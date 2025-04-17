@@ -8,7 +8,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (user) {
-      fetch('http://localhost:5000/api/projects/my-projects', {
+      fetch('http://localhost:5001/api/projects/my-projects', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       })
         .then((res) => res.json())

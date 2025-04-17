@@ -6,7 +6,7 @@ export default function ProjectHub() {
   const [projects, setProjects] = useState([]);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/projects')
+    fetch('http://localhost:5001/api/projects')
       .then((res) => res.json())
       .then((data) => setProjects(data));
   }, []);

@@ -6,7 +6,7 @@ export default function Explore() {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/users?search=${search}`)
+    fetch(`http://localhost:5001/api/users?search=${search}`)
       .then((res) => res.json())
       .then((data) => setUsers(data));
   }, [search]);

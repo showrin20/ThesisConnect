@@ -10,7 +10,7 @@ export default function ProjectForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem('token');
-    await fetch('http://localhost:5000/api/projects', {
+    await fetch('http://localhost:5001/api/projects', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -7,7 +7,7 @@
 
   color-scheme: light;
   color: #213547;
-  background-color: #F5ECD7;
+  background-color: #DDE6ED;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -21,7 +21,7 @@ body {
   width: 100vw;
   height: 100vh;
   min-height: 100vh;
-  background-color: #ffffff;
+  background-color: #DDE6ED;
   color: #213547;
   display: flex;
   flex-direction: column;
