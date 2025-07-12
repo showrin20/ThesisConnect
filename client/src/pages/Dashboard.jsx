@@ -1,36 +1,48 @@
-import { useContext, useEffect, useState } from 'react';
+import { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { UserContext } from '../context/UserContext';
-import ProjectCard from '../components/ProjectCard';
+import ComingSoon from '../components/ComingSoon';
 
 export default function Dashboard() {
-  const { user } = useContext(UserContext);
-  const [projects, setProjects] = useState([]);
+  const { user, setUser } = useContext(UserContext);
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (user) {
-      fetch('http://localhost:5001/api/projects/my-projects', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      })
-        .then((res) => res.json())
-        .then((data) => setProjects(data));
-    }
-  }, [user]);
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+    navigate('/login');
+  };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Your Dashboard</h1>
-      {user ? (
-        <div>
-          <h2 className="text-xl mb-2">Your Projects</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {projects.map((project) => (
-              <ProjectCard key={project._id} project={project} />
-            ))}
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 to-gray-800">
+      {/* Header */}
+      <header className="bg-gradient-to-r from-slate-800 via-purple-800 to-slate-800 shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+            ThesisConnect Dashboard
+          </h1>
+          <div className="flex items-center gap-4">
+            {user ? (
+              <span className="text-white text-sm md:text-base">
+                Welcome, {user.name || user.email}
+              </span>
+            ) : null}
+            <button
+              onClick={handleLogout}
+              className="relative bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-medium px-4 py-2 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+              aria-label="Log out of ThesisConnect"
+            >
+              Logout
+              <span className="absolute inset-0 rounded-full border border-red-400/30 opacity-0 hover:opacity-100 transition-opacity duration-300"></span>
+            </button>
           </div>
         </div>
-      ) : (
-        <p>Please log in to view your dashboard.</p>
-      )}
+      </header>
+
+      {/* Main Content */}
+      <main>
+        <ComingSoon />
+      </main>
     </div>
   );
 }

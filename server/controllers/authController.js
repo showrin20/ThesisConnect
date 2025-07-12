@@ -13,6 +13,7 @@ exports.register = async (req, res) => {
     scholarLink,
     githubLink,
     keywords = [],
+    role = 'student', // ✅ default to 'student'
   } = req.body;
 
   try {
@@ -39,15 +40,18 @@ exports.register = async (req, res) => {
       domain,
       scholarLink,
       githubLink,
-      keywords,
+      keywords: Array.isArray(keywords) ? keywords : [],
+      role: ['admin', 'student', 'supervisor'].includes(role) ? role : 'student',
     });
 
     await user.save();
 
     // Create JWT
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: '1h',
-    });
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
 
     // Respond
     res.status(201).json({
@@ -61,6 +65,7 @@ exports.register = async (req, res) => {
         scholarLink: user.scholarLink,
         githubLink: user.githubLink,
         keywords: user.keywords,
+        role: user.role,
       },
     });
   } catch (err) {
@@ -100,9 +105,11 @@ exports.login = async (req, res) => {
     }
 
     // Create JWT
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: '1h',
-    });
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
 
     // Respond
     res.json({
@@ -116,6 +123,7 @@ exports.login = async (req, res) => {
         scholarLink: user.scholarLink,
         githubLink: user.githubLink,
         keywords: user.keywords,
+        role: user.role,
       },
     });
   } catch (err) {
