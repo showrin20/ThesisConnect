@@ -44,19 +44,22 @@
 * 📅 Mentorship session booking (time slot based)
 
 
+
+
 ## 🖼️ UI Preview
 
-Here's a sneak peek at our UI flow 👇
+Here's a sneak peek at our UI flow 👇  
 *All images stored in `/UI/` directory (images 1 to 6)*
 
 | ![UI 1](https://github.com/showrin20/ThesisConnect/blob/main/UI/1.png) | ![UI 2](https://github.com/showrin20/ThesisConnect/blob/main/UI/2.png) | ![UI 3](https://github.com/showrin20/ThesisConnect/blob/main/UI/3.png) |
-| :--------------------------------------------------------------------: | :--------------------------------------------------------------------: | :--------------------------------------------------------------------: |
-|                                  UI 1                                  |                                  UI 2                                  |                                  UI 3                                  |
+|:--:|:--:|:--:|
+| UI 1 | UI 2 | UI 3 |
 
-| | ![UI 5](https://github.com/showrin20/ThesisConnect/blob/main/UI/5.png) | ![UI 6](https://github.com/showrin20/ThesisConnect/blob/main/UI/6.png) |![UI 4](https://github.com/showrin20/ThesisConnect/blob/main/UI/4.png) 
-| :--------------------------------------------------------------------: | :--------------------------------------------------------------------: | :--------------------------------------------------------------------: |
-|                                  UI 4                                  |                                  UI 5                                  |                                  UI 6                                  |
+| ![UI 5](https://github.com/showrin20/ThesisConnect/blob/main/UI/5.png) | ![UI 4](https://github.com/showrin20/ThesisConnect/blob/main/UI/4.png) | ![UI 6](https://github.com/showrin20/ThesisConnect/blob/main/UI/6.png) |
+|:--:|:--:|:--:|
+| UI 4 | UI 5 | UI 6 |
 
+---
 ---
 
 ## ⚙️ Tech Stack
