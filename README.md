@@ -1,4 +1,4 @@
-# 🎓 ThesisConnect
+# 🎓 [ThesisConnect](https://docs.google.com/document/d/1C-v7He-nDQgbw6lyI3BAR52A98BQpnWWdbkWAWkjkrk/edit?usp=sharing)
 
 > 👩‍💻 A platform for connecting thesis students, mentors, and collaborators.
 
