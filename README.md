@@ -53,7 +53,7 @@ Here's a sneak peek at our UI flow 👇
 | :--------------------------------------------------------------------: | :--------------------------------------------------------------------: | :--------------------------------------------------------------------: |
 |                                  UI 1                                  |                                  UI 2                                  |                                  UI 3                                  |
 
-| ![UI 4](https://github.com/showrin20/ThesisConnect/blob/main/UI/4.png) | ![UI 5](https://github.com/showrin20/ThesisConnect/blob/main/UI/5.png) | ![UI 6](https://github.com/showrin20/ThesisConnect/blob/main/UI/6.png) |
+| | ![UI 5](https://github.com/showrin20/ThesisConnect/blob/main/UI/5.png) | ![UI 6](https://github.com/showrin20/ThesisConnect/blob/main/UI/6.png) |![UI 4](https://github.com/showrin20/ThesisConnect/blob/main/UI/4.png) 
 | :--------------------------------------------------------------------: | :--------------------------------------------------------------------: | :--------------------------------------------------------------------: |
 |                                  UI 4                                  |                                  UI 5                                  |                                  UI 6                                  |
 
