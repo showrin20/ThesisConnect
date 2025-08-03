@@ -1,7 +1,6 @@
-import { useState, useContext } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserContext } from '../context/UserContext';
-import axios from '../axios';
+import { useAuth } from '../context/AuthContext';
 
 export default function Auth({ isSignup = false }) {
   const [formData, setFormData] = useState({
@@ -16,7 +15,8 @@ export default function Auth({ isSignup = false }) {
   });
 
   const [error, setError] = useState('');
-  const { setUser } = useContext(UserContext);
+  const [isLoading, setIsLoading] = useState(false);
+  const { register, login, clearError } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -27,32 +27,35 @@ export default function Auth({ isSignup = false }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
+    clearError();
 
     try {
-      const endpoint = isSignup ? '/auth/register' : '/auth/login';
+      let result;
+      
+      if (isSignup) {
+        const userData = {
+          ...formData,
+          keywords: formData.keywords
+            ? formData.keywords.split(',').map((kw) => kw.trim()).filter(Boolean)
+            : [],
+        };
+        result = await register(userData);
+      } else {
+        result = await login({ email: formData.email, password: formData.password });
+      }
 
-      const payload = isSignup
-        ? {
-            ...formData,
-            keywords: formData.keywords
-              ? formData.keywords.split(',').map((kw) => kw.trim()).filter(Boolean)
-              : [],
-          }
-        : {
-            email: formData.email,
-            password: formData.password,
-          };
-
-      console.log('📦 Sending payload:', payload);
-
-      const res = await axios.post(endpoint, payload);
-
-      localStorage.setItem('token', res.data.token);
-      setUser(res.data.user);
-      navigate('/dashboard');
+      if (result.success) {
+        // Navigate to dashboard on success
+        navigate('/dashboard');
+      } else {
+        setError(result.error || 'An unexpected error occurred');
+      }
     } catch (err) {
-      console.error('🔴 Auth error:', err.response?.data || err.message);
-      setError(err.response?.data?.msg || 'An unexpected error occurred');
+      console.error('🔴 Auth error:', err);
+      setError(err.message || 'An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -95,11 +98,25 @@ export default function Auth({ isSignup = false }) {
             <div className="col-span-1 md:col-span-2">
               <button
                 type="submit"
-                className="relative w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium p-3 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                disabled={isLoading}
+                className={`relative w-full font-medium p-3 rounded-full shadow-lg transition-all duration-300 ${
+                  isLoading
+                    ? 'bg-gray-600 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:shadow-xl transform hover:scale-105'
+                } text-white`}
                 aria-label={isSignup ? 'Sign up for ThesisConnect' : 'Log in to ThesisConnect'}
               >
-                {isSignup ? 'Sign Up' : 'Login'}
-                <span className="absolute inset-0 rounded-full border border-blue-400/30 opacity-0 hover:opacity-100 transition-opacity duration-300"></span>
+                {isLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    {isSignup ? 'Signing Up...' : 'Logging In...'}
+                  </span>
+                ) : (
+                  isSignup ? 'Sign Up' : 'Login'
+                )}
+                {!isLoading && (
+                  <span className="absolute inset-0 rounded-full border border-blue-400/30 opacity-0 hover:opacity-100 transition-opacity duration-300"></span>
+                )}
               </button>
             </div>
           </form>

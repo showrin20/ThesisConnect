@@ -6,6 +6,8 @@ const connectDB = require('./config/connectDB');
 
 // Import Routes
 const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/users');
+const projectRoutes = require('./routes/projects');
 
 // Load environment variables
 dotenv.config();
@@ -17,21 +19,56 @@ const app = express();
 connectDB();
 
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  credentials: true,
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
+}));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Health check route
 app.get('/api/test', (req, res) => {
-  res.status(200).json({ message: 'Server is running!' });
+  res.status(200).json({ 
+    message: 'Server is running!',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/projects', projectRoutes);
+
+// 404 handler for API routes
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ 
+    success: false,
+    message: `API route ${req.originalUrl} not found`,
+    error: 'Not Found'
+  });
+});
+
+// Catch-all handler for non-API routes (prevents HTML responses)
+app.use('*', (req, res) => {
+  res.status(404).json({ 
+    success: false,
+    message: `Route ${req.originalUrl} not found`,
+    error: 'Not Found'
+  });
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ message: 'Something went wrong!' });
+  res.status(500).json({ 
+    success: false,
+    message: 'Something went wrong!',
+    error: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message
+  });
 });
 
 // Start server

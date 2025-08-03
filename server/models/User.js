@@ -8,12 +8,22 @@ const UserSchema = new mongoose.Schema({
   domain: String,
   scholarLink: String,
   githubLink: String,
+  linkedinLink: String,
+  website: String,
   keywords: [String],
+  bio: String,
+  phone: String,
+  location: String,
+  researchInterests: String,
+  currentPosition: String,
+  yearsOfExperience: { type: Number, default: 0 },
   role: {
     type: String,
     enum: ['student', 'supervisor', 'admin'],
     default: 'student',
   },
+}, {
+  timestamps: true
 });
 
 module.exports = mongoose.model('User', UserSchema);

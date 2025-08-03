@@ -1,26 +1,64 @@
-import { useContext } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { UserContext } from '../context/UserContext';
-import { ExternalLink, MapPin, BookOpen, Tag, Star, TrendingUp, Edit2 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { ExternalLink, MapPin, BookOpen, Tag, Star, TrendingUp, Edit2, User, Mail } from 'lucide-react';
 
 export default function MyProfile() {
-  const { user } = useContext(UserContext); // Assume user is authenticated
+  const { user, loading } = useAuth();
 
-  // Dummy data for Showrin Rahman
-  const dummyUser = {
-    name: 'Showrin Rahman',
-    email: 'showrin.rahman@example.com',
-    university: 'BRAC University, Dhaka',
-    domain: 'Computer Science (AI, Machine Learning, GeoAI)',
-    keywords: ['AI', 'Machine Learning', 'Deep Learning', 'Computer Vision', 'GeoAI', 'Disaster Management'],
-    scholarLink: 'https://scholar.google.com/citations?user=showrin123',
-    githubLink: 'https://github.com/showrin20',
-    publications: 5,
-    citations: 120,
-    hIndex: 3,
-  };
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-12 min-h-screen bg-gradient-to-b from-slate-900 to-gray-800">
+        <div className="relative max-w-4xl mx-auto">
+          <div className="relative bg-gradient-to-r from-slate-800 via-purple-800 to-slate-800 text-white rounded-xl shadow-2xl p-8">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-400/20 rounded w-48 mx-auto mb-8"></div>
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-start space-x-4">
+                  <div className="w-16 h-16 bg-gray-400/20 rounded-full"></div>
+                  <div>
+                    <div className="h-6 bg-gray-400/20 rounded w-48 mb-2"></div>
+                    <div className="h-4 bg-gray-400/20 rounded w-64 mb-2"></div>
+                    <div className="h-4 bg-gray-400/20 rounded w-56"></div>
+                  </div>
+                </div>
+                <div className="h-10 bg-gray-400/20 rounded w-32"></div>
+              </div>
+              <div className="space-y-4">
+                <div className="h-8 bg-gray-400/20 rounded w-full"></div>
+                <div className="h-20 bg-gray-400/20 rounded w-full"></div>
+                <div className="grid grid-cols-3 gap-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-20 bg-gray-400/20 rounded"></div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const profile = user || dummyUser; // Use authenticated user or dummy data
+  if (!user) {
+    return (
+      <div className="container mx-auto px-4 py-12 min-h-screen bg-gradient-to-b from-slate-900 to-gray-800">
+        <div className="relative max-w-4xl mx-auto">
+          <div className="relative bg-gradient-to-r from-slate-800 via-purple-800 to-slate-800 text-white rounded-xl shadow-2xl p-8 text-center">
+            <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-300 mb-4">No User Data Found</h2>
+            <p className="text-gray-400 mb-6">Please log in to view your profile.</p>
+            <Link
+              to="/auth"
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
+            >
+              Go to Login
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-12 min-h-screen bg-gradient-to-b from-slate-900 to-gray-800">
@@ -37,7 +75,7 @@ export default function MyProfile() {
               {/* Avatar */}
               <div className="relative">
                 <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                  {profile.name?.charAt(0) || 'U'}
+                  {user.name?.charAt(0)?.toUpperCase() || 'U'}
                 </div>
                 <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
                   <div className="w-2 h-2 bg-white rounded-full"></div>
@@ -46,17 +84,33 @@ export default function MyProfile() {
               {/* Name and University */}
               <div className="flex-1 min-w-0">
                 <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
-                  {profile.name}
+                  {user.name || 'Unknown User'}
                 </h2>
+                {user.university && (
+                  <div className="flex items-center text-gray-300 mb-2">
+                    <MapPin className="w-4 h-4 mr-1 text-blue-400" />
+                    <span className="text-sm truncate">{user.university}</span>
+                  </div>
+                )}
                 <div className="flex items-center text-gray-300 mb-2">
-                  <MapPin className="w-4 h-4 mr-1 text-blue-400" />
-                  <span className="text-sm truncate">{profile.university}</span>
+                  <Mail className="w-4 h-4 mr-1 text-blue-400" />
+                  <span className="text-sm">{user.email}</span>
                 </div>
-                <div className="text-sm text-gray-300">{profile.email}</div>
+                {user.role && (
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                    user.role === 'admin' 
+                      ? 'bg-red-100 text-red-800 border border-red-200'
+                      : user.role === 'supervisor'
+                      ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                      : 'bg-green-100 text-green-800 border border-green-200'
+                  }`}>
+                    {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                  </span>
+                )}
               </div>
             </div>
             <Link
-              to="/edit-profile"
+              to="/settings"
               className="flex items-center space-x-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg shadow-md hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
               aria-label="Edit my profile"
             >
@@ -66,53 +120,60 @@ export default function MyProfile() {
           </div>
 
           {/* Domain and Links */}
-          <div className="mb-6">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 border border-blue-200">
-              <BookOpen className="w-4 h-4 mr-1" />
-              {profile.domain}
-            </span>
-            <div className="flex space-x-4 mt-4">
-              {profile.scholarLink && (
-                <a
-                  href={profile.scholarLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center space-x-1 text-blue-400 hover:text-blue-300 transition-colors duration-200"
-                  aria-label="Visit Google Scholar profile"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  <span>Google Scholar</span>
-                </a>
+          {(user.domain || user.scholarLink || user.githubLink) && (
+            <div className="mb-6">
+              {user.domain && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 border border-blue-200 mb-4">
+                  <BookOpen className="w-4 h-4 mr-1" />
+                  {user.domain}
+                </span>
               )}
-              {profile.githubLink && (
-                <a
-                  href={profile.githubLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center space-x-1 text-blue-400 hover:text-blue-300 transition-colors duration-200"
-                  aria-label="Visit GitHub profile"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  <span>GitHub</span>
-                </a>
+              
+              {(user.scholarLink || user.githubLink) && (
+                <div className="flex space-x-4 mt-4">
+                  {user.scholarLink && (
+                    <a
+                      href={user.scholarLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center space-x-1 text-blue-400 hover:text-blue-300 transition-colors duration-200"
+                      aria-label="Visit Google Scholar profile"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      <span>Google Scholar</span>
+                    </a>
+                  )}
+                  {user.githubLink && (
+                    <a
+                      href={user.githubLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center space-x-1 text-blue-400 hover:text-blue-300 transition-colors duration-200"
+                      aria-label="Visit GitHub profile"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      <span>GitHub</span>
+                    </a>
+                  )}
+                </div>
               )}
             </div>
-          </div>
+          )}
 
           {/* Keywords Section */}
-          {profile.keywords && profile.keywords.length > 0 && (
+          {user.keywords && user.keywords.length > 0 && (
             <div className="mb-6">
-              <div className="flex items-center mb-2">
-                <Tag className="w-4 h-4 text-blue-400 mr-1" />
+              <div className="flex items-center mb-3">
+                <Tag className="w-4 h-4 text-blue-400 mr-2" />
                 <span className="text-sm font-medium bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
                   Research Keywords
                 </span>
               </div>
               <div className="flex flex-wrap gap-2">
-                {profile.keywords.map((keyword, idx) => (
+                {user.keywords.map((keyword, idx) => (
                   <span
                     key={idx}
-                    className="px-2 py-1 bg-slate-700/50 text-gray-200 text-xs rounded-full hover:bg-blue-700/50 hover:text-blue-300 transition-colors duration-200"
+                    className="px-3 py-1 bg-slate-700/50 text-gray-200 text-sm rounded-full hover:bg-blue-700/50 hover:text-blue-300 transition-colors duration-200 border border-slate-600/50"
                   >
                     {keyword}
                   </span>
@@ -121,27 +182,61 @@ export default function MyProfile() {
             </div>
           )}
 
-          {/* Stats Section */}
+          {/* Stats Section - Using placeholder data since these aren't in the user model yet */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="bg-gradient-to-r from-blue-50 to-blue-100 text-blue-800 rounded-lg p-4 text-center">
               <BookOpen className="w-5 h-5 text-blue-600 mx-auto mb-2" />
-              <div className="text-sm font-bold">{profile.publications}</div>
-              <div className="text-xs">Papers</div>
+              <div className="text-lg font-bold">{user.publications || '0'}</div>
+              <div className="text-xs">Publications</div>
             </div>
             <div className="bg-gradient-to-r from-green-50 to-green-100 text-green-800 rounded-lg p-4 text-center">
               <TrendingUp className="w-5 h-5 text-green-600 mx-auto mb-2" />
-              <div className="text-sm font-bold">{profile.citations}</div>
+              <div className="text-lg font-bold">{user.citations || '0'}</div>
               <div className="text-xs">Citations</div>
             </div>
             <div className="bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 rounded-lg p-4 text-center">
               <Star className="w-5 h-5 text-purple-600 mx-auto mb-2" />
-              <div className="text-sm font-bold">{profile.hIndex}</div>
+              <div className="text-lg font-bold">{user.hIndex || '0'}</div>
               <div className="text-xs">H-Index</div>
             </div>
           </div>
 
-          {/* Action Button */}
-          <div className="text-center">
+          {/* Profile Completion */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-300">Profile Completion</span>
+              <span className="text-sm text-gray-400">
+                {Math.round(
+                  ((user.name ? 1 : 0) +
+                   (user.email ? 1 : 0) +
+                   (user.university ? 1 : 0) +
+                   (user.domain ? 1 : 0) +
+                   (user.keywords?.length > 0 ? 1 : 0) +
+                   (user.scholarLink ? 1 : 0) +
+                   (user.githubLink ? 1 : 0)) / 7 * 100
+                )}%
+              </span>
+            </div>
+            <div className="w-full bg-gray-700 rounded-full h-2">
+              <div 
+                className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500"
+                style={{
+                  width: `${Math.round(
+                    ((user.name ? 1 : 0) +
+                     (user.email ? 1 : 0) +
+                     (user.university ? 1 : 0) +
+                     (user.domain ? 1 : 0) +
+                     (user.keywords?.length > 0 ? 1 : 0) +
+                     (user.scholarLink ? 1 : 0) +
+                     (user.githubLink ? 1 : 0)) / 7 * 100
+                  )}%`
+                }}
+              ></div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-center space-x-4">
             <Link
               to="/dashboard"
               className="relative inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-lg hover:from-blue-700 hover:to-purple-700 hover:shadow-xl transform hover:scale-105 transition-all duration-300"
@@ -149,6 +244,15 @@ export default function MyProfile() {
             >
               Back to Dashboard
               <span className="absolute inset-0 rounded-full border border-blue-400/30 opacity-0 hover:opacity-100 transition-opacity duration-300"></span>
+            </Link>
+            
+            <Link
+              to="/settings"
+              className="relative inline-flex items-center px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-full shadow-lg hover:from-gray-700 hover:to-gray-800 hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+              aria-label="Edit profile settings"
+            >
+              <Edit2 className="w-4 h-4 mr-2" />
+              Edit Profile
             </Link>
           </div>
         </div>

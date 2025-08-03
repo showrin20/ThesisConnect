@@ -41,66 +41,6 @@ export default function Publications() {
       abstract: 'A comprehensive survey of CNN architectures and their applications in medical image analysis, covering recent advances and future directions.',
       citations: 42,
       location: 'Paris, France'
-    },
-    {
-      id: 3,
-      title: 'Sentiment Analysis of Bengali Social Media Posts Using Transformer Models',
-      authors: ['Your Name', 'Dr. Rashid Hassan', 'Ms. Fatima Khan'],
-      year: 2024,
-      venue: 'ACM Transactions on Asian and Low-Resource Language Information Processing',
-      type: 'Journal',
-      genre: 'Natural Language Processing',
-      quality: 'Q2',
-      tags: ['Sentiment Analysis', 'Bengali NLP', 'Transformers', 'Social Media', 'BERT'],
-      doi: '10.1145/3589234.1234567',
-      abstract: 'This study presents a transformer-based approach for sentiment analysis of Bengali social media content, achieving state-of-the-art performance.',
-      citations: 8,
-      location: 'Singapore'
-    },
-    {
-      id: 4,
-      title: 'Blockchain-Based Secure Data Sharing Framework for Collaborative Research',
-      authors: ['Your Name', 'Dr. Ahmed Ali', 'Dr. John Smith'],
-      year: 2023,
-      venue: 'International Conference on Blockchain Technology (ICBT)',
-      type: 'Conference',
-      genre: 'Blockchain',
-      quality: 'A',
-      tags: ['Blockchain', 'Data Security', 'Research Collaboration', 'Privacy', 'Smart Contracts'],
-      doi: '10.1145/3456789.0123456',
-      abstract: 'A novel blockchain framework that enables secure and transparent sharing of research data while maintaining privacy and data integrity.',
-      citations: 23,
-      location: 'Tokyo, Japan'
-    },
-    {
-      id: 5,
-      title: 'Federated Learning for IoT Device Classification in Smart Cities',
-      authors: ['Your Name', 'Dr. Lisa Chen', 'Mr. David Park'],
-      year: 2024,
-      venue: 'Journal of Internet of Things',
-      type: 'Journal',
-      genre: 'IoT',
-      quality: 'Q1',
-      tags: ['Federated Learning', 'IoT', 'Smart Cities', 'Device Classification', 'Privacy'],
-      doi: '10.1016/j.iot.2024.567890',
-      abstract: 'This paper proposes a federated learning approach for classifying IoT devices in smart city environments while preserving privacy.',
-      citations: 12,
-      location: 'South Korea'
-    },
-    {
-      id: 6,
-      title: 'Explainable AI for Healthcare: A Case Study on Lung Disease Detection',
-      authors: ['Your Name', 'Dr. Robert Johnson'],
-      year: 2023,
-      venue: 'Workshop on Explainable AI in Healthcare (XAIH)',
-      type: 'Workshop',
-      genre: 'Explainable AI',
-      quality: 'B',
-      tags: ['Explainable AI', 'Healthcare', 'Lung Disease', 'Medical Imaging', 'Interpretability'],
-      doi: '10.1007/workshop.2023.12345',
-      abstract: 'An explainable AI system for lung disease detection that provides interpretable results for healthcare professionals.',
-      citations: 6,
-      location: 'Boston, USA'
     }
   ];
 

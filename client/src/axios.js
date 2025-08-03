@@ -8,11 +8,11 @@ const instance = axios.create({
   },
 });
 
-// Optionally add token if you want auto-auth headers:
+// Add token to x-auth-token header for consistency with backend
 instance.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers['x-auth-token'] = token;
   }
   return config;
 });

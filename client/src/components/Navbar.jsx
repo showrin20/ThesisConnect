@@ -40,6 +40,7 @@ const Navbar = () => {
               Home
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-400 to-purple-400 group-hover:w-full transition-all duration-300"></span>
             </Link>
+        
             <Link 
               to="/explore" 
               className="relative text-gray-300 hover:text-white transition-all duration-300 group font-medium"
@@ -118,6 +119,13 @@ const Navbar = () => {
                 Home
               </Link>
               <Link
+                to="/dashboard"
+                className="block text-gray-300 hover:text-white hover:bg-white/10 px-4 py-3 rounded-lg transition-all duration-300"
+                onClick={toggleMenu}
+              >
+                Dashboard
+              </Link>
+              <Link
                 to="/explore"
                 className="block text-gray-300 hover:text-white hover:bg-white/10 px-4 py-3 rounded-lg transition-all duration-300"
                 onClick={toggleMenu}
@@ -125,11 +133,11 @@ const Navbar = () => {
                 Explore
               </Link>
               <Link
-                to="/dashboard"
+                to="/publications"
                 className="block text-gray-300 hover:text-white hover:bg-white/10 px-4 py-3 rounded-lg transition-all duration-300"
                 onClick={toggleMenu}
               >
-                Forum
+                Publications
               </Link>
               <Link
                 to="/resources"

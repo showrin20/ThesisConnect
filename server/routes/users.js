@@ -5,7 +5,15 @@ const User = require('../models/User');
 const router = express.Router();
 
 const auth = (req, res, next) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
+  let token = req.header('x-auth-token');
+  
+  if (!token) {
+    const authHeader = req.header('Authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7);
+    }
+  }
+
   if (!token) return res.status(401).json({ msg: 'No token, authorization denied' });
 
   try {
@@ -17,26 +25,37 @@ const auth = (req, res, next) => {
   }
 };
 
-router.get('/me', auth, async (req, res) => {
-  const user = await User.findById(req.user.id).select('-password');
-  res.json(user);
-});
-
-router.put('/profile', auth, async (req, res) => {
-  const updates = req.body;
-  const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true }).select('-password');
-  res.json(user);
-});
-
+// Get all users with search functionality
 router.get('/', async (req, res) => {
-  const search = req.query.search || '';
-  const users = await User.find({
-    $or: [
-      { domain: { $regex: search, $options: 'i' } },
-      { keywords: { $regex: search, $options: 'i' } },
-    ],
-  }).select('-password');
-  res.json(users);
+  try {
+    const search = req.query.search || '';
+    const users = await User.find({
+      $or: [
+        { domain: { $regex: search, $options: 'i' } },
+        { keywords: { $regex: search, $options: 'i' } },
+        { name: { $regex: search, $options: 'i' } },
+        { university: { $regex: search, $options: 'i' } },
+      ],
+    }).select('-password');
+    res.json(users);
+  } catch (err) {
+    console.error('Get users error:', err);
+    res.status(500).json({ msg: 'Server error' });
+  }
+});
+
+// Get user by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+    res.json(user);
+  } catch (err) {
+    console.error('Get user by ID error:', err);
+    res.status(500).json({ msg: 'Server error' });
+  }
 });
 
 module.exports = router;
