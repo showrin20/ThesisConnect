@@ -93,7 +93,7 @@ const Settings = () => {
       
       if (result.success) {
         setSaveStatus('success');
-        setTimeout(() => setSaveStatus(null), 3000);
+        setTimeout(() => setSaveStatus(null), );
       } else {
         setSaveStatus('error');
       }

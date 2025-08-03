@@ -17,7 +17,9 @@ import {
   ChevronDown,
   ChevronRight
 } from 'lucide-react';
-import { Link } from 'react-router-dom'; // Ensure react-router-dom is installed
+import { Link } from 'react-router-dom';
+
+ // Ensure react-router-dom is installed
 
 const Sidebar = ({ isOpen, onClose }) => {
   const [activeCategory, setActiveCategory] = useState('Computer Science');
@@ -35,7 +37,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const quickNavItems = [
     { icon: Home, label: 'My Dashboard', active: true, path: '/dashboard' },
-    { icon: FolderOpen, label: 'My Projects', path: '/projects' },
+    { icon: FolderOpen, label: 'My Projects', path: '/my-projects' },
     { icon: Users, label: 'Explore', path: '/explore' },
     { icon: Settings, label: 'Settings', path: '/settings' }
   ];

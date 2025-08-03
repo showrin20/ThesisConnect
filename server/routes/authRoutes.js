@@ -9,4 +9,5 @@ router.post('/logout', logout);
 router.get('/me', auth, getProfile);
 router.put('/profile', auth, updateProfile);
 
+
 module.exports = router;

@@ -10,7 +10,7 @@ import Publications from './pages/Publication';
 import Dashboard from './pages/Dashboard';
 import Settings from './pages/Settings';
 import Auth from './components/Auth';
-
+import MyProjects from './pages/MyProjects';  
 // Component to conditionally render navbar
 function AppContent() {
   const location = useLocation();
@@ -44,6 +44,11 @@ function AppContent() {
           <Route path="/projects" element={
             <ProtectedRoute>
               <ProjectHub />
+            </ProtectedRoute>
+          } />
+          <Route path="/my-projects" element={
+            <ProtectedRoute>
+              <MyProjects />
             </ProtectedRoute>
           } />
         </Routes>

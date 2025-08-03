@@ -75,7 +75,15 @@ export default function ProjectHub() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
           {projects.map((project) => (
-            <ProjectCard key={project._id} project={project} />
+            <ProjectCard 
+              key={project._id} 
+              title={project.title}
+              description={project.description}
+              link={project.link}
+              tags={project.tags}
+              status={project.status}
+              category={project.category}
+            />
           ))}
         </div>
       )}

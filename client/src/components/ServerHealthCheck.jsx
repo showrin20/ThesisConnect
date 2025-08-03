@@ -79,7 +79,7 @@ const ServerHealthCheck = () => {
             <div className="text-sm text-gray-300 space-y-2">
               <div>• Make sure the backend server is running: <code className="bg-slate-600 px-1 rounded">npm run dev</code> in the server folder</div>
               <div>• Check if the server is running on port 5001: <a href="http://localhost:5001/api/test" target="_blank" className="text-blue-400 hover:underline">http://localhost:5001/api/test</a></div>
-              <div>• Verify CORS settings allow requests from http://localhost:3000</div>
+              <div>• Verify CORS settings allow requests from http://localhost:5173</div>
               <div>• Check browser network tab for detailed error messages</div>
               <div>• For auth endpoints, make sure you're logged in with a valid token</div>
             </div>

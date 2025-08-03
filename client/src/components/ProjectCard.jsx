@@ -1,6 +1,7 @@
 import React from 'react';
+import { ExternalLink } from 'lucide-react';
 
-const ProjectCard = ({ title, description, tags, status, category }) => {
+const ProjectCard = ({ title, description, link, tags, status, category }) => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'Active':
@@ -13,6 +14,8 @@ const ProjectCard = ({ title, description, tags, status, category }) => {
         return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
     }
   };
+
+  const trimmedLink = link?.trim();
 
   return (
     <div className="relative group">
@@ -32,7 +35,7 @@ const ProjectCard = ({ title, description, tags, status, category }) => {
         </p>
         
         <div className="flex flex-wrap gap-2 mb-4">
-          {tags.map((tag, index) => (
+          {tags && tags.map((tag, index) => (
             <span 
               key={index}
               className="px-2 py-1 bg-sky-500/20 text-sky-300 rounded-md text-xs font-medium border border-sky-500/30"
@@ -42,8 +45,23 @@ const ProjectCard = ({ title, description, tags, status, category }) => {
           ))}
         </div>
         
-        <div className="text-xs text-white/50">
-          Category: {category}
+        <div className="flex items-center justify-between">
+          <div className="text-xs text-white/50">
+            Category: {category || 'Research'}
+          </div>
+          {trimmedLink ? (
+            <a
+              href={trimmedLink.startsWith('http') ? trimmedLink : `https://${trimmedLink}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 px-3 py-1 bg-sky-500/20 text-sky-400 border border-sky-500/30 rounded-lg hover:bg-sky-500/30 transition-all duration-200 text-xs font-medium"
+            >
+              <span>View Project</span>
+              <ExternalLink size={12} />
+            </a>
+          ) : (
+            <span className="text-xs text-gray-400 italic">No project link available</span>
+          )}
         </div>
       </div>
     </div>
