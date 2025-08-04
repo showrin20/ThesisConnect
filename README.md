@@ -74,13 +74,54 @@ Here's a sneak peek at our UI flow 👇
 
 ---
 
-## 🤝 Contributing
+
+## 🚀 Getting Started with ThesisConnect
+
+To run the project locally, follow these steps:
+
+### 1. 📥 Clone the Repository
 
 ```bash
 git clone https://github.com/showrin20/ThesisConnect.git
 cd ThesisConnect
-npm install
 ```
+
+---
+
+### 2. 🖥️ Start the Frontend (React + Vite)
+
+```bash
+cd client
+npm install
+npm run dev
+```
+
+This will start the frontend server at [http://localhost:5173](http://localhost:5173)
+
+---
+
+### 3. 🧠 Start the Backend (Node.js + Express)
+
+Open a **new terminal** window:
+
+```bash
+cd server
+npm install
+npm start
+```
+
+This will start the backend API server at [http://localhost:5001](http://localhost:5001)
+
+---
+
+### 📌 Notes
+
+* Make sure MongoDB is running locally or your `.env` file has the correct database URI.
+* The backend should serve API endpoints and handle authentication using JWT.
+* CORS config must allow requests from `http://localhost:5173`.
+
+
+
 
 ---
 
