@@ -10,25 +10,25 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 shadow-2xl p-10 fixed w-full top-0 left-0 z-50 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="flex justify-between items-center h-16">
+    <nav className="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 shadow-2xl p-4 md:p-10 fixed w-full top-0 left-0 z-50 backdrop-blur-md">
+      <div className="max-w-7xl mx-auto px-4 md:px-6">
+        <div className="flex justify-between items-center h-12 md:h-16">
           {/* Brand Logo & Name */}
-          <div className="flex items-center space-x-3">
-  <Link to="/" className="flex items-center space-x-3 group">
-    <div className="relative w-40 h-50"> {/* Reduced from w-40 h-40 */}
-      <div className="absolute inset-0  transition duration-300"></div>
-      <img 
-        src="1.png" 
-        alt="ThesisConnect Logo" 
-        className="w-full h-full object-contain relative z-10" 
-      />
-    </div>
-    <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-      ThesisConnect
-    </h1>
-  </Link>
-</div>
+          <div className="flex items-center space-x-2 md:space-x-3">
+            <Link to="/" className="flex items-center space-x-2 md:space-x-3 group">
+              <div className="relative w-8 h-8 md:w-40 md:h-50">
+                <div className="absolute inset-0 transition duration-300"></div>
+                <img 
+                  src="1.png" 
+                  alt="ThesisConnect Logo" 
+                  className="w-full h-full object-contain relative z-10" 
+                />
+              </div>
+              <h1 className="text-lg md:text-2xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                ThesisConnect
+              </h1>
+            </Link>
+          </div>
 
 
           {/* Desktop Navigation Links */}
@@ -85,16 +85,20 @@ const Navbar = () => {
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center">
             <button
-              className="text-gray-300 hover:text-white p-2 rounded-lg hover:bg-white/10 transition-all duration-300"
+              className="text-gray-300 hover:text-white p-2 rounded-lg hover:bg-white/10 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
               onClick={toggleMenu}
               aria-label="Toggle menu"
+              aria-expanded={isOpen}
             >
               <svg
-                className="w-6 h-6"
+                className="w-6 h-6 transform transition-transform duration-300"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
                 xmlns="http://www.w3.org/2000/svg"
+                style={{
+                  transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)'
+                }}
               >
                 <path
                   strokeLinecap="round"
@@ -109,60 +113,62 @@ const Navbar = () => {
 
         {/* Mobile Dropdown Menu */}
         {isOpen && (
-          <div className="md:hidden bg-gradient-to-r from-slate-800 via-purple-800 to-slate-800 rounded-lg m-4 shadow-2xl border border-purple-500/20">
-            <div className="p-4 space-y-2">
+          <div className="md:hidden absolute top-full left-0 right-0 bg-gradient-to-r from-slate-800 via-purple-800 to-slate-800 rounded-b-lg shadow-2xl border-t border-purple-500/20 backdrop-blur-md">
+            <div className="p-4 space-y-1">
               <Link
                 to="/"
-                className="block text-gray-300 hover:text-white hover:bg-white/10 px-4 py-3 rounded-lg transition-all duration-300"
+                className="block text-gray-300 hover:text-white hover:bg-white/10 px-4 py-3 rounded-lg transition-all duration-300 text-center"
                 onClick={toggleMenu}
               >
-                Home
+                🏠 Home
               </Link>
               <Link
                 to="/dashboard"
-                className="block text-gray-300 hover:text-white hover:bg-white/10 px-4 py-3 rounded-lg transition-all duration-300"
+                className="block text-gray-300 hover:text-white hover:bg-white/10 px-4 py-3 rounded-lg transition-all duration-300 text-center"
                 onClick={toggleMenu}
               >
-                Dashboard
+                📊 Dashboard
               </Link>
               <Link
                 to="/explore"
-                className="block text-gray-300 hover:text-white hover:bg-white/10 px-4 py-3 rounded-lg transition-all duration-300"
+                className="block text-gray-300 hover:text-white hover:bg-white/10 px-4 py-3 rounded-lg transition-all duration-300 text-center"
                 onClick={toggleMenu}
               >
-                Explore
+                🔍 Explore
               </Link>
               <Link
                 to="/publications"
-                className="block text-gray-300 hover:text-white hover:bg-white/10 px-4 py-3 rounded-lg transition-all duration-300"
+                className="block text-gray-300 hover:text-white hover:bg-white/10 px-4 py-3 rounded-lg transition-all duration-300 text-center"
                 onClick={toggleMenu}
               >
-                Publications
+                📚 Publications
               </Link>
               <Link
                 to="/resources"
-                className="block text-gray-300 hover:text-white hover:bg-white/10 px-4 py-3 rounded-lg transition-all duration-300"
+                className="block text-gray-300 hover:text-white hover:bg-white/10 px-4 py-3 rounded-lg transition-all duration-300 text-center"
                 onClick={toggleMenu}
               >
-                Blog
+                📝 Blog
               </Link>
               <hr className="border-purple-500/30 my-3" />
-              <Link
-                to="/signup"
-                className="block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3 rounded-lg flex items-center space-x-2 transition-all duration-300 shadow-lg"
-                onClick={toggleMenu}
-              >
-                <FaUserPlus className="text-sm" />
-                <span className="font-medium">Sign Up</span>
-              </Link>
-              <Link
-                to="/login"
-                className="block border-2 border-purple-400 text-purple-400 hover:bg-purple-400 hover:text-white px-4 py-3 rounded-lg flex items-center space-x-2 transition-all duration-300"
-                onClick={toggleMenu}
-              >
-                <FaSignInAlt className="text-sm" />
-                <span className="font-medium">Login</span>
-              </Link>
+              <div className="space-y-2">
+                <Link
+                  to="/signup"
+                  className="block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3 rounded-lg text-center transition-all duration-300 shadow-lg font-medium"
+                  onClick={toggleMenu}
+                >
+                  <FaUserPlus className="inline-block mr-2 text-sm" />
+                  Sign Up
+                </Link>
+                <Link
+                  to="/login"
+                  className="block border-2 border-purple-400 text-purple-400 hover:bg-purple-400 hover:text-white px-4 py-3 rounded-lg text-center transition-all duration-300 font-medium"
+                  onClick={toggleMenu}
+                >
+                  <FaSignInAlt className="inline-block mr-2 text-sm" />
+                  Login
+                </Link>
+              </div>
             </div>
           </div>
         )}
