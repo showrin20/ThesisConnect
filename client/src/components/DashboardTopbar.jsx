@@ -68,7 +68,7 @@ const Topbar = ({ onMenuToggle, user, onLogout, isLoggingOut }) => {
 
               {/* Dropdown Menu */}
               {isProfileOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 shadow-xl z-50">
+                <div className="absolute right-0 mt-2 w-48 bg-gray-900/70 rounded-xl border border-white/20 shadow-xl z-50">
                   <div className="p-2">
                     <Link 
                       to="/profile" 

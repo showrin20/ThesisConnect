@@ -1,9 +1,50 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const Project = require('../models/Project');
 
 const router = express.Router();
+
+//////////////////////////
+// 📁 FILE UPLOAD SETUP
+//////////////////////////
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Multer configuration for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    // Generate unique filename: timestamp-userId-originalname
+    const uniqueName = `${Date.now()}-${req.user.id}-${file.originalname}`;
+    cb(null, uniqueName);
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  // Only allow PDF files
+  if (file.mimetype === 'application/pdf') {
+    cb(null, true);
+  } else {
+    cb(new Error('Only PDF files are allowed'), false);
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  }
+});
 
 //////////////////////////
 // 🔐 AUTH MIDDLEWARE
@@ -42,26 +83,70 @@ const isValidURL = (url) => {
 //////////////////////////
 // 📌 CREATE PROJECT
 //////////////////////////
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, upload.single('thesisPdf'), async (req, res) => {
   try {
-    const { title, description, link, tags, status, collaborators } = req.body;
+    const { title, description, link, tags, status, collaborators, thesisDraft } = req.body;
 
-    if (!title || !description || !link) {
-      return res.status(400).json({ msg: 'Title, description, and project link are required' });
+    if (!title || !description) {
+      return res.status(400).json({ msg: 'Title and description are required' });
     }
 
-    if (!isValidURL(link)) {
+    // Parse thesisDraft if it's a string (from FormData)
+    let parsedThesisDraft = {};
+    if (thesisDraft) {
+      try {
+        parsedThesisDraft = typeof thesisDraft === 'string' ? JSON.parse(thesisDraft) : thesisDraft;
+      } catch (error) {
+        console.error('Failed to parse thesisDraft:', error);
+      }
+    }
+
+    // Validate that either link OR thesis draft is provided
+    const hasLink = link && link.trim();
+    const hasThesisDraft = req.file || (parsedThesisDraft.externalLink && parsedThesisDraft.externalLink.trim());
+    
+    if (!hasLink && !hasThesisDraft) {
+      return res.status(400).json({ msg: 'Either project link or thesis draft is required' });
+    }
+
+    // Validate URLs if provided
+    if (hasLink && !isValidURL(link)) {
       return res.status(400).json({ msg: 'Invalid project link URL' });
+    }
+
+    if (parsedThesisDraft.externalLink && !isValidURL(parsedThesisDraft.externalLink)) {
+      return res.status(400).json({ msg: 'Invalid thesis draft external link URL' });
+    }
+
+    // Prepare thesis draft data
+    let thesisDraftData = {};
+    if (req.file) {
+      // File was uploaded
+      thesisDraftData = {
+        pdfUrl: `/uploads/${req.file.filename}`,
+        pdfFileName: req.file.originalname,
+        pdfSize: req.file.size,
+        description: parsedThesisDraft.description || '',
+        uploadedAt: new Date()
+      };
+    } else if (parsedThesisDraft.externalLink) {
+      // External link provided
+      thesisDraftData = {
+        externalLink: parsedThesisDraft.externalLink,
+        description: parsedThesisDraft.description || '',
+        uploadedAt: new Date()
+      };
     }
 
     const project = new Project({
       title,
       description,
-      link,
-      tags: Array.isArray(tags) ? tags : [],
+      link: link || '',
+      tags: Array.isArray(tags) ? tags : (tags ? tags.split(',').map(tag => tag.trim()) : []),
       status: status || 'Planned',
       collaborators: Array.isArray(collaborators) ? collaborators : [],
       creator: req.user.id,
+      thesisDraft: Object.keys(thesisDraftData).length > 0 ? thesisDraftData : undefined
     });
 
     await project.save();
@@ -70,12 +155,46 @@ router.post('/', auth, async (req, res) => {
     res.status(201).json({ success: true, data: project });
   } catch (error) {
     console.error('Create project error:', error);
+    
+    // Clean up uploaded file if project creation failed
+    if (req.file) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (unlinkError) {
+        console.error('Failed to clean up uploaded file:', unlinkError);
+      }
+    }
+    
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ msg: 'File size too large. Maximum size is 10MB.' });
+    }
+    
     res.status(500).json({ msg: 'Server error while creating project', error: error.message });
   }
 });
 
 //////////////////////////
-// 📌 GET ALL PROJECTS
+// � SERVE UPLOADED FILES
+//////////////////////////
+router.get('/uploads/:filename', auth, (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(__dirname, '../uploads', filename);
+  
+  // Check if file exists
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ msg: 'File not found' });
+  }
+  
+  // Set headers for PDF download
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+  
+  // Send file
+  res.sendFile(filePath);
+});
+
+//////////////////////////
+// �📌 GET ALL PROJECTS
 //////////////////////////
 router.get('/', async (_req, res) => {
   try {
