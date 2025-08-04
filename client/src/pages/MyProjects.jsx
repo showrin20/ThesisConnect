@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import axios from '../axios'; // your axios instance configured with baseURL
 import ProjectCard from '../components/ProjectCard';
 import { Plus, Edit, Trash2 } from 'lucide-react';
+import statsService from '../services/statsService';
 
 // Import Dashboard components
 import Sidebar from '../components/DashboardSidebar';
@@ -19,6 +20,34 @@ export default function MyProjects() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [editingProject, setEditingProject] = useState(null);
+  
+  // User statistics state
+  const [userStats, setUserStats] = useState({
+    projects: { total: 0, planned: 0, inProgress: 0, completed: 0 },
+    publications: { total: 0, byType: {}, totalCitations: 0 },
+    collaborators: { total: 0 }
+  });
+  const [loadingStats, setLoadingStats] = useState(false);
+  
+  // Fetch user statistics
+  useEffect(() => {
+    const fetchUserStats = async () => {
+      if (!user?.id) return;
+      
+      setLoadingStats(true);
+      try {
+        const stats = await statsService.getUserStats(user.id);
+        setUserStats(stats);
+      } catch (error) {
+        console.error('Failed to fetch user stats:', error);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+    
+    fetchUserStats();
+  }, [user?.id]);
+  
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -126,7 +155,7 @@ export default function MyProjects() {
 
       <div className="relative flex h-screen">
         {/* Sidebar */}
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} projects={projects} />
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} projects={projects} userStats={userStats} />
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col lg:ml-0">

@@ -12,6 +12,8 @@ import Settings from './pages/Settings';
 import Auth from './components/Auth';
 import MyProjects from './pages/MyProjects';  
 import MyPublications from './pages/MyPublications';
+import PublicationSearch from './components/PublicationSearch';
+
 
 // Component to conditionally render navbar
 function AppContent() {
@@ -61,6 +63,13 @@ function AppContent() {
             <ProtectedRoute>
               <MyPublications />
             </ProtectedRoute>
+          } />
+
+         <Route path="/search-publications" element={
+            <ProtectedRoute>
+              <PublicationSearch />
+            </ProtectedRoute>
+
           } />
         </Routes>
       </main>

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ExternalLink, MapPin, BookOpen, Tag, Star, TrendingUp, Edit2, User, Mail } from 'lucide-react';
 import axios from '../axios';
+import statsService from '../services/statsService';
 
 // Import Dashboard components
 import Sidebar from '../components/DashboardSidebar';
@@ -14,6 +15,33 @@ export default function MyProfile() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [projects, setProjects] = useState([]);
+  
+  // User statistics state
+  const [userStats, setUserStats] = useState({
+    projects: { total: 0, planned: 0, inProgress: 0, completed: 0 },
+    publications: { total: 0, byType: {}, totalCitations: 0 },
+    collaborators: { total: 0 }
+  });
+  const [loadingStats, setLoadingStats] = useState(false);
+
+  // Fetch user statistics
+  useEffect(() => {
+    const fetchUserStats = async () => {
+      if (!user?.id) return;
+      
+      setLoadingStats(true);
+      try {
+        const stats = await statsService.getUserStats(user.id);
+        setUserStats(stats);
+      } catch (error) {
+        console.error('Failed to fetch user stats:', error);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+    
+    fetchUserStats();
+  }, [user?.id]);
 
   // Fetch projects for sidebar counts
   useEffect(() => {
@@ -53,7 +81,7 @@ export default function MyProfile() {
 
         <div className="relative flex h-screen">
           {/* Sidebar */}
-          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} projects={projects} />
+          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} projects={projects} userStats={userStats} />
 
           {/* Main Content */}
           <div className="flex-1 flex flex-col lg:ml-0">
@@ -113,7 +141,7 @@ export default function MyProfile() {
 
         <div className="relative flex h-screen">
           {/* Sidebar */}
-          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} projects={projects} />
+          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} projects={projects} userStats={userStats} />
 
           {/* Main Content */}
           <div className="flex-1 flex flex-col lg:ml-0">
@@ -158,7 +186,7 @@ export default function MyProfile() {
 
       <div className="relative flex h-screen">
         {/* Sidebar */}
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} projects={projects} />
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} projects={projects} userStats={userStats} />
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col lg:ml-0">

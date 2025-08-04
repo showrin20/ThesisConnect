@@ -9,22 +9,25 @@ import {
   CheckCircle, 
   Search,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Users,
+  TrendingUp
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const Sidebar = ({ isOpen, onClose, projects = [] }) => {
+const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
   const [activeCategory, setActiveCategory] = useState('Computer Science');
   const [expandedSections, setExpandedSections] = useState({
     categories: true,
     status: true,
   });
 
-  // Calculate dynamic counts based on actual project data
-  const plannedCount = projects.filter(p => p.status === 'Planned').length;
-  const inProgressCount = projects.filter(p => p.status === 'In Progress').length;
-  const completedCount = projects.filter(p => p.status === 'Completed').length;
+  // Use dynamic counts from userStats if available, otherwise fallback to local calculation
+  const plannedCount = userStats?.projects?.planned ?? projects.filter(p => p.status === 'Planned').length;
+  const inProgressCount = userStats?.projects?.inProgress ?? projects.filter(p => p.status === 'In Progress').length;
+  const completedCount = userStats?.projects?.completed ?? projects.filter(p => p.status === 'Completed').length;
   const totalActiveCount = plannedCount + inProgressCount; // Active = Planned + In Progress
+  const totalProjects = userStats?.projects?.total ?? projects.length;
 
   const toggleSection = (section) => {
     setExpandedSections(prev => ({
@@ -49,10 +52,36 @@ const Sidebar = ({ isOpen, onClose, projects = [] }) => {
   ];
 
   const projectStatus = [
-    { icon: Activity, label: 'Active Projects', count: totalActiveCount },
-    { icon: Clock, label: 'Planned', count: plannedCount },
-    { icon: Clock, label: 'In Progress', count: inProgressCount },
-    { icon: CheckCircle, label: 'Completed', count: completedCount },
+    { 
+      icon: Activity, 
+      label: 'Total Projects', 
+      count: totalProjects,
+      color: 'text-sky-400'
+    },
+    { 
+      icon: Activity, 
+      label: 'Active Projects', 
+      count: totalActiveCount,
+      color: 'text-blue-400'
+    },
+    { 
+      icon: Clock, 
+      label: 'Planned', 
+      count: plannedCount,
+      color: 'text-yellow-400'
+    },
+    { 
+      icon: Clock, 
+      label: 'In Progress', 
+      count: inProgressCount,
+      color: 'text-purple-400'
+    },
+    { 
+      icon: CheckCircle, 
+      label: 'Completed', 
+      count: completedCount,
+      color: 'text-green-400'
+    },
   ];
 
   return (
@@ -160,16 +189,58 @@ const Sidebar = ({ isOpen, onClose, projects = [] }) => {
                       className="flex items-center justify-between px-3 py-2 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-all duration-200"
                     >
                       <div className="flex items-center gap-3">
-                        <status.icon size={18} />
+                        <status.icon size={18} className={status.color || ''} />
                         <span className="text-sm font-medium">{status.label}</span>
                       </div>
-                      <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        status.color 
+                          ? `bg-${status.color.split('-')[1]}-500/20 ${status.color}` 
+                          : 'bg-white/20 text-white/80'
+                      }`}>
                         {status.count}
                       </span>
                     </div>
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* User Statistics Section */}
+            <div>
+              <h3 className="text-white/80 text-sm font-semibold mb-3">Overview</h3>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                  <div className="flex items-center gap-3">
+                    <Users size={18} className="text-purple-400" />
+                    <span className="text-sm font-medium text-white/80">Collaborators</span>
+                  </div>
+                  <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-1 rounded-full">
+                    {userStats?.collaborators?.total || 0}
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-green-500/10 border border-green-500/20">
+                  <div className="flex items-center gap-3">
+                    <BookOpen size={18} className="text-green-400" />
+                    <span className="text-sm font-medium text-white/80">Publications</span>
+                  </div>
+                  <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full">
+                    {userStats?.publications?.total || 0}
+                  </span>
+                </div>
+                
+                {userStats?.publications?.totalCitations > 0 && (
+                  <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                    <div className="flex items-center gap-3">
+                      <TrendingUp size={18} className="text-yellow-400" />
+                      <span className="text-sm font-medium text-white/80">Citations</span>
+                    </div>
+                    <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full">
+                      {userStats?.publications?.totalCitations}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

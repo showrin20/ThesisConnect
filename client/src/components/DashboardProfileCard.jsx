@@ -2,7 +2,7 @@ import React from 'react';
 import { User, MapPin, BookOpen, Users, GraduationCap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const ProfileCard = () => {
+const ProfileCard = ({ userStats = null, loadingStats = false }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -72,7 +72,9 @@ const ProfileCard = () => {
               <BookOpen size={16} />
               Active Projects
             </span>
-            <span className="text-sky-400 font-semibold">12</span>
+            <span className="text-sky-400 font-semibold">
+              {loadingStats ? '...' : (userStats?.projects?.total || 0)}
+            </span>
           </div>
           
           <div className="flex items-center justify-between">
@@ -80,7 +82,9 @@ const ProfileCard = () => {
               <Users size={16} />
               Collaborators
             </span>
-            <span className="text-purple-400 font-semibold">8</span>
+            <span className="text-purple-400 font-semibold">
+              {loadingStats ? '...' : (userStats?.collaborators?.total || 0)}
+            </span>
           </div>
           
           <div className="flex items-center justify-between">
@@ -88,7 +92,9 @@ const ProfileCard = () => {
               <BookOpen size={16} />
               Publications
             </span>
-            <span className="text-green-400 font-semibold">24</span>
+            <span className="text-green-400 font-semibold">
+              {loadingStats ? '...' : (userStats?.publications?.total || 0)}
+            </span>
           </div>
         </div>
 

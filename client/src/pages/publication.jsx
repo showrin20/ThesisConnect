@@ -114,7 +114,7 @@ export default function Publications() {
                 Publications
               </span>
             </h1>
-            <p className="text-slate-600 text-lg max-w-2xl mx-auto">
+            <p className="text-white text-lg max-w-2xl mx-auto">
               Discover cutting-edge research and academic publications from our community
             </p>
           </div>
