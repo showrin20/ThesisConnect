@@ -8,9 +8,9 @@ import {
   TrendingUp,
   ExternalLink
 } from 'lucide-react';
-import axios from '../axios'; // Use the configured axios instance
+import axios from '../axios';
 
-// Import components
+// Components
 import Sidebar from '../components/DashboardSidebar';
 import Topbar from '../components/DashboardTopbar';
 import StatCard from '../components/StatCard';
@@ -18,6 +18,8 @@ import ProjectCard from '../components/ProjectCard';
 import ForumActivityCard from '../components/ForumActivityCard';
 import ProfileCard from '../components/DashboardProfileCard';
 import ProjectForm from '../components/ProjectForm';
+import PublicationForm from '../components/PublicationForm';  // Import publication form
+import PublicationCard from '../components/ PublicationCard'; 
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -25,31 +27,32 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showProjectForm, setShowProjectForm] = useState(false);
+  const [showPublicationForm, setShowPublicationForm] = useState(false);  // For publication form modal
 
+  // Projects state
   const [recentProjects, setRecentProjects] = useState([]);
-  const [forumActivity, setForumActivity] = useState([]);
-  
-  // Add missing state variables
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [projectsError, setProjectsError] = useState(null);
 
+  // Publications state
+  const [recentPublications, setRecentPublications] = useState([]);
+  const [loadingPublications, setLoadingPublications] = useState(false);
+  const [publicationsError, setPublicationsError] = useState(null);
+
+  // Forum activity state
+  const [forumActivity, setForumActivity] = useState([]);
+
+  // Fetch projects on mount
   useEffect(() => {
     const fetchProjects = async () => {
       setLoadingProjects(true);
       setProjectsError(null);
       try {
         const response = await axios.get('/projects');
-        console.log('API Response:', response.data); // Debug log
-        
-        // Your backend returns: { success: true, count: X, data: [...] }
-        // So we need to access response.data.data for the actual projects array
-        const projects = response.data?.data || [];
-        
-        setRecentProjects(projects);
+        setRecentProjects(response.data?.data || []);
       } catch (error) {
         setProjectsError('Failed to load projects');
-        console.error('Failed to fetch projects:', error);
-        setRecentProjects([]); // Ensure it's always an array
+        setRecentProjects([]);
       } finally {
         setLoadingProjects(false);
       }
@@ -57,7 +60,40 @@ export default function Dashboard() {
     fetchProjects();
   }, []);
 
-  // Update stats to show actual project count
+  // Fetch publications on mount
+  useEffect(() => {
+    const fetchPublications = async () => {
+      setLoadingPublications(true);
+      setPublicationsError(null);
+      try {
+        const response = await axios.get('/publications');
+        setRecentPublications(response.data?.data || []);
+      } catch (error) {
+        setPublicationsError('Failed to load publications');
+        setRecentPublications([]);
+      } finally {
+        setLoadingPublications(false);
+      }
+    };
+    fetchPublications();
+  }, []);
+
+  // Count projects by status
+  const projectStatusCounts = recentProjects.reduce(
+    (acc, project) => {
+      const status = project.status || 'Planned';
+      if (status === 'Planned') acc.Planned++;
+      else if (status === 'In Progress') acc.InProgress++;
+      else if (status === 'Completed') acc.Completed++;
+      return acc;
+    },
+    { Planned: 0, InProgress: 0, Completed: 0 }
+  );
+
+  // Count total publications
+  const publicationsCount = recentPublications.length;
+
+  // Stats grid with dynamic numbers
   const stats = [
     { 
       number: recentProjects.length.toString(), 
@@ -65,8 +101,11 @@ export default function Dashboard() {
       icon: Activity, 
       color: 'text-sky-400' 
     },
+    { number: projectStatusCounts.Planned.toString(), label: 'Planned', icon: BookOpen, color: 'text-yellow-400' },
+    { number: projectStatusCounts.InProgress.toString(), label: 'In Progress', icon: TrendingUp, color: 'text-purple-400' },
+    { number: projectStatusCounts.Completed.toString(), label: 'Completed', icon: Users, color: 'text-green-400' },
     { number: '0', label: 'Collaborators', icon: Users, color: 'text-purple-400' },
-    { number: '0', label: 'Publications', icon: BookOpen, color: 'text-green-400' },
+    { number: publicationsCount.toString(), label: 'Publications', icon: BookOpen, color: 'text-green-400' },
   ];
 
   const handleLogout = async () => {
@@ -82,41 +121,34 @@ export default function Dashboard() {
     }
   };
 
+  // Add new project to list & close form
   const handleProjectCreated = (newProject) => {
-    // The ProjectForm gets the response from backend which includes response.data.data
-    // So we need to extract the actual project data
     const projectData = newProject?.data || newProject;
     setRecentProjects([projectData, ...recentProjects]);
     setShowProjectForm(false);
-    
-    // Optionally refresh the projects list
-    // fetchProjects();
   };
 
-  const fetchProjectsRefresh = async () => {
-    try {
-      const response = await axios.get('/projects');
-      const projects = response.data?.data || [];
-      setRecentProjects(projects);
-    } catch (error) {
-      console.error('Failed to refresh projects:', error);
-    }
+  // Add new publication to list & close form
+  const handlePublicationCreated = (newPublication) => {
+    const publicationData = newPublication?.data || newPublication;
+    setRecentPublications([publicationData, ...recentPublications]);
+    setShowPublicationForm(false);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900/20 via-slate-900 to-blue-900/20">
-      {/* Background Pattern */}
       <div className="absolute inset-0 opacity-30">
         <div className="h-full w-full bg-[radial-gradient(circle_at_50%_50%,rgba(56,189,248,0.1),transparent_50%)]"></div>
       </div>
 
       <div className="relative flex h-screen">
-        {/* Sidebar */}
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <Sidebar
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          projects={recentProjects}
+        />
 
-        {/* Main Content */}
         <div className="flex-1 flex flex-col lg:ml-0">
-          {/* Topbar */}
           <Topbar 
             onMenuToggle={() => setSidebarOpen(!sidebarOpen)} 
             user={user}
@@ -124,7 +156,6 @@ export default function Dashboard() {
             isLoggingOut={isLoggingOut}
           />
 
-          {/* Dashboard Content */}
           <main className="flex-1 overflow-y-auto p-6">
             <div className="max-w-7xl mx-auto space-y-6">
               {/* Quick Actions Bar */}
@@ -136,30 +167,55 @@ export default function Dashboard() {
                   <TrendingUp size={16} />
                   Start New Project
                 </button>
+                <button
+                  onClick={() => setShowPublicationForm(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-500/20 text-green-400 border border-green-500/30 rounded-lg hover:bg-green-500/30 transition-all duration-200"
+                >
+                  <BookOpen size={16} />
+                  Add Publication
+                </button>
                 <button className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded-lg hover:bg-purple-500/30 transition-all duration-200">
                   <Users size={16} />
                   Find Collaborators
                 </button>
-                <button className="flex items-center gap-2 px-4 py-2 bg-green-500/20 text-green-400 border border-green-500/30 rounded-lg hover:bg-green-500/30 transition-all duration-200">
+                <button className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-lg hover:bg-blue-500/30 transition-all duration-200">
                   <BookOpen size={16} />
                   Browse Publications
                 </button>
               </div>
 
-              {/* Show error if projects failed to load */}
+              {/* Errors */}
               {projectsError && (
                 <div className="mb-6 p-4 bg-red-900/30 border border-red-500/50 rounded-lg">
                   <p className="text-red-300 text-sm">{projectsError}</p>
                   <button 
-                    onClick={fetchProjectsRefresh}
+                    onClick={() => {
+                      // Retry fetch projects
+                      axios.get('/projects').then(res => setRecentProjects(res.data?.data || []));
+                      setProjectsError(null);
+                    }}
                     className="mt-2 text-sm text-sky-400 hover:text-sky-300 underline"
                   >
                     Try Again
                   </button>
                 </div>
               )}
+              {publicationsError && (
+                <div className="mb-6 p-4 bg-red-900/30 border border-red-500/50 rounded-lg">
+                  <p className="text-red-300 text-sm">{publicationsError}</p>
+                  <button 
+                    onClick={() => {
+                      axios.get('/publications').then(res => setRecentPublications(res.data?.data || []));
+                      setPublicationsError(null);
+                    }}
+                    className="mt-2 text-sm text-green-400 hover:text-green-300 underline"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              )}
 
-              {/* Conditionally render ProjectForm */}
+              {/* Modals */}
               {showProjectForm && (
                 <div className="mb-6 p-6 bg-white/10 rounded-xl border border-white/20">
                   <div className="flex items-center justify-between mb-4">
@@ -175,11 +231,26 @@ export default function Dashboard() {
                 </div>
               )}
 
+              {showPublicationForm && (
+                <div className="mb-6 p-6 bg-white/10 rounded-xl border border-white/20">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-white">Add Publication</h3>
+                    <button
+                      onClick={() => setShowPublicationForm(false)}
+                      className="text-gray-400 hover:text-white transition-colors"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <PublicationForm onPublicationCreated={handlePublicationCreated} />
+                </div>
+              )}
+
               {/* Stats Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {stats.map((stat, index) => (
+                {stats.map((stat, idx) => (
                   <StatCard
-                    key={index}
+                    key={idx}
                     number={stat.number}
                     label={stat.label}
                     icon={stat.icon}
@@ -190,7 +261,6 @@ export default function Dashboard() {
 
               {/* Main Content Grid */}
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                {/* Left Column - Projects and Activity */}
                 <div className="xl:col-span-2 space-y-6">
                   {/* Recent Projects */}
                   <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10">
@@ -238,8 +308,53 @@ export default function Dashboard() {
                     </div>
                   </div>
 
+                  {/* Recent Publications */}
+                  <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10 mt-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-xl font-semibold text-white">Recent Publications</h2>
+                      <button 
+                        onClick={() => navigate('/publications')}
+                        className="flex items-center gap-2 text-green-400 hover:text-green-300 text-sm font-medium"
+                      >
+                        <span>View All</span>
+                        <ExternalLink size={14} />
+                      </button>
+                    </div>
+                    <div className="space-y-4">
+                      {loadingPublications ? (
+                        <div className="flex items-center justify-center py-8">
+                          <div className="w-6 h-6 border-2 border-green-400/30 border-t-green-400 rounded-full animate-spin"></div>
+                          <span className="ml-2 text-white/60">Loading publications...</span>
+                        </div>
+                      ) : recentPublications.length === 0 ? (
+                        <div className="text-center py-8">
+                          <p className="text-white/60 text-sm italic mb-4">No publications yet.</p>
+                          <button
+                            onClick={() => setShowPublicationForm(true)}
+                            className="text-green-400 hover:text-green-300 text-sm underline"
+                          >
+                            Add your first publication
+                          </button>
+                        </div>
+                      ) : (
+                        recentPublications.slice(0, 3).map((pub, idx) => (
+                          <PublicationCard
+                            key={pub._id || idx}
+                            title={pub.title}
+                            authors={pub.authors}
+                            year={pub.year}
+                            venue={pub.venue}
+                            tags={pub.tags}
+                            doi={pub.doi}
+                            abstract={pub.abstract}
+                          />
+                        ))
+                      )}
+                    </div>
+                  </div>
+
                   {/* Forum Activity */}
-                  <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10">
+                  <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10 mt-6">
                     <div className="flex items-center justify-between mb-6">
                       <h2 className="text-xl font-semibold text-white">Recent Forum Activity</h2>
                       <button className="flex items-center gap-2 text-sky-400 hover:text-sky-300 text-sm font-medium">
@@ -268,10 +383,8 @@ export default function Dashboard() {
 
                 {/* Right Column - Profile and Quick Info */}
                 <div className="space-y-6">
-                  {/* Profile Card */}
                   <ProfileCard />
 
-                  {/* Quick Stats */}
                   <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10">
                     <h3 className="text-lg font-semibold text-white mb-4">This Week</h3>
                     <div className="space-y-4">
@@ -294,7 +407,6 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  {/* Recent Activity */}
                   <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10">
                     <h3 className="text-lg font-semibold text-white mb-4">Recent Activity</h3>
                     <p className="text-white/60 text-sm italic">No recent activity to show.</p>

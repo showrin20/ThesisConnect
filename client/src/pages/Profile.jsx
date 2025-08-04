@@ -1,39 +1,102 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ExternalLink, MapPin, BookOpen, Tag, Star, TrendingUp, Edit2, User, Mail } from 'lucide-react';
+import axios from '../axios';
+
+// Import Dashboard components
+import Sidebar from '../components/DashboardSidebar';
+import Topbar from '../components/DashboardTopbar';
 
 export default function MyProfile() {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
+  const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [projects, setProjects] = useState([]);
+
+  // Fetch projects for sidebar counts
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await axios.get('/projects');
+        const projectsData = response.data?.data || [];
+        setProjects(projectsData);
+      } catch (error) {
+        console.error('Failed to fetch projects:', error);
+        setProjects([]);
+      }
+    };
+    fetchProjects();
+  }, []);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      navigate('/login');
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-12 min-h-screen bg-gradient-to-b from-slate-900 to-gray-800">
-        <div className="relative max-w-4xl mx-auto">
-          <div className="relative bg-gradient-to-r from-slate-800 via-purple-800 to-slate-800 text-white rounded-xl shadow-2xl p-8">
-            <div className="animate-pulse">
-              <div className="h-8 bg-gray-400/20 rounded w-48 mx-auto mb-8"></div>
-              <div className="flex items-start justify-between mb-6">
-                <div className="flex items-start space-x-4">
-                  <div className="w-16 h-16 bg-gray-400/20 rounded-full"></div>
-                  <div>
-                    <div className="h-6 bg-gray-400/20 rounded w-48 mb-2"></div>
-                    <div className="h-4 bg-gray-400/20 rounded w-64 mb-2"></div>
-                    <div className="h-4 bg-gray-400/20 rounded w-56"></div>
+      <div className="min-h-screen bg-gradient-to-br from-purple-900/20 via-slate-900 to-blue-900/20">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-30">
+          <div className="h-full w-full bg-[radial-gradient(circle_at_50%_50%,rgba(56,189,248,0.1),transparent_50%)]"></div>
+        </div>
+
+        <div className="relative flex h-screen">
+          {/* Sidebar */}
+          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} projects={projects} />
+
+          {/* Main Content */}
+          <div className="flex-1 flex flex-col lg:ml-0">
+            {/* Topbar */}
+            <Topbar 
+              onMenuToggle={() => setSidebarOpen(!sidebarOpen)} 
+              user={user}
+              onLogout={handleLogout}
+              isLoggingOut={isLoggingOut}
+            />
+
+            {/* Loading Content */}
+            <main className="flex-1 overflow-y-auto p-6">
+              <div className="container mx-auto px-4 py-12">
+                <div className="relative max-w-4xl mx-auto">
+                  <div className="relative bg-gradient-to-r from-slate-800 via-purple-800 to-slate-800 text-white rounded-xl shadow-2xl p-8">
+                    <div className="animate-pulse">
+                      <div className="h-8 bg-gray-400/20 rounded w-48 mx-auto mb-8"></div>
+                      <div className="flex items-start justify-between mb-6">
+                        <div className="flex items-start space-x-4">
+                          <div className="w-16 h-16 bg-gray-400/20 rounded-full"></div>
+                          <div>
+                            <div className="h-6 bg-gray-400/20 rounded w-48 mb-2"></div>
+                            <div className="h-4 bg-gray-400/20 rounded w-64 mb-2"></div>
+                            <div className="h-4 bg-gray-400/20 rounded w-56"></div>
+                          </div>
+                        </div>
+                        <div className="h-10 bg-gray-400/20 rounded w-32"></div>
+                      </div>
+                      <div className="space-y-4">
+                        <div className="h-8 bg-gray-400/20 rounded w-full"></div>
+                        <div className="h-20 bg-gray-400/20 rounded w-full"></div>
+                        <div className="grid grid-cols-3 gap-4">
+                          {[1, 2, 3].map((i) => (
+                            <div key={i} className="h-20 bg-gray-400/20 rounded"></div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="h-10 bg-gray-400/20 rounded w-32"></div>
               </div>
-              <div className="space-y-4">
-                <div className="h-8 bg-gray-400/20 rounded w-full"></div>
-                <div className="h-20 bg-gray-400/20 rounded w-full"></div>
-                <div className="grid grid-cols-3 gap-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-20 bg-gray-400/20 rounded"></div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            </main>
           </div>
         </div>
       </div>
@@ -42,18 +105,44 @@ export default function MyProfile() {
 
   if (!user) {
     return (
-      <div className="container mx-auto px-4 py-12 min-h-screen bg-gradient-to-b from-slate-900 to-gray-800">
-        <div className="relative max-w-4xl mx-auto">
-          <div className="relative bg-gradient-to-r from-slate-800 via-purple-800 to-slate-800 text-white rounded-xl shadow-2xl p-8 text-center">
-            <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-300 mb-4">No User Data Found</h2>
-            <p className="text-gray-400 mb-6">Please log in to view your profile.</p>
-            <Link
-              to="/auth"
-              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
-            >
-              Go to Login
-            </Link>
+      <div className="min-h-screen bg-gradient-to-br from-purple-900/20 via-slate-900 to-blue-900/20">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-30">
+          <div className="h-full w-full bg-[radial-gradient(circle_at_50%_50%,rgba(56,189,248,0.1),transparent_50%)]"></div>
+        </div>
+
+        <div className="relative flex h-screen">
+          {/* Sidebar */}
+          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} projects={projects} />
+
+          {/* Main Content */}
+          <div className="flex-1 flex flex-col lg:ml-0">
+            {/* Topbar */}
+            <Topbar 
+              onMenuToggle={() => setSidebarOpen(!sidebarOpen)} 
+              user={user}
+              onLogout={handleLogout}
+              isLoggingOut={isLoggingOut}
+            />
+
+            {/* No User Content */}
+            <main className="flex-1 overflow-y-auto p-6">
+              <div className="container mx-auto px-4 py-12">
+                <div className="relative max-w-4xl mx-auto">
+                  <div className="relative bg-gradient-to-r from-slate-800 via-purple-800 to-slate-800 text-white rounded-xl shadow-2xl p-8 text-center">
+                    <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <h2 className="text-2xl font-bold text-gray-300 mb-4">No User Data Found</h2>
+                    <p className="text-gray-400 mb-6">Please log in to view your profile.</p>
+                    <Link
+                      to="/auth"
+                      className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
+                    >
+                      Go to Login
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </main>
           </div>
         </div>
       </div>
@@ -61,13 +150,35 @@ export default function MyProfile() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-12 min-h-screen bg-gradient-to-b from-slate-900 to-gray-800">
-      <div className="relative max-w-4xl mx-auto">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 opacity-50 animate-pulse"></div>
-        <div className="relative card bg-gradient-to-r from-slate-800 via-purple-800 to-slate-800 text-white rounded-xl shadow-2xl p-8 animate-fade-in">
-          <h1 className="text-3xl md:text-4xl font-bold text-center bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-8">
-            My Profile
-          </h1>
+    <div className="min-h-screen bg-gradient-to-br from-purple-900/20 via-slate-900 to-blue-900/20">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-30">
+        <div className="h-full w-full bg-[radial-gradient(circle_at_50%_50%,rgba(56,189,248,0.1),transparent_50%)]"></div>
+      </div>
+
+      <div className="relative flex h-screen">
+        {/* Sidebar */}
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} projects={projects} />
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col lg:ml-0">
+          {/* Topbar */}
+          <Topbar 
+            onMenuToggle={() => setSidebarOpen(!sidebarOpen)} 
+            user={user}
+            onLogout={handleLogout}
+            isLoggingOut={isLoggingOut}
+          />
+
+          {/* Profile Content */}
+          <main className="flex-1 overflow-y-auto p-6">
+            <div className="container mx-auto px-4 py-12">
+              <div className="relative max-w-4xl mx-auto">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 opacity-50 animate-pulse"></div>
+                <div className="relative card bg-gradient-to-r from-slate-800 via-purple-800 to-slate-800 text-white rounded-xl shadow-2xl p-8 animate-fade-in">
+                  <h1 className="text-3xl md:text-4xl font-bold text-center bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-8">
+                    My Profile
+                  </h1>
 
           {/* Header Section */}
           <div className="flex items-start justify-between mb-6">
@@ -255,6 +366,10 @@ export default function MyProfile() {
               Edit Profile
             </Link>
           </div>
+                </div>
+              </div>
+            </div>
+          </main>
         </div>
       </div>
     </div>

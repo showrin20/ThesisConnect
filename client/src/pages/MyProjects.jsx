@@ -1,9 +1,20 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import axios from '../axios'; // your axios instance configured with baseURL
 import ProjectCard from '../components/ProjectCard';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 
+// Import Dashboard components
+import Sidebar from '../components/DashboardSidebar';
+import Topbar from '../components/DashboardTopbar';
+
 export default function MyProjects() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -16,6 +27,19 @@ export default function MyProjects() {
     status: 'Planned',
     collaborators: '',
   });
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      navigate('/login');
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   const fetchMyProjects = async () => {
     setLoading(true);
@@ -95,16 +119,33 @@ export default function MyProjects() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900/20 via-slate-900 to-blue-900/20">
+      {/* Background Pattern */}
       <div className="absolute inset-0 opacity-30">
         <div className="h-full w-full bg-[radial-gradient(circle_at_50%_50%,rgba(56,189,248,0.1),transparent_50%)]"></div>
       </div>
 
-      <div className="relative container mx-auto p-6">
-        <h1 className="text-4xl font-bold mb-8 text-center">
-          <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-            My Projects
-          </span>
-        </h1>
+      <div className="relative flex h-screen">
+        {/* Sidebar */}
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} projects={projects} />
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col lg:ml-0">
+          {/* Topbar */}
+          <Topbar 
+            onMenuToggle={() => setSidebarOpen(!sidebarOpen)} 
+            user={user}
+            onLogout={handleLogout}
+            isLoggingOut={isLoggingOut}
+          />
+
+          {/* MyProjects Content */}
+          <main className="flex-1 overflow-y-auto p-6">
+            <div className="container mx-auto">
+              <h1 className="text-4xl font-bold mb-8 text-center">
+                <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                  My Projects
+                </span>
+              </h1>
 
         {editingProject && (
           <form onSubmit={handleUpdate} className="max-w-2xl mx-auto bg-white/5 backdrop-blur-lg rounded-xl p-8 mb-8 border border-white/10 shadow-lg">
@@ -152,6 +193,9 @@ export default function MyProjects() {
             ))}
           </div>
         )}
+            </div>
+          </main>
+        </div>
       </div>
     </div>
   );

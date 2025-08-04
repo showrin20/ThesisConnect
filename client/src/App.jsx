@@ -11,10 +11,16 @@ import Dashboard from './pages/Dashboard';
 import Settings from './pages/Settings';
 import Auth from './components/Auth';
 import MyProjects from './pages/MyProjects';  
+import MyPublications from './pages/MyPublications';
+
 // Component to conditionally render navbar
 function AppContent() {
   const location = useLocation();
-  const hideNavbar = location.pathname === '/dashboard' || location.pathname === '/settings';
+  const hideNavbar = location.pathname === '/dashboard' || 
+                     location.pathname === '/settings' || 
+                     location.pathname === '/profile' || 
+                     location.pathname === '/my-projects' ||
+                     location.pathname === '/my-publications';
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-gray-800">
@@ -49,6 +55,11 @@ function AppContent() {
           <Route path="/my-projects" element={
             <ProtectedRoute>
               <MyProjects />
+            </ProtectedRoute>
+          } />
+          <Route path="/my-publications" element={
+            <ProtectedRoute>
+              <MyPublications />
             </ProtectedRoute>
           } />
         </Routes>
