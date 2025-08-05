@@ -239,7 +239,7 @@ export default function MyProfile() {
                   <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                     user.role === 'admin' 
                       ? 'bg-red-100 text-red-800 border border-red-200'
-                      : user.role === 'supervisor'
+                      : user.role === 'mentor'
                       ? 'bg-blue-100 text-blue-800 border border-blue-200'
                       : 'bg-green-100 text-green-800 border border-green-200'
                   }`}>

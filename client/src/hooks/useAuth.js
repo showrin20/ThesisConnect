@@ -29,7 +29,7 @@ export const useRole = () => {
   const { user } = useAuth();
   
   const isAdmin = user?.role === 'admin';
-  const isSupervisor = user?.role === 'supervisor';
+  const ismentor = user?.role === 'mentor';
   const isStudent = user?.role === 'student';
   
   const hasRole = (role) => user?.role === role;
@@ -37,7 +37,7 @@ export const useRole = () => {
   
   return {
     isAdmin,
-    isSupervisor,
+    ismentor,
     isStudent,
     hasRole,
     hasAnyRole,

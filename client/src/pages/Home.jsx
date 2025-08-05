@@ -1,7 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { FaSearch, FaUsers, FaBook } from "react-icons/fa";
-import heroGif from "../assets/home/hero.gif";
 export default function Home() {
   return (
     <div className="container mx-auto px-4 pt-36 pb-12 bg-gradient-to-b from-slate-900 to-gray-800">

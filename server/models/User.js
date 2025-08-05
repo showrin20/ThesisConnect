@@ -19,7 +19,7 @@ const UserSchema = new mongoose.Schema({
   yearsOfExperience: { type: Number, default: 0 },
   role: {
     type: String,
-    enum: ['student', 'supervisor', 'admin'],
+    enum: ['student', 'mentor', 'admin'],
     default: 'student',
   },
 }, {

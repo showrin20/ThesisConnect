@@ -57,7 +57,7 @@ exports.register = async (req, res) => {
       researchInterests,
       currentPosition,
       yearsOfExperience: yearsOfExperience ? Number(yearsOfExperience) : 0,
-      role: ['admin', 'student', 'supervisor'].includes(role) ? role : 'student',
+      role: ['admin', 'student', 'mentor'].includes(role) ? role : 'student',
     });
 
     await user.save();

@@ -57,7 +57,7 @@ const ProfileCard = ({ userStats = null, loadingStats = false }) => {
             <div className="flex items-center gap-1 mt-1">
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                 user?.role === 'admin' ? 'bg-red-500/20 text-red-300' :
-                user?.role === 'supervisor' ? 'bg-blue-500/20 text-blue-300' :
+                user?.role === 'mentor' ? 'bg-blue-500/20 text-blue-300' :
                 'bg-green-500/20 text-green-300'
               }`}>
                 {user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1) || 'Student'}
