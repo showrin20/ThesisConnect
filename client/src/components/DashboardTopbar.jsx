@@ -109,7 +109,7 @@ const Topbar = ({ onMenuToggle, user, onLogout, isLoggingOut }) => {
                 <div 
                   className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm"
                   style={{
-                    background: `linear-gradient(45deg, ${colors.primary.blue[400]}, ${colors.primary.purple[400]})`,
+                    background: `linear-gradient(45deg, ${colors.primary.blue[300]}, ${colors.primary.purple[300]})`,
                     color: colors.surface.primary
                   }}
                 >
@@ -125,7 +125,7 @@ const Topbar = ({ onMenuToggle, user, onLogout, isLoggingOut }) => {
                 <div 
                   className="absolute right-0 mt-2 w-48 rounded-xl border shadow-xl z-50"
                   style={{
-                    backgroundColor: `${colors.background.gray[900]}B3`,
+                    backgroundColor: `${colors.background.gray[600]}99`,
                     borderColor: colors.border.light
                   }}
                 >
