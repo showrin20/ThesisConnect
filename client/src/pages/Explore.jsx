@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import axios from '../axios'; // Update path to match your setup
+import { colors } from '../styles/colors';
+import { getButtonStyles } from '../styles/styleUtils';
 
 export default function MyProjects() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -84,47 +86,99 @@ useEffect(() => {
   };
 
   const getStatusBadgeColor = (status) => {
-    return 'bg-slate-100 text-slate-700 border-slate-300'; // neutral color
+    return {
+      backgroundColor: colors.surface.secondary,
+      color: colors.text.secondary,
+      borderColor: colors.border.primary
+    };
   };
 
   return (
-    <div className="min-h-screen from-slate-80 via-blue-90 to-purple-50">
+    <div 
+      className="min-h-screen"
+      style={{
+        background: `linear-gradient(135deg, ${colors.gradients.background.main}, ${colors.gradients.background.hero})`
+      }}
+    >
       {/* Header */}
-      <div className="backdrop-blur-sm border-b border-slate-200/60 shadow-sm">
+      <div 
+        className="backdrop-blur-sm border-b shadow-sm"
+        style={{ borderColor: `${colors.border.primary}99` }}
+      >
         <div className="container mx-auto px-4 py-12">
           <div className="text-center mb-8">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+              <span 
+                className="bg-clip-text text-transparent"
+                style={{
+                  background: colors.gradients.brand.primary,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }}
+              >
                 My Research Projects
               </span>
             </h1>
-            <p className="text-white text-lg max-w-2xl mx-auto">
+            <p className="text-lg max-w-2xl mx-auto" style={{ color: colors.text.primary }}>
               Exploring real-world problems with tech innovation
             </p>
           </div>
 
           {/* Search and Filters */}
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-slate-200/60 shadow-lg">
+          <div 
+            className="backdrop-blur-sm rounded-2xl p-6 border shadow-lg"
+            style={{
+              backgroundColor: `${colors.background.glass}B3`,
+              borderColor: `${colors.border.primary}99`
+            }}
+          >
             <div className="flex flex-col lg:flex-row gap-4 items-center justify-between mb-4">
               <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                <Search 
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" 
+                  style={{ color: colors.text.muted }}
+                />
                 <input
                   type="text"
                   placeholder="Search projects..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-white/80 border border-slate-300 rounded-lg text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 shadow-sm"
+                  className="w-full pl-10 pr-4 py-3 border rounded-lg transition-all duration-200 shadow-sm focus:outline-none focus:ring-2"
+                  style={{
+                    backgroundColor: `${colors.input.background}CC`,
+                    borderColor: colors.input.border,
+                    color: colors.input.text
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = colors.input.borderFocus;
+                    e.target.style.boxShadow = `0 0 0 2px ${colors.primary.blue[400]}33`;
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = colors.input.border;
+                    e.target.style.boxShadow = 'none';
+                  }}
                 />
               </div>
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className="flex items-center gap-2 px-4 py-3 bg-white/80 border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition-all duration-200 shadow-sm"
+                  className="flex items-center gap-2 px-4 py-3 border rounded-lg transition-all duration-200 shadow-sm"
+                  style={getButtonStyles('outline')}
+                  onMouseEnter={(e) => {
+                    Object.assign(e.target.style, getButtonStyles('outline'));
+                    e.target.style.backgroundColor = colors.button.outline.backgroundHover;
+                  }}
+                  onMouseLeave={(e) => {
+                    Object.assign(e.target.style, getButtonStyles('outline'));
+                  }}
                 >
                   <Filter className="w-4 h-4" />
                   <span>Filters</span>
                   {(selectedStatus !== 'All' || selectedKeywords.length > 0) && (
-                    <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
+                    <span 
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: colors.primary.blue[400] }}
+                    ></span>
                   )}
                 </button>
                
@@ -133,14 +187,30 @@ useEffect(() => {
 
             {/* Filter Options */}
             {showFilters && (
-              <div className="border-t border-slate-200/60 pt-4 animate-in slide-in-from-top-2 duration-200">
+              <div 
+                className="border-t pt-4 animate-in slide-in-from-top-2 duration-200"
+                style={{ borderColor: `${colors.border.primary}99` }}
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-2">Status</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>Status</label>
                     <select
                       value={selectedStatus}
                       onChange={(e) => setSelectedStatus(e.target.value)}
-                      className="w-full px-3 py-2 bg-white/80 border border-slate-300 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent shadow-sm"
+                      className="w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2"
+                      style={{
+                        backgroundColor: `${colors.input.background}CC`,
+                        borderColor: colors.input.border,
+                        color: colors.input.text
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.borderColor = colors.input.borderFocus;
+                        e.target.style.boxShadow = `0 0 0 2px ${colors.primary.blue[400]}33`;
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.borderColor = colors.input.border;
+                        e.target.style.boxShadow = 'none';
+                      }}
                     >
                       {statuses.map((status) => (
                         <option key={status} value={status}>
@@ -150,17 +220,36 @@ useEffect(() => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-2">Tags</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>Tags</label>
                     <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto">
                       {allKeywords.map((keyword) => (
                         <button
                           key={keyword}
                           onClick={() => handleKeywordToggle(keyword)}
-                          className={`px-3 py-1 rounded-full text-xs border transition-all duration-200 ${
+                          className="px-3 py-1 rounded-full text-xs border transition-all duration-200 shadow-sm"
+                          style={
                             selectedKeywords.includes(keyword)
-                              ? 'bg-blue-500 text-white border-blue-400 shadow-sm'
-                              : 'bg-white/80 text-slate-600 border-slate-300 hover:bg-slate-50 shadow-sm'
-                          }`}
+                              ? {
+                                  backgroundColor: colors.primary.blue[500],
+                                  color: colors.button.primary.text,
+                                  borderColor: colors.primary.blue[400]
+                                }
+                              : {
+                                  backgroundColor: `${colors.background.card}CC`,
+                                  color: colors.text.secondary,
+                                  borderColor: colors.border.primary
+                                }
+                          }
+                          onMouseEnter={(e) => {
+                            if (!selectedKeywords.includes(keyword)) {
+                              e.target.style.backgroundColor = colors.surface.muted;
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!selectedKeywords.includes(keyword)) {
+                              e.target.style.backgroundColor = `${colors.background.card}CC`;
+                            }
+                          }}
                         >
                           {keyword}
                         </button>
@@ -172,7 +261,18 @@ useEffect(() => {
                   <div className="flex justify-end mt-4">
                     <button
                       onClick={clearFilters}
-                      className="flex items-center gap-2 px-4 py-2 text-slate-500 hover:text-slate-700 transition-colors duration-200"
+                      className="flex items-center gap-2 px-4 py-2 transition-colors duration-200"
+                      style={{
+                        color: colors.text.muted,
+                        backgroundColor: 'transparent',
+                        border: 'none'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.color = colors.text.secondary;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.color = colors.text.muted;
+                      }}
                     >
                       <X className="w-4 h-4" />
                       <span>Clear Filters</span>
@@ -183,8 +283,11 @@ useEffect(() => {
             )}
 
             {/* Result Summary */}
-            <div className="mt-4 pt-4 border-t border-slate-200/60">
-              <p className="text-slate-500 text-sm">
+            <div 
+              className="mt-4 pt-4 border-t"
+              style={{ borderColor: `${colors.border.primary}99` }}
+            >
+              <p className="text-sm" style={{ color: colors.text.muted }}>
                 Showing {filteredProjects.length} of {projects.length} projects
               </p>
             </div>
@@ -195,15 +298,21 @@ useEffect(() => {
       {/* Project Grid */}
       <div className="container mx-auto px-4 py-8">
         {loadingProjects ? (
-          <div className="text-center py-12 text-slate-500">Loading projects...</div>
+          <div className="text-center py-12" style={{ color: colors.text.muted }}>Loading projects...</div>
         ) : projectsError ? (
-          <div className="text-center py-12 text-red-500">{projectsError}</div>
+          <div className="text-center py-12" style={{ color: colors.accent.red[400] }}>{projectsError}</div>
         ) : filteredProjects.length === 0 ? (
           <div className="text-center py-12">
-            <div className="bg-white/70 rounded-xl p-8 max-w-md mx-auto shadow-lg border border-slate-200/60">
-              <Search className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-slate-600 mb-2">No projects found</h3>
-              <p className="text-slate-500">Try adjusting your search or filters</p>
+            <div 
+              className="rounded-xl p-8 max-w-md mx-auto shadow-lg border"
+              style={{
+                backgroundColor: `${colors.background.glass}B3`,
+                borderColor: `${colors.border.primary}99`
+              }}
+            >
+              <Search className="w-12 h-12 mx-auto mb-4" style={{ color: colors.text.muted }} />
+              <h3 className="text-xl font-semibold mb-2" style={{ color: colors.text.secondary }}>No projects found</h3>
+              <p style={{ color: colors.text.muted }}>Try adjusting your search or filters</p>
             </div>
           </div>
         ) : (
@@ -211,17 +320,37 @@ useEffect(() => {
             {filteredProjects.map((project) => (
               <article
                 key={project._id}
-                className="group bg-gradient-to-br from-white/80 to-blue-50/80 backdrop-blur-sm rounded-2xl p-6 border border-slate-200/60 hover:border-slate-300/80 hover:shadow-xl hover:shadow-blue-200/30 transform hover:-translate-y-2 transition-all duration-300 shadow-lg"
+                className="group backdrop-blur-sm rounded-2xl p-6 border hover:shadow-xl transform hover:-translate-y-2 transition-all duration-300 shadow-lg"
+                style={{
+                  background: `linear-gradient(135deg, ${colors.background.glass}CC, ${colors.primary.blue[50]}CC)`,
+                  borderColor: `${colors.border.primary}99`
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.borderColor = `${colors.border.primary}CC`;
+                  e.target.style.boxShadow = `0 20px 25px -5px ${colors.primary.blue[400]}26, 0 10px 10px -5px ${colors.primary.blue[400]}1A`;
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.borderColor = `${colors.border.primary}99`;
+                  e.target.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+                }}
               >
                 <div className="mb-4">
                   <h2 className="text-xl font-bold mb-3 leading-tight">
-                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    <span 
+                      className="bg-clip-text text-transparent"
+                      style={{
+                        background: colors.gradients.brand.primary,
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent'
+                      }}
+                    >
                       {project.title}
                     </span>
                   </h2>
                   <div className="flex items-center gap-2 mb-3">
                     <div
-                      className={`flex items-center gap-1 px-3 py-1 rounded-full border text-xs font-medium ${getStatusBadgeColor()}`}
+                      className="flex items-center gap-1 px-3 py-1 rounded-full border text-xs font-medium"
+                      style={getStatusBadgeColor()}
                     >
                       <Clock className="w-3 h-3" />
                       <span>{new Date(project.createdAt).toDateString()}</span>
@@ -229,27 +358,47 @@ useEffect(() => {
                   </div>
                 </div>
 
-                <p className="text-slate-600 text-sm leading-relaxed mb-4 line-clamp-3">
+                <p className="text-sm leading-relaxed mb-4 line-clamp-3" style={{ color: colors.text.secondary }}>
                   {project.description}
                 </p>
 
                 {project.tags?.length > 0 && (
                   <div className="mb-4">
                     <div className="flex items-center gap-1 mb-2">
-                      <Tag className="w-4 h-4 text-blue-500" />
-                      <span className="text-xs font-medium text-slate-500">Tags</span>
+                      <Tag className="w-4 h-4" style={{ color: colors.primary.blue[500] }} />
+                      <span className="text-xs font-medium" style={{ color: colors.text.muted }}>Tags</span>
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {project.tags.slice(0, 3).map((tag, idx) => (
                         <span
                           key={idx}
-                          className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-md border border-slate-200 hover:bg-blue-100 hover:border-blue-300 transition-all duration-200 shadow-sm"
+                          className="px-2 py-1 text-xs rounded-md border transition-all duration-200 shadow-sm"
+                          style={{
+                            backgroundColor: colors.surface.secondary,
+                            color: colors.text.secondary,
+                            borderColor: colors.border.primary
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.backgroundColor = `${colors.primary.blue[100]}`;
+                            e.target.style.borderColor = `${colors.primary.blue[300]}`;
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.backgroundColor = colors.surface.secondary;
+                            e.target.style.borderColor = colors.border.primary;
+                          }}
                         >
                           {tag}
                         </span>
                       ))}
                       {project.tags.length > 3 && (
-                        <span className="px-2 py-1 bg-slate-100 text-slate-500 text-xs rounded-md border border-slate-200 shadow-sm">
+                        <span 
+                          className="px-2 py-1 text-xs rounded-md border shadow-sm"
+                          style={{
+                            backgroundColor: colors.surface.secondary,
+                            color: colors.text.muted,
+                            borderColor: colors.border.primary
+                          }}
+                        >
                           +{project.tags.length - 3} more
                         </span>
                       )}
@@ -260,10 +409,10 @@ useEffect(() => {
                 {project.creator?.name && (
                   <div className="mb-6">
                     <div className="flex items-center gap-1 mb-2">
-                      <Users className="w-4 h-4 text-purple-500" />
-                      <span className="text-xs font-medium text-slate-500">Created by</span>
+                      <Users className="w-4 h-4" style={{ color: colors.primary.purple[500] }} />
+                      <span className="text-xs font-medium" style={{ color: colors.text.muted }}>Created by</span>
                     </div>
-                    <div className="text-slate-600 text-sm">{project.creator.name}</div>
+                    <div className="text-sm" style={{ color: colors.text.secondary }}>{project.creator.name}</div>
                   </div>
                 )}
 
@@ -276,7 +425,18 @@ useEffect(() => {
                       alert('No project link available');
                     }
                   }}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg shadow-lg hover:from-blue-600 hover:to-purple-600 hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-sm font-medium"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-200 text-sm font-medium"
+                  style={{
+                    background: colors.gradients.brand.primary,
+                    color: colors.text.primary,
+                    boxShadow: `0 4px 12px ${colors.primary.blue[500]}33`
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.boxShadow = `0 6px 20px ${colors.primary.blue[500]}44`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.boxShadow = `0 4px 12px ${colors.primary.blue[500]}33`;
+                  }}
                 >
                   <BookOpen className="w-4 h-4" />
                   <span>View Project</span>

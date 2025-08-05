@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import axios from '../axios';
 import statsService from '../services/statsService';
+import { colors } from '../styles/colors';
+import { getCardStyles, getButtonStyles, getGradientTextStyles } from '../styles/styleUtils';
 
 // Components
 import Sidebar from '../components/DashboardSidebar';
@@ -118,37 +120,37 @@ export default function Dashboard() {
       number: loadingStats ? '...' : userStats.projects.total.toString(), 
       label: 'Total Projects', 
       icon: Activity, 
-      color: 'text-sky-400' 
+      color: colors.primary.blue[400]
     },
     { 
       number: loadingStats ? '...' : userStats.projects.planned.toString(), 
       label: 'Planned Projects', 
       icon: BookOpen, 
-      color: 'text-yellow-400' 
+      color: colors.accent.yellow[400]
     },
     { 
       number: loadingStats ? '...' : userStats.projects.inProgress.toString(), 
       label: 'In Progress', 
       icon: TrendingUp, 
-      color: 'text-purple-400' 
+      color: colors.primary.purple[400]
     },
     { 
       number: loadingStats ? '...' : userStats.projects.completed.toString(), 
       label: 'Completed', 
       icon: Users, 
-      color: 'text-green-400' 
+      color: colors.accent.green[400]
     },
     { 
       number: loadingStats ? '...' : userStats.collaborators.total.toString(), 
       label: 'Collaborators', 
       icon: Users, 
-      color: 'text-purple-400' 
+      color: colors.primary.purple[400]
     },
     { 
       number: loadingStats ? '...' : userStats.publications.total.toString(), 
       label: 'Publications', 
       icon: BookOpen, 
-      color: 'text-green-400' 
+      color: colors.accent.green[400]
     },
   ];
 
@@ -220,9 +222,19 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900/20 via-slate-900 to-blue-900/20">
+    <div 
+      className="min-h-screen"
+      style={{
+        background: `linear-gradient(135deg, ${colors.gradients.background.main}, ${colors.gradients.background.hero})`
+      }}
+    >
       <div className="absolute inset-0 opacity-30">
-        <div className="h-full w-full bg-[radial-gradient(circle_at_50%_50%,rgba(56,189,248,0.1),transparent_50%)]"></div>
+        <div 
+          className="h-full w-full"
+          style={{
+            background: `radial-gradient(circle at 50% 50%, ${colors.primary.blue[400]}1A, transparent 50%)`
+          }}
+        ></div>
       </div>
 
       <div className="relative flex h-screen">
@@ -247,25 +259,55 @@ export default function Dashboard() {
               <div className="flex flex-wrap gap-3 mb-6">
                 <button
                   onClick={() => setShowProjectForm(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-sky-500/20 text-sky-400 border border-sky-500/30 rounded-lg hover:bg-sky-500/30 transition-all duration-200"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200"
+                  style={{
+                    backgroundColor: `${colors.primary.blue[500]}33`,
+                    color: colors.primary.blue[400],
+                    borderColor: `${colors.primary.blue[500]}4D`
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.primary.blue[500]}4D`}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.primary.blue[500]}33`}
                 >
                   <TrendingUp size={16} />
                   Start New Project
                 </button>
                 <button
                   onClick={() => setShowPublicationForm(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-500/20 text-green-400 border border-green-500/30 rounded-lg hover:bg-green-500/30 transition-all duration-200"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200"
+                  style={{
+                    backgroundColor: `${colors.accent.green[500]}33`,
+                    color: colors.accent.green[400],
+                    borderColor: `${colors.accent.green[500]}4D`
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.accent.green[500]}4D`}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.accent.green[500]}33`}
                 >
                   <BookOpen size={16} />
                   Add Publication
                 </button>
-                <button className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded-lg hover:bg-purple-500/30 transition-all duration-200">
+                <button 
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200"
+                  style={{
+                    backgroundColor: `${colors.primary.purple[500]}33`,
+                    color: colors.primary.purple[400],
+                    borderColor: `${colors.primary.purple[500]}4D`
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.primary.purple[500]}4D`}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.primary.purple[500]}33`}
+                >
                   <Users size={16} />
                   Find Collaborators
                 </button>
                 <button 
                   onClick={handleBrowsePublications}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-lg hover:bg-blue-500/30 transition-all duration-200"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200"
+                  style={{
+                    backgroundColor: `${colors.primary.blue[600]}33`,
+                    color: colors.primary.blue[400],
+                    borderColor: `${colors.primary.blue[600]}4D`
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.primary.blue[600]}4D`}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.primary.blue[600]}33`}
                 >
                   <BookOpen size={16} />
                   External Publication Finder
@@ -274,8 +316,14 @@ export default function Dashboard() {
 
               {/* Error Messages */}
               {statsError && (
-                <div className="mb-6 p-4 bg-yellow-900/30 border border-yellow-500/50 rounded-lg">
-                  <p className="text-yellow-300 text-sm">{statsError}</p>
+                <div 
+                  className="mb-6 p-4 rounded-lg border"
+                  style={{
+                    backgroundColor: `${colors.accent.yellow[500]}33`,
+                    borderColor: `${colors.accent.yellow[500]}80`
+                  }}
+                >
+                  <p className="text-sm" style={{ color: colors.accent.yellow[300] }}>{statsError}</p>
                   <button 
                     onClick={() => {
                       if (user?.id) {
@@ -285,7 +333,10 @@ export default function Dashboard() {
                         setStatsError(null);
                       }
                     }}
-                    className="mt-2 text-sm text-yellow-400 hover:text-yellow-300 underline"
+                    className="mt-2 text-sm underline transition-colors"
+                    style={{ color: colors.accent.yellow[400] }}
+                    onMouseEnter={(e) => e.target.style.color = colors.accent.yellow[300]}
+                    onMouseLeave={(e) => e.target.style.color = colors.accent.yellow[400]}
                   >
                     Retry Loading Stats
                   </button>
@@ -293,14 +344,23 @@ export default function Dashboard() {
               )}
               
               {projectsError && (
-                <div className="mb-6 p-4 bg-red-900/30 border border-red-500/50 rounded-lg">
-                  <p className="text-red-300 text-sm">{projectsError}</p>
+                <div 
+                  className="mb-6 p-4 rounded-lg border"
+                  style={{
+                    backgroundColor: `${colors.accent.red[500]}33`,
+                    borderColor: `${colors.accent.red[500]}80`
+                  }}
+                >
+                  <p className="text-sm" style={{ color: colors.accent.red[300] }}>{projectsError}</p>
                   <button 
                     onClick={() => {
                       axios.get('/projects').then(res => setRecentProjects(res.data?.data || []));
                       setProjectsError(null);
                     }}
-                    className="mt-2 text-sm text-sky-400 hover:text-sky-300 underline"
+                    className="mt-2 text-sm underline transition-colors"
+                    style={{ color: colors.primary.blue[400] }}
+                    onMouseEnter={(e) => e.target.style.color = colors.primary.blue[300]}
+                    onMouseLeave={(e) => e.target.style.color = colors.primary.blue[400]}
                   >
                     Try Again
                   </button>
@@ -308,14 +368,23 @@ export default function Dashboard() {
               )}
               
               {publicationsError && (
-                <div className="mb-6 p-4 bg-red-900/30 border border-red-500/50 rounded-lg">
-                  <p className="text-red-300 text-sm">{publicationsError}</p>
+                <div 
+                  className="mb-6 p-4 rounded-lg border"
+                  style={{
+                    backgroundColor: `${colors.accent.red[500]}33`,
+                    borderColor: `${colors.accent.red[500]}80`
+                  }}
+                >
+                  <p className="text-sm" style={{ color: colors.accent.red[300] }}>{publicationsError}</p>
                   <button 
                     onClick={() => {
                       axios.get('/publications').then(res => setRecentPublications(res.data?.data || []));
                       setPublicationsError(null);
                     }}
-                    className="mt-2 text-sm text-green-400 hover:text-green-300 underline"
+                    className="mt-2 text-sm underline transition-colors"
+                    style={{ color: colors.accent.green[400] }}
+                    onMouseEnter={(e) => e.target.style.color = colors.accent.green[300]}
+                    onMouseLeave={(e) => e.target.style.color = colors.accent.green[400]}
                   >
                     Try Again
                   </button>
@@ -324,12 +393,21 @@ export default function Dashboard() {
 
               {/* Modals */}
               {showProjectForm && (
-                <div className="mb-6 p-6 bg-white/10 rounded-xl border border-white/20">
+                <div 
+                  className="mb-6 p-6 backdrop-blur-lg rounded-xl border"
+                  style={{
+                    backgroundColor: colors.background.glass,
+                    borderColor: colors.border.secondary
+                  }}
+                >
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-white">Create New Project</h3>
+                    <h3 className="text-lg font-semibold" style={{ color: colors.text.primary }}>Create New Project</h3>
                     <button
                       onClick={() => setShowProjectForm(false)}
-                      className="text-gray-400 hover:text-white transition-colors"
+                      className="transition-colors"
+                      style={{ color: colors.text.muted }}
+                      onMouseEnter={(e) => e.target.style.color = colors.text.primary}
+                      onMouseLeave={(e) => e.target.style.color = colors.text.muted}
                     >
                       ✕
                     </button>
@@ -339,12 +417,21 @@ export default function Dashboard() {
               )}
 
               {showPublicationForm && (
-                <div className="mb-6 p-6 bg-white/10 rounded-xl border border-white/20">
+                <div 
+                  className="mb-6 p-6 backdrop-blur-lg rounded-xl border"
+                  style={{
+                    backgroundColor: colors.background.glass,
+                    borderColor: colors.border.secondary
+                  }}
+                >
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-white">Add Publication</h3>
+                    <h3 className="text-lg font-semibold" style={{ color: colors.text.primary }}>Add Publication</h3>
                     <button
                       onClick={() => setShowPublicationForm(false)}
-                      className="text-gray-400 hover:text-white transition-colors"
+                      className="transition-colors"
+                      style={{ color: colors.text.muted }}
+                      onMouseEnter={(e) => e.target.style.color = colors.text.primary}
+                      onMouseLeave={(e) => e.target.style.color = colors.text.muted}
                     >
                       ✕
                     </button>
@@ -354,12 +441,21 @@ export default function Dashboard() {
               )}
 
               {showPublicationSearch && (
-                <div className="mb-6 p-6 bg-white/10 rounded-xl border border-white/20">
+                <div 
+                  className="mb-6 p-6 backdrop-blur-lg rounded-xl border"
+                  style={{
+                    backgroundColor: colors.background.glass,
+                    borderColor: colors.border.secondary
+                  }}
+                >
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-white">Browse Publications</h3>
+                    <h3 className="text-lg font-semibold" style={{ color: colors.text.primary }}>Browse Publications</h3>
                     <button
                       onClick={() => setShowPublicationSearch(false)}
-                      className="text-gray-400 hover:text-white transition-colors"
+                      className="transition-colors"
+                      style={{ color: colors.text.muted }}
+                      onMouseEnter={(e) => e.target.style.color = colors.text.primary}
+                      onMouseLeave={(e) => e.target.style.color = colors.text.muted}
                     >
                       ✕
                     </button>
@@ -385,12 +481,21 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 <div className="xl:col-span-2 space-y-6">
                   {/* Recent Projects */}
-                  <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10">
+                  <div 
+                    className="backdrop-blur-lg rounded-xl p-6 border"
+                    style={{
+                      backgroundColor: colors.background.glass,
+                      borderColor: colors.border.secondary
+                    }}
+                  >
                     <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-xl font-semibold text-white">Recent Projects</h2>
+                      <h2 className="text-xl font-semibold" style={{ color: colors.text.primary }}>Recent Projects</h2>
                       <button 
                         onClick={() => navigate('/my-projects')}
-                        className="flex items-center gap-2 text-sky-400 hover:text-sky-300 text-sm font-medium"
+                        className="flex items-center gap-2 text-sm font-medium transition-colors"
+                        style={{ color: colors.primary.blue[400] }}
+                        onMouseEnter={(e) => e.target.style.color = colors.primary.blue[300]}
+                        onMouseLeave={(e) => e.target.style.color = colors.primary.blue[400]}
                       >
                         <span>View All</span>
                         <ExternalLink size={14} />
@@ -399,15 +504,24 @@ export default function Dashboard() {
                     <div className="space-y-4">
                       {loadingProjects ? (
                         <div className="flex items-center justify-center py-8">
-                          <div className="w-6 h-6 border-2 border-sky-400/30 border-t-sky-400 rounded-full animate-spin"></div>
-                          <span className="ml-2 text-white/60">Loading projects...</span>
+                          <div 
+                            className="w-6 h-6 border-2 rounded-full animate-spin"
+                            style={{
+                              borderColor: `${colors.primary.blue[400]}4D`,
+                              borderTopColor: colors.primary.blue[400]
+                            }}
+                          ></div>
+                          <span className="ml-2" style={{ color: `${colors.text.secondary}99` }}>Loading projects...</span>
                         </div>
                       ) : recentProjects.length === 0 ? (
                         <div className="text-center py-8">
-                          <p className="text-white/60 text-sm italic mb-4">No projects yet.</p>
+                          <p className="text-sm italic mb-4" style={{ color: `${colors.text.secondary}99` }}>No projects yet.</p>
                           <button
                             onClick={() => setShowProjectForm(true)}
-                            className="text-sky-400 hover:text-sky-300 text-sm underline"
+                            className="text-sm underline transition-colors"
+                            style={{ color: colors.primary.blue[400] }}
+                            onMouseEnter={(e) => e.target.style.color = colors.primary.blue[300]}
+                            onMouseLeave={(e) => e.target.style.color = colors.primary.blue[400]}
                           >
                             Create your first project
                           </button>
@@ -431,12 +545,21 @@ export default function Dashboard() {
                   </div>
 
                   {/* Recent Publications */}
-                  <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10">
+                  <div 
+                    className="backdrop-blur-lg rounded-xl p-6 border"
+                    style={{
+                      backgroundColor: colors.background.glass,
+                      borderColor: colors.border.secondary
+                    }}
+                  >
                     <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-xl font-semibold text-white">Recent Publications</h2>
+                      <h2 className="text-xl font-semibold" style={{ color: colors.text.primary }}>Recent Publications</h2>
                       <button 
                         onClick={() => navigate('/my-publications')}
-                        className="flex items-center gap-2 text-green-400 hover:text-green-300 text-sm font-medium"
+                        className="flex items-center gap-2 text-sm font-medium transition-colors"
+                        style={{ color: colors.accent.green[400] }}
+                        onMouseEnter={(e) => e.target.style.color = colors.accent.green[300]}
+                        onMouseLeave={(e) => e.target.style.color = colors.accent.green[400]}
                       >
                         <span>View All</span>
                         <ExternalLink size={14} />
@@ -445,15 +568,24 @@ export default function Dashboard() {
                     <div className="space-y-4">
                       {loadingPublications ? (
                         <div className="flex items-center justify-center py-8">
-                          <div className="w-6 h-6 border-2 border-green-400/30 border-t-green-400 rounded-full animate-spin"></div>
-                          <span className="ml-2 text-white/60">Loading publications...</span>
+                          <div 
+                            className="w-6 h-6 border-2 rounded-full animate-spin"
+                            style={{
+                              borderColor: `${colors.accent.green[400]}4D`,
+                              borderTopColor: colors.accent.green[400]
+                            }}
+                          ></div>
+                          <span className="ml-2" style={{ color: `${colors.text.secondary}99` }}>Loading publications...</span>
                         </div>
                       ) : recentPublications.length === 0 ? (
                         <div className="text-center py-8">
-                          <p className="text-white/60 text-sm italic mb-4">No publications yet.</p>
+                          <p className="text-sm italic mb-4" style={{ color: `${colors.text.secondary}99` }}>No publications yet.</p>
                           <button
                             onClick={() => setShowPublicationForm(true)}
-                            className="text-green-400 hover:text-green-300 text-sm underline"
+                            className="text-sm underline transition-colors"
+                            style={{ color: colors.accent.green[400] }}
+                            onMouseEnter={(e) => e.target.style.color = colors.accent.green[300]}
+                            onMouseLeave={(e) => e.target.style.color = colors.accent.green[400]}
                           >
                             Add your first publication
                           </button>
@@ -480,35 +612,52 @@ export default function Dashboard() {
                 <div className="space-y-6">
                   <ProfileCard userStats={userStats} loadingStats={loadingStats} />
 
-                  <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10">
-                    <h3 className="text-lg font-semibold text-white mb-4">This Week</h3>
+                  <div 
+                    className="backdrop-blur-lg rounded-xl p-6 border"
+                    style={{
+                      backgroundColor: colors.background.glass,
+                      borderColor: colors.border.secondary
+                    }}
+                  >
+                    <h3 className="text-lg font-semibold mb-4" style={{ color: colors.text.primary }}>This Week</h3>
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <span className="text-white/80 text-sm">New Messages</span>
-                        <span className="text-sky-400 font-semibold">0</span>
+                        <span className="text-sm" style={{ color: `${colors.text.secondary}CC` }}>New Messages</span>
+                        <span className="font-semibold" style={{ color: colors.primary.blue[400] }}>0</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-white/80 text-sm">Project Updates</span>
-                        <span className="text-purple-400 font-semibold">{loadingStats ? '...' : userStats.projects.inProgress}</span>
+                        <span className="text-sm" style={{ color: `${colors.text.secondary}CC` }}>Project Updates</span>
+                        <span className="font-semibold" style={{ color: colors.primary.purple[400] }}>{loadingStats ? '...' : userStats.projects.inProgress}</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-white/80 text-sm">Collaboration Requests</span>
-                        <span className="text-green-400 font-semibold">0</span>
+                        <span className="text-sm" style={{ color: `${colors.text.secondary}CC` }}>Collaboration Requests</span>
+                        <span className="font-semibold" style={{ color: colors.accent.green[400] }}>0</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10">
+                  <div 
+                    className="backdrop-blur-lg rounded-xl p-6 border"
+                    style={{
+                      backgroundColor: colors.background.glass,
+                      borderColor: colors.border.secondary
+                    }}
+                  >
                     <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-xl font-semibold text-white">Recent Forum Activity</h2>
-                      <button className="flex items-center gap-2 text-sky-400 hover:text-sky-300 text-sm font-medium">
+                      <h2 className="text-xl font-semibold" style={{ color: colors.text.primary }}>Recent Forum Activity</h2>
+                      <button 
+                        className="flex items-center gap-2 text-sm font-medium transition-colors"
+                        style={{ color: colors.primary.blue[400] }}
+                        onMouseEnter={(e) => e.target.style.color = colors.primary.blue[300]}
+                        onMouseLeave={(e) => e.target.style.color = colors.primary.blue[400]}
+                      >
                         <span>View All</span>
                         <ExternalLink size={14} />
                       </button>
                     </div>
                     <div className="space-y-4">
                       {forumActivity.length === 0 ? (
-                        <p className="text-white/60 text-sm italic">No recent forum activity to show.</p>
+                        <p className="text-sm italic" style={{ color: `${colors.text.secondary}99` }}>No recent forum activity to show.</p>
                       ) : (
                         forumActivity.map((activity, index) => (
                           <ForumActivityCard

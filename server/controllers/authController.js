@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { validateRole } = require('../middlewares/auth');
 
 // REGISTER CONTROLLER
 exports.register = async (req, res) => {
@@ -21,20 +22,29 @@ exports.register = async (req, res) => {
     researchInterests,
     currentPosition,
     yearsOfExperience,
-    role = 'student', 
+    role, 
   } = req.body;
 
   try {
     // Basic validation
     if (!name || !email || !password) {
-      return res.status(400).json({ msg: 'Name, email, and password are required' });
+      return res.status(400).json({ 
+        success: false,
+        msg: 'Name, email, and password are required' 
+      });
     }
 
     // Check if user already exists
     let user = await User.findOne({ email });
     if (user) {
-      return res.status(400).json({ msg: 'User already exists' });
+      return res.status(400).json({ 
+        success: false,
+        msg: 'User already exists' 
+      });
     }
+
+    // Validate and normalize role
+    const validatedRole = validateRole(role);
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -57,20 +67,21 @@ exports.register = async (req, res) => {
       researchInterests,
       currentPosition,
       yearsOfExperience: yearsOfExperience ? Number(yearsOfExperience) : 0,
-      role: ['admin', 'student', 'mentor'].includes(role) ? role : 'student',
+      role: validatedRole, // Use validated role
     });
 
     await user.save();
 
-    // Create JWT
+    // Create JWT with validated role
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: '24h' } // Extended expiry
     );
 
     // Respond
     res.status(201).json({
+      success: true,
       token,
       user: {
         id: user._id,
@@ -101,10 +112,16 @@ exports.register = async (req, res) => {
     });
 
     if (err.name === 'ValidationError') {
-      return res.status(400).json({ msg: 'Validation error: ' + err.message });
+      return res.status(400).json({ 
+        success: false,
+        msg: 'Validation error: ' + err.message 
+      });
     }
 
-    res.status(500).json({ msg: 'Server error during registration' });
+    res.status(500).json({ 
+      success: false,
+      msg: 'Server error during registration' 
+    });
   }
 };
 
@@ -115,28 +132,47 @@ exports.login = async (req, res) => {
   try {
     // Basic validation
     if (!email || !password) {
-      return res.status(400).json({ msg: 'Email and password are required' });
+      return res.status(400).json({ 
+        success: false,
+        msg: 'Email and password are required' 
+      });
     }
 
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ msg: 'Invalid credentials' });
+      return res.status(400).json({ 
+        success: false,
+        msg: 'Invalid credentials' 
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ msg: 'Invalid credentials' });
+      return res.status(400).json({ 
+        success: false,
+        msg: 'Invalid credentials' 
+      });
     }
 
-    // Create JWT
+    // Validate role before creating token
+    const validatedRole = validateRole(user.role);
+    
+    // Update user role if it was invalid
+    if (user.role !== validatedRole) {
+      await User.findByIdAndUpdate(user._id, { role: validatedRole });
+      user.role = validatedRole;
+    }
+
+    // Create JWT with validated role
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      { id: user._id, role: validatedRole },
       process.env.JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: '24h' }
     );
 
     // Respond
     res.json({
+      success: true,
       token,
       user: {
         id: user._id,
@@ -155,7 +191,7 @@ exports.login = async (req, res) => {
         researchInterests: user.researchInterests,
         currentPosition: user.currentPosition,
         yearsOfExperience: user.yearsOfExperience,
-        role: user.role,
+        role: validatedRole,
       },
     });
   } catch (err) {
@@ -166,7 +202,10 @@ exports.login = async (req, res) => {
       error: err,
     });
 
-    res.status(500).json({ msg: 'Server error during login' });
+    res.status(500).json({ 
+      success: false,
+      msg: 'Server error during login' 
+    });
   }
 };
 

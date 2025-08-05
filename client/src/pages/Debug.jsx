@@ -1,6 +1,8 @@
 import React from 'react';
 import ServerHealthCheck from '../components/ServerHealthCheck';
 import { useAuth } from '../context/AuthContext';
+import { getButtonStyles } from '../styles/styleUtils';
+import { colors } from '../styles/colors';
 
 const DebugPage = () => {
   const { user, token, isAuthenticated, loading, error } = useAuth();
@@ -102,19 +104,43 @@ const DebugPage = () => {
           <div className="flex flex-wrap gap-3">
             <button
               onClick={() => window.open('http://localhost:5001/api/test', '_blank')}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 rounded transition-colors"
+              style={getButtonStyles('primary')}
+              onMouseEnter={(e) => {
+                Object.assign(e.target.style, getButtonStyles('primary'));
+                e.target.style.background = colors.button.primary.backgroundHover;
+              }}
+              onMouseLeave={(e) => {
+                Object.assign(e.target.style, getButtonStyles('primary'));
+              }}
             >
               Test Backend Health
             </button>
             <button
               onClick={() => localStorage.clear()}
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+              className="px-4 py-2 rounded transition-colors"
+              style={getButtonStyles('danger')}
+              onMouseEnter={(e) => {
+                Object.assign(e.target.style, getButtonStyles('danger'));
+                e.target.style.backgroundColor = colors.button.danger.backgroundHover;
+              }}
+              onMouseLeave={(e) => {
+                Object.assign(e.target.style, getButtonStyles('danger'));
+              }}
             >
               Clear Local Storage
             </button>
             <button
               onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+              className="px-4 py-2 rounded transition-colors"
+              style={getButtonStyles('success')}
+              onMouseEnter={(e) => {
+                Object.assign(e.target.style, getButtonStyles('success'));
+                e.target.style.backgroundColor = colors.button.success.backgroundHover;
+              }}
+              onMouseLeave={(e) => {
+                Object.assign(e.target.style, getButtonStyles('success'));
+              }}
             >
               Refresh Page
             </button>

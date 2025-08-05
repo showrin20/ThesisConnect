@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { User, Bell, Shield, Save, AlertCircle, CheckCircle, MapPin, Phone, Globe, Briefcase } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Sidebar from '../components/DashboardSidebar';
+import { colors } from '../styles/colors';
+import { getInputStyles, getButtonStyles, getStatusStyles, getCardStyles } from '../styles/styleUtils';
 
 const Settings = () => {
   const { user, loading, error, clearError, updateUser } = useAuth();
@@ -249,11 +251,15 @@ const Settings = () => {
           onChange={(e) => setKeywordInput(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && addKeyword()}
           placeholder="Add keyword..."
-          className="flex-1 px-3 py-2 rounded-lg bg-white/10 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-sky-400/50"
+          className="flex-1 px-3 py-2 rounded-lg transition-all duration-200"
+          style={getInputStyles()}
+          onFocus={(e) => Object.assign(e.target.style, getInputStyles(true))}
+          onBlur={(e) => Object.assign(e.target.style, getInputStyles(false))}
         />
         <button
           onClick={addKeyword}
-          className="px-3 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors"
+          className="px-3 py-2 rounded-lg transition-colors"
+          style={getButtonStyles('primary')}
         >
           Add
         </button>
@@ -262,12 +268,19 @@ const Settings = () => {
         {formData.keywords.map((keyword, index) => (
           <span
             key={index}
-            className="inline-flex items-center gap-1 px-2 py-1 bg-purple-500/20 text-purple-300 text-sm rounded-full"
+            className="inline-flex items-center gap-1 px-2 py-1 text-sm rounded-full"
+            style={{
+              backgroundColor: `${colors.primary.purple[500]}33`, // 20% opacity
+              color: colors.primary.purple[300]
+            }}
           >
             {keyword}
             <button
               onClick={() => removeKeyword(keyword)}
-              className="text-purple-400 hover:text-purple-200"
+              className="transition-colors"
+              style={{ color: colors.primary.purple[400] }}
+              onMouseEnter={(e) => e.target.style.color = colors.primary.purple[200]}
+              onMouseLeave={(e) => e.target.style.color = colors.primary.purple[400]}
             >
               ×
             </button>
@@ -282,34 +295,37 @@ const Settings = () => {
       onClick={() => !disabled && onChange(!checked)}
       disabled={disabled}
       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
-        checked 
-          ? 'bg-sky-500' 
-          : 'bg-gray-600'
-      } ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+        disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+      }`}
+      style={{
+        backgroundColor: checked ? colors.primary.blue[500] : colors.border.primary
+      }}
     >
       <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
-          checked ? 'translate-x-6' : 'translate-x-1'
-        }`}
+        className="inline-block h-4 w-4 transform rounded-full transition-transform duration-200"
+        style={{
+          backgroundColor: colors.text.primary,
+          transform: checked ? 'translateX(24px)' : 'translateX(4px)'
+        }}
       />
     </button>
   );
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900/20 via-slate-900 to-blue-900/20">
+      <div className="min-h-screen" style={{ background: colors.gradients.background.page }}>
         <div className="container mx-auto px-6 py-8 max-w-4xl">
           <div className="animate-pulse">
-            <div className="h-8 bg-white/10 rounded w-48 mb-4"></div>
-            <div className="h-4 bg-white/10 rounded w-96 mb-8"></div>
+            <div className="h-8 rounded w-48 mb-4" style={{ backgroundColor: colors.background.glass }}></div>
+            <div className="h-4 rounded w-96 mb-8" style={{ backgroundColor: colors.background.glass }}></div>
             {[1, 2, 3].map(i => (
-              <div key={i} className="bg-white/5 rounded-xl p-6 mb-6">
-                <div className="h-6 bg-white/10 rounded w-32 mb-4"></div>
+              <div key={i} className="rounded-xl p-6 mb-6" style={{ backgroundColor: colors.background.card }}>
+                <div className="h-6 rounded w-32 mb-4" style={{ backgroundColor: colors.background.glass }}></div>
                 <div className="space-y-4">
                   {[1, 2].map(j => (
-                    <div key={j} className="bg-white/5 rounded-lg p-4">
-                      <div className="h-4 bg-white/10 rounded w-24 mb-2"></div>
-                      <div className="h-3 bg-white/10 rounded w-48"></div>
+                    <div key={j} className="rounded-lg p-4" style={{ backgroundColor: colors.background.card }}>
+                      <div className="h-4 rounded w-24 mb-2" style={{ backgroundColor: colors.background.glass }}></div>
+                      <div className="h-3 rounded w-48" style={{ backgroundColor: colors.background.glass }}></div>
                     </div>
                   ))}
                 </div>
@@ -322,31 +338,37 @@ const Settings = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900/20 via-slate-900 to-blue-900/20">
+    <div className="min-h-screen" style={{ background: colors.gradients.background.page }}>
       <div className="flex">
         <Sidebar />
         <div className="flex-1 p-6 ml-10"> {/* Changed from ml-64 to ml-16 */}
           <div className="container mx-auto max-w-4xl">
             {/* Header */}
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-white mb-2">
+              <h1 className="text-3xl font-bold mb-2" style={{ color: colors.text.primary }}>
                 Settings
               </h1>
-              <p className="text-white/70">
+              <p style={{ color: colors.text.secondary }}>
                 Manage your account preferences and application settings
               </p>
               {user?.name && (
-                <div className="mt-4 p-4 bg-white/5 backdrop-blur-lg rounded-lg border border-white/20">
+                <div className="mt-4 p-4 backdrop-blur-lg rounded-lg border" style={{
+                  backgroundColor: colors.background.card,
+                  borderColor: colors.border.secondary
+                }}>
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-white/10">
-                      <User size={20} className="text-sky-400" />
+                    <div className="p-2 rounded-lg" style={{ backgroundColor: colors.background.glass }}>
+                      <User size={20} style={{ color: colors.primary.blue[400] }} />
                     </div>
                     <div>
-                      <h3 className="font-medium text-white">Account Name</h3>
-                      <p className="text-white/70 text-sm">This cannot be changed</p>
+                      <h3 className="font-medium" style={{ color: colors.text.primary }}>Account Name</h3>
+                      <p className="text-sm" style={{ color: colors.text.secondary }}>This cannot be changed</p>
                     </div>
                     <div className="ml-auto">
-                      <span className="px-3 py-1 bg-gray-500/20 text-gray-300 rounded-lg text-sm">
+                      <span className="px-3 py-1 rounded-lg text-sm" style={{
+                        backgroundColor: `${colors.text.disabled}33`, // 20% opacity
+                        color: colors.text.secondary
+                      }}>
                         {user.name}
                       </span>
                     </div>
@@ -357,23 +379,23 @@ const Settings = () => {
 
             {/* Status Messages */}
             {error && (
-              <div className="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-lg flex items-center gap-3">
-                <AlertCircle className="text-red-400" size={20} />
-                <span className="text-red-300">{error}</span>
+              <div className="mb-6 p-4 border rounded-lg flex items-center gap-3" style={getStatusStyles('error')}>
+                <AlertCircle size={20} style={{ color: colors.status.error.text }} />
+                <span style={{ color: colors.status.error.text }}>{error}</span>
               </div>
             )}
 
             {saveStatus === 'success' && (
-              <div className="mb-6 p-4 bg-green-500/20 border border-green-500/30 rounded-lg flex items-center gap-3">
-                <CheckCircle className="text-green-400" size={20} />
-                <span className="text-green-300">Settings saved successfully!</span>
+              <div className="mb-6 p-4 border rounded-lg flex items-center gap-3" style={getStatusStyles('success')}>
+                <CheckCircle size={20} style={{ color: colors.status.success.text }} />
+                <span style={{ color: colors.status.success.text }}>Settings saved successfully!</span>
               </div>
             )}
 
             {saveStatus === 'error' && (
-              <div className="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-lg flex items-center gap-3">
-                <AlertCircle className="text-red-400" size={20} />
-                <span className="text-red-300">Failed to save settings. Please try again.</span>
+              <div className="mb-6 p-4 border rounded-lg flex items-center gap-3" style={getStatusStyles('error')}>
+                <AlertCircle size={20} style={{ color: colors.status.error.text }} />
+                <span style={{ color: colors.status.error.text }}>Failed to save settings. Please try again.</span>
               </div>
             )}
 
@@ -382,14 +404,18 @@ const Settings = () => {
               {settingsSections.map((section) => (
                 <div
                   key={section.title}
-                  className="bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/20"
+                  className="backdrop-blur-lg rounded-xl p-6 border"
+                  style={{
+                    backgroundColor: colors.background.card,
+                    borderColor: colors.border.secondary
+                  }}
                 >
                   {/* Section Header */}
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 rounded-lg bg-white/10">
-                      <section.icon size={20} className="text-sky-400" />
+                    <div className="p-2 rounded-lg" style={{ backgroundColor: colors.background.glass }}>
+                      <section.icon size={20} style={{ color: colors.primary.blue[400] }} />
                     </div>
-                    <h2 className="text-xl font-semibold text-white">
+                    <h2 className="text-xl font-semibold" style={{ color: colors.text.primary }}>
                       {section.title}
                     </h2>
                   </div>
@@ -399,13 +425,17 @@ const Settings = () => {
                     {section.settings.map((setting) => (
                       <div
                         key={setting.id}
-                        className="flex items-center justify-between p-4 rounded-lg bg-white/5 border border-white/10"
+                        className="flex items-center justify-between p-4 rounded-lg border"
+                        style={{
+                          backgroundColor: colors.background.card,
+                          borderColor: colors.border.light
+                        }}
                       >
                         <div className="flex-1">
-                          <h3 className="font-medium text-white mb-1">
+                          <h3 className="font-medium mb-1" style={{ color: colors.text.primary }}>
                             {setting.label}
                           </h3>
-                          <p className="text-sm text-white/70">
+                          <p className="text-sm" style={{ color: colors.text.secondary }}>
                             {setting.description}
                           </p>
                         </div>
@@ -425,7 +455,10 @@ const Settings = () => {
                               value={setting.value}
                               onChange={handleInputChange}
                               placeholder={setting.placeholder}
-                              className="px-3 py-2 rounded-lg bg-white/10 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-sky-400/50 w-64"
+                              className="px-3 py-2 rounded-lg w-64 transition-all duration-200"
+                              style={getInputStyles()}
+                              onFocus={(e) => Object.assign(e.target.style, getInputStyles(true))}
+                              onBlur={(e) => Object.assign(e.target.style, getInputStyles(false))}
                             />
                           )}
                           
@@ -436,7 +469,10 @@ const Settings = () => {
                               onChange={handleInputChange}
                               placeholder={setting.placeholder}
                               rows={3}
-                              className="px-3 py-2 rounded-lg bg-white/10 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-sky-400/50 w-64 resize-vertical"
+                              className="px-3 py-2 rounded-lg w-64 resize-vertical transition-all duration-200"
+                              style={getInputStyles()}
+                              onFocus={(e) => Object.assign(e.target.style, getInputStyles(true))}
+                              onBlur={(e) => Object.assign(e.target.style, getInputStyles(false))}
                             />
                           )}
                           
@@ -446,10 +482,13 @@ const Settings = () => {
                             <select
                               value={setting.value}
                               onChange={(e) => setting.onChange(e.target.value)}
-                              className="px-3 py-2 rounded-lg bg-white/10 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-sky-400/50 w-48"
+                              className="px-3 py-2 rounded-lg w-48 transition-all duration-200"
+                              style={getInputStyles()}
+                              onFocus={(e) => Object.assign(e.target.style, getInputStyles(true))}
+                              onBlur={(e) => Object.assign(e.target.style, getInputStyles(false))}
                             >
                               {setting.options?.map((option) => (
-                                <option key={option.value} value={option.value} className="bg-slate-800">
+                                <option key={option.value} value={option.value} style={{ backgroundColor: colors.background.secondary }}>
                                   {option.label}
                                 </option>
                               ))}
@@ -468,7 +507,26 @@ const Settings = () => {
               <button 
                 onClick={handleSave}
                 disabled={isSaving}
-                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-sky-500 to-purple-500 hover:from-sky-600 hover:to-purple-600 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="flex items-center gap-2 px-6 py-3 font-medium rounded-lg shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                style={
+                  isSaving 
+                    ? getButtonStyles('primary', true)
+                    : getButtonStyles('primary')
+                }
+                onMouseEnter={!isSaving ? (e) => {
+                  Object.assign(e.target.style, {
+                    background: colors.button.primary.backgroundHover,
+                    transform: 'scale(1.05)',
+                    boxShadow: `0 20px 25px -5px ${colors.shadow.xl}, 0 10px 10px -5px ${colors.shadow.lg}`
+                  });
+                } : undefined}
+                onMouseLeave={!isSaving ? (e) => {
+                  Object.assign(e.target.style, {
+                    background: colors.button.primary.background,
+                    transform: 'scale(1)',
+                    boxShadow: `0 10px 15px -3px ${colors.shadow.lg}, 0 4px 6px -2px ${colors.shadow.default}`
+                  });
+                } : undefined}
               >
                 <Save size={18} />
                 {isSaving ? 'Saving...' : 'Save Changes'}

@@ -1,5 +1,6 @@
 import { useState, useContext } from 'react';
 import { UserContext } from '../context/UserContext';
+import { colors } from '../styles/colors';
 
 export default function ProfileForm({ user }) {
   const [formData, setFormData] = useState({
@@ -42,6 +43,13 @@ export default function ProfileForm({ user }) {
         onChange={handleChange}
         placeholder="Name"
         className="w-full p-2 mb-4 border rounded"
+        style={{
+          backgroundColor: colors.input.background,
+          borderColor: colors.input.border,
+          color: colors.input.text
+        }}
+        onFocus={(e) => e.target.style.borderColor = colors.input.borderFocus}
+        onBlur={(e) => e.target.style.borderColor = colors.input.border}
       />
       <input
         name="university"
@@ -49,6 +57,13 @@ export default function ProfileForm({ user }) {
         onChange={handleChange}
         placeholder="University"
         className="w-full p-2 mb-4 border rounded"
+        style={{
+          backgroundColor: colors.input.background,
+          borderColor: colors.input.border,
+          color: colors.input.text
+        }}
+        onFocus={(e) => e.target.style.borderColor = colors.input.borderFocus}
+        onBlur={(e) => e.target.style.borderColor = colors.input.border}
       />
       <input
         name="domain"
@@ -56,6 +71,13 @@ export default function ProfileForm({ user }) {
         onChange={handleChange}
         placeholder="Research Domain"
         className="w-full p-2 mb-4 border rounded"
+        style={{
+          backgroundColor: colors.input.background,
+          borderColor: colors.input.border,
+          color: colors.input.text
+        }}
+        onFocus={(e) => e.target.style.borderColor = colors.input.borderFocus}
+        onBlur={(e) => e.target.style.borderColor = colors.input.border}
       />
       <input
         name="scholarLink"
@@ -63,6 +85,13 @@ export default function ProfileForm({ user }) {
         onChange={handleChange}
         placeholder="Google Scholar Link"
         className="w-full p-2 mb-4 border rounded"
+        style={{
+          backgroundColor: colors.input.background,
+          borderColor: colors.input.border,
+          color: colors.input.text
+        }}
+        onFocus={(e) => e.target.style.borderColor = colors.input.borderFocus}
+        onBlur={(e) => e.target.style.borderColor = colors.input.border}
       />
       <input
         name="githubLink"
@@ -70,6 +99,13 @@ export default function ProfileForm({ user }) {
         onChange={handleChange}
         placeholder="GitHub Link"
         className="w-full p-2 mb-4 border rounded"
+        style={{
+          backgroundColor: colors.input.background,
+          borderColor: colors.input.border,
+          color: colors.input.text
+        }}
+        onFocus={(e) => e.target.style.borderColor = colors.input.borderFocus}
+        onBlur={(e) => e.target.style.borderColor = colors.input.border}
       />
       <input
         name="keywords"
@@ -77,8 +113,24 @@ export default function ProfileForm({ user }) {
         onChange={handleChange}
         placeholder="Keywords (comma-separated)"
         className="w-full p-2 mb-4 border rounded"
+        style={{
+          backgroundColor: colors.input.background,
+          borderColor: colors.input.border,
+          color: colors.input.text
+        }}
+        onFocus={(e) => e.target.style.borderColor = colors.input.borderFocus}
+        onBlur={(e) => e.target.style.borderColor = colors.input.border}
       />
-      <button type="submit" className="w-full p-2 bg-blue-500 text-white rounded">
+      <button 
+        type="submit" 
+        className="w-full p-2 rounded transition-colors"
+        style={{
+          backgroundColor: colors.button.primary.background,
+          color: colors.button.primary.text
+        }}
+        onMouseEnter={(e) => e.target.style.backgroundColor = colors.primary.blue[600]}
+        onMouseLeave={(e) => e.target.style.backgroundColor = colors.button.primary.background}
+      >
         Update Profile
       </button>
     </form>

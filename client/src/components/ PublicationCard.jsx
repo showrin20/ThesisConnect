@@ -1,5 +1,6 @@
 import React from 'react';
 import { ExternalLink } from 'lucide-react';
+import { colors } from '../styles/colors';
 
 const PublicationCard = ({
   title,
@@ -31,25 +32,48 @@ const PublicationCard = ({
 
   return (
     <div className="relative group">
-      <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-blue-600/10 rounded-xl blur-sm group-hover:blur-none transition-all duration-300"></div>
-      <div className="relative bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-[1.02]">
-        <h3 className="text-white font-semibold text-lg group-hover:text-sky-400 transition-colors duration-300 mb-2">
+      <div 
+        className="absolute inset-0 rounded-xl blur-sm group-hover:blur-none transition-all duration-300"
+        style={{
+          background: `linear-gradient(to right, ${colors.primary.purple[600]}1A, ${colors.primary.blue[600]}1A)`
+        }}
+      ></div>
+      <div 
+        className="relative backdrop-blur-lg rounded-xl p-6 border hover:scale-[1.02] transition-all duration-300"
+        style={{
+          backgroundColor: colors.background.glass,
+          borderColor: colors.border.secondary
+        }}
+        onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.background.glass}CC`}
+        onMouseLeave={(e) => e.target.style.backgroundColor = colors.background.glass}
+      >
+        <h3 
+          className="font-semibold text-lg mb-2 transition-colors duration-300"
+          style={{ color: colors.text.primary }}
+          onMouseEnter={(e) => e.target.style.color = colors.primary.blue[400]}
+          onMouseLeave={(e) => e.target.style.color = colors.text.primary}
+        >
           {title}
         </h3>
-        <div className="text-xs text-white/60 mb-2 italic">
+        <div className="text-xs mb-2 italic" style={{ color: `${colors.text.secondary}99` }}>
           {formattedAuthors} {year ? `| ${year}` : ''}
         </div>
-        <div className="text-xs text-white/50 mb-3">
+        <div className="text-xs mb-3" style={{ color: `${colors.text.secondary}80` }}>
           {venue || 'Unknown Venue'}
         </div>
         {shortAbstract && (
-          <p className="text-white/70 text-sm mb-4 line-clamp-3">{shortAbstract}</p>
+          <p className="text-sm mb-4 line-clamp-3" style={{ color: `${colors.text.secondary}B3` }}>{shortAbstract}</p>
         )}
         <div className="flex flex-wrap gap-2 mb-4">
           {tags && tags.map((tag, i) => (
             <span
               key={i}
-              className="px-2 py-1 bg-green-500/20 text-green-300 rounded-md text-xs font-medium border border-green-500/30"
+              className="px-2 py-1 rounded-md text-xs font-medium border"
+              style={{
+                backgroundColor: `${colors.accent.green[500]}33`,
+                color: colors.accent.green[800],
+                borderColor: `${colors.accent.green[500]}4D`
+              }}
             >
               {tag}
             </span>
@@ -61,13 +85,20 @@ const PublicationCard = ({
               href={publicationLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 px-3 py-1 bg-green-500/20 text-green-400 border border-green-500/30 rounded-lg hover:bg-green-500/30 transition-all duration-200 text-xs font-medium"
+              className="flex items-center gap-1 px-3 py-1 border rounded-lg transition-all duration-200 text-xs font-medium"
+              style={{
+                backgroundColor: `${colors.accent.green[500]}33`,
+                color: colors.accent.green[800],
+                borderColor: `${colors.accent.green[500]}4D`
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.accent.green[500]}4D`}
+              onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.accent.green[500]}33`}
             >
               <span>View Publication</span>
               <ExternalLink size={12} />
             </a>
           ) : (
-            <span className="text-xs text-gray-400 italic">No link available</span>
+            <span className="text-xs italic" style={{ color: colors.text.disabled }}>No link available</span>
           )}
         </div>
       </div>

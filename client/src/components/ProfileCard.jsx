@@ -25,7 +25,9 @@ const ProfileCard = () => {
             {user.name?.[0]?.toUpperCase() || <User size={24} />}
           </div>
           <div>
-            <h3 className="text-white font-semibold text-lg">{user.name}</h3>
+            <h3 className="text-white font-semibold text-lg">
+              {user.name}
+            </h3>
             <p className="text-white/70 text-sm flex items-center gap-1">
               <MapPin size={14} />
               {user.university}
@@ -42,14 +44,24 @@ const ProfileCard = () => {
 
           <div className="flex items-center gap-2">
             <Globe2 size={16} />
-            <a href={user.scholarLink} target="_blank" rel="noreferrer" className="underline text-blue-300">
+            <a 
+              href={user.scholarLink} 
+              target="_blank" 
+              rel="noreferrer" 
+              className="underline text-blue-300 hover:text-blue-200 transition-colors"
+            >
               Google Scholar
             </a>
           </div>
 
           <div className="flex items-center gap-2">
             <GitBranch size={16} />
-            <a href={user.githubLink} target="_blank" rel="noreferrer" className="underline text-green-300">
+            <a 
+              href={user.githubLink} 
+              target="_blank" 
+              rel="noreferrer" 
+              className="underline text-green-300 hover:text-green-200 transition-colors"
+            >
               GitHub
             </a>
           </div>
@@ -62,7 +74,10 @@ const ProfileCard = () => {
           {user.keywords?.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">
               {user.keywords.map((kw, idx) => (
-                <span key={idx} className="bg-white/20 text-white/80 px-2 py-1 text-xs rounded-md">
+                <span 
+                  key={idx} 
+                  className="bg-white/20 text-white/80 px-2 py-1 text-xs rounded-md"
+                >
                   {kw}
                 </span>
               ))}

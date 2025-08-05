@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { FaUserPlus, FaSignInAlt, FaGraduationCap } from "react-icons/fa";
 import { colors } from '../styles/colors';
+import { getButtonStyles, getHoverEffects } from '../styles/styleUtils';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -62,17 +63,23 @@ const Navbar = () => {
             </Link>
             <Link 
               to="/publications" 
-              className="relative text-gray-300 hover:text-white transition-all duration-300 group font-medium"
+              className="relative transition-all duration-300 group font-medium"
+              style={{ color: colors.text.secondary }}
+              onMouseEnter={(e) => e.target.style.color = colors.text.primary}
+              onMouseLeave={(e) => e.target.style.color = colors.text.secondary}
             >
               Publications
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-400 to-purple-400 group-hover:w-full transition-all duration-300"></span>
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 group-hover:w-full transition-all duration-300" style={{ background: colors.gradients.brand.primary }}></span>
             </Link>
             <Link 
               to="/resources" 
-              className="relative text-gray-300 hover:text-white transition-all duration-300 group font-medium"
+              className="relative transition-all duration-300 group font-medium"
+              style={{ color: colors.text.secondary }}
+              onMouseEnter={(e) => e.target.style.color = colors.text.primary}
+              onMouseLeave={(e) => e.target.style.color = colors.text.secondary}
             >
               Blog
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-400 to-purple-400 group-hover:w-full transition-all duration-300"></span>
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 group-hover:w-full transition-all duration-300" style={{ background: colors.gradients.brand.primary }}></span>
             </Link>
           </div>
 
@@ -80,14 +87,42 @@ const Navbar = () => {
           <div className="hidden md:flex space-x-3">
             <Link 
               to="/signup" 
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-full flex items-center space-x-2 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+              className="px-4 py-2 rounded-full flex items-center space-x-2 transition-all duration-300 shadow-lg font-medium"
+              style={getButtonStyles('primary')}
+              onMouseEnter={(e) => {
+                Object.assign(e.target.style, {
+                  background: colors.button.primary.backgroundHover,
+                  ...getHoverEffects.scale
+                });
+              }}
+              onMouseLeave={(e) => {
+                Object.assign(e.target.style, {
+                  background: colors.button.primary.background,
+                  transform: 'scale(1)'
+                });
+              }}
             >
               <FaUserPlus className="text-sm" />
               <span className="font-medium">Sign Up</span>
             </Link>
             <Link 
               to="/login" 
-              className="border-2 border-purple-400 text-purple-400 hover:bg-purple-400 hover:text-white px-4 py-2 rounded-full flex items-center space-x-2 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+              className="px-4 py-2 rounded-full flex items-center space-x-2 transition-all duration-300 shadow-lg font-medium"
+              style={getButtonStyles('secondary')}
+              onMouseEnter={(e) => {
+                Object.assign(e.target.style, {
+                  backgroundColor: colors.button.secondary.backgroundHover,
+                  color: colors.button.secondary.textHover,
+                  ...getHoverEffects.scale
+                });
+              }}
+              onMouseLeave={(e) => {
+                Object.assign(e.target.style, {
+                  backgroundColor: colors.button.secondary.background,
+                  color: colors.button.secondary.text,
+                  transform: 'scale(1)'
+                });
+              }}
             >
               <FaSignInAlt className="text-sm" />
               <span className="font-medium">Login</span>
@@ -97,7 +132,19 @@ const Navbar = () => {
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center">
             <button
-              className="text-gray-300 hover:text-white p-2 rounded-lg hover:bg-white/10 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
+              className="p-2 rounded-lg transition-all duration-300 focus:outline-none focus:ring-2"
+              style={{ 
+                color: colors.text.secondary,
+                focusRingColor: colors.primary.purple[400]
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.color = colors.text.primary;
+                e.target.style.backgroundColor = colors.background.glass;
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.color = colors.text.secondary;
+                e.target.style.backgroundColor = 'transparent';
+              }}
               onClick={toggleMenu}
               aria-label="Toggle menu"
               aria-expanded={isOpen}
@@ -125,48 +172,98 @@ const Navbar = () => {
 
         {/* Mobile Dropdown Menu */}
         {isOpen && (
-          <div className="md:hidden absolute top-full left-0 right-0 bg-gradient-to-r from-slate-800 via-purple-800 to-slate-800 rounded-b-lg shadow-2xl border-t border-purple-500/20 backdrop-blur-md">
+          <div className="md:hidden absolute top-full left-0 right-0 rounded-b-lg shadow-2xl border-t backdrop-blur-md" 
+               style={{ 
+                 background: colors.gradients.background.hero,
+                 borderColor: `${colors.primary.purple[500]}33` // 20% opacity
+               }}>
             <div className="p-4 space-y-1">
               <Link
                 to="/"
-                className="block text-gray-300 hover:text-white hover:bg-white/10 px-4 py-3 rounded-lg transition-all duration-300 text-center"
+                className="block px-4 py-3 rounded-lg transition-all duration-300 text-center"
+                style={{ color: colors.text.secondary }}
+                onMouseEnter={(e) => {
+                  e.target.style.color = colors.text.primary;
+                  e.target.style.backgroundColor = colors.background.glass;
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.color = colors.text.secondary;
+                  e.target.style.backgroundColor = 'transparent';
+                }}
                 onClick={toggleMenu}
               >
                 🏠 Home
               </Link>
               <Link
                 to="/dashboard"
-                className="block text-gray-300 hover:text-white hover:bg-white/10 px-4 py-3 rounded-lg transition-all duration-300 text-center"
+                className="block px-4 py-3 rounded-lg transition-all duration-300 text-center"
+                style={{ color: colors.text.secondary }}
+                onMouseEnter={(e) => {
+                  e.target.style.color = colors.text.primary;
+                  e.target.style.backgroundColor = colors.background.glass;
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.color = colors.text.secondary;
+                  e.target.style.backgroundColor = 'transparent';
+                }}
                 onClick={toggleMenu}
               >
                 📊 Dashboard
               </Link>
               <Link
                 to="/explore"
-                className="block text-gray-300 hover:text-white hover:bg-white/10 px-4 py-3 rounded-lg transition-all duration-300 text-center"
+                className="block px-4 py-3 rounded-lg transition-all duration-300 text-center"
+                style={{ color: colors.text.secondary }}
+                onMouseEnter={(e) => {
+                  e.target.style.color = colors.text.primary;
+                  e.target.style.backgroundColor = colors.background.glass;
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.color = colors.text.secondary;
+                  e.target.style.backgroundColor = 'transparent';
+                }}
                 onClick={toggleMenu}
               >
                 🔍 Explore
               </Link>
               <Link
                 to="/publications"
-                className="block text-gray-300 hover:text-white hover:bg-white/10 px-4 py-3 rounded-lg transition-all duration-300 text-center"
+                className="block px-4 py-3 rounded-lg transition-all duration-300 text-center"
+                style={{ color: colors.text.secondary }}
+                onMouseEnter={(e) => {
+                  e.target.style.color = colors.text.primary;
+                  e.target.style.backgroundColor = colors.background.glass;
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.color = colors.text.secondary;
+                  e.target.style.backgroundColor = 'transparent';
+                }}
                 onClick={toggleMenu}
               >
                 📚 Publications
               </Link>
               <Link
                 to="/resources"
-                className="block text-gray-300 hover:text-white hover:bg-white/10 px-4 py-3 rounded-lg transition-all duration-300 text-center"
+                className="block px-4 py-3 rounded-lg transition-all duration-300 text-center"
+                style={{ color: colors.text.secondary }}
+                onMouseEnter={(e) => {
+                  e.target.style.color = colors.text.primary;
+                  e.target.style.backgroundColor = colors.background.glass;
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.color = colors.text.secondary;
+                  e.target.style.backgroundColor = 'transparent';
+                }}
                 onClick={toggleMenu}
               >
                 📝 Blog
               </Link>
-              <hr className="border-purple-500/30 my-3" />
+              <hr className="my-3" style={{ borderColor: `${colors.primary.purple[500]}4D` }} />
               <div className="space-y-2">
                 <Link
                   to="/signup"
-                  className="block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3 rounded-lg text-center transition-all duration-300 shadow-lg font-medium"
+                  className="block px-4 py-3 rounded-lg text-center transition-all duration-300 shadow-lg font-medium"
+                  style={getButtonStyles('primary')}
                   onClick={toggleMenu}
                 >
                   <FaUserPlus className="inline-block mr-2 text-sm" />
@@ -174,7 +271,16 @@ const Navbar = () => {
                 </Link>
                 <Link
                   to="/login"
-                  className="block border-2 border-purple-400 text-purple-400 hover:bg-purple-400 hover:text-white px-4 py-3 rounded-lg text-center transition-all duration-300 font-medium"
+                  className="block px-4 py-3 rounded-lg text-center transition-all duration-300 font-medium"
+                  style={getButtonStyles('secondary')}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = colors.button.secondary.backgroundHover;
+                    e.target.style.color = colors.button.secondary.textHover;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = colors.button.secondary.background;
+                    e.target.style.color = colors.button.secondary.text;
+                  }}
                   onClick={toggleMenu}
                 >
                   <FaSignInAlt className="inline-block mr-2 text-sm" />

@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { FaSearch, FaUsers, FaBook } from "react-icons/fa";
 import { colors } from '../styles/colors';
+import { getButtonStyles } from '../styles/styleUtils';
 
 export default function Home() {
   return (
@@ -25,36 +26,23 @@ export default function Home() {
             <div className="flex space-x-4">
               <Link
                 to="/explore"
-                className="relative font-medium px-6 py-3 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                className="font-medium px-6 py-3 rounded-full shadow-lg hover:bg-gradient-to-r hover:from-blue-600 hover:to-blue-800 transform hover:scale-105 transition-all duration-300"
                 style={{ 
                   background: colors.gradients.brand.dark,
                   color: colors.text.primary 
                 }}
-                onMouseEnter={(e) => e.target.style.background = colors.gradients.brand.darkHover}
-                onMouseLeave={(e) => e.target.style.background = colors.gradients.brand.dark}
               >
                 Explore Projects
-                <span className="absolute inset-0 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-300" style={{ border: `1px solid ${colors.border.blue}` }}></span>
               </Link>
               <Link
                 to="/signup"
-                className="relative font-medium px-6 py-3 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 border-2"
+                className="font-medium px-6 py-3 rounded-full shadow-lg border-2 border-purple-400 hover:bg-purple-100 hover:text-gray-900 transform hover:scale-105 transition-all duration-300"
                 style={{ 
-                  borderColor: colors.primary.purple[400],
                   color: colors.primary.purple[400],
                   backgroundColor: 'transparent'
                 }}
-                onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = colors.primary.purple[400];
-                  e.target.style.color = colors.text.primary;
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = 'transparent';
-                  e.target.style.color = colors.primary.purple[400];
-                }}
               >
                 Get Started
-                <span className="absolute inset-0 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-300" style={{ border: `1px solid ${colors.border.purple}` }}></span>
               </Link>
             </div>
           </div>
@@ -79,7 +67,9 @@ export default function Home() {
           Why ThesisConnect?
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="card shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300" style={{ 
+          <div className="card shadow-xl hover:shadow-2xl transform hover:-translate-y-
+
+1 transition-all duration-300" style={{ 
             backgroundColor: colors.background.secondary,
             color: colors.text.secondary 
           }}>
@@ -142,16 +132,10 @@ export default function Home() {
         <p className="mb-6 text-lg" style={{ color: colors.text.secondary }}>Join ThesisConnect today and take the first step towards impactful research.</p>
         <Link
           to="/signup"
-          className="relative btn btn-lg border-none rounded-full px-8 py-3 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
-          style={{ 
-            backgroundColor: colors.text.primary,
-            color: colors.primary.purple[600] 
-          }}
-          onMouseEnter={(e) => e.target.style.backgroundColor = colors.text.secondary}
-          onMouseLeave={(e) => e.target.style.backgroundColor = colors.text.primary}
+          className="btn btn-lg border-none rounded-full px-8 py-3 shadow-lg hover:bg-gradient-to-r hover:from-purple-600 hover:to-purple-800 transform hover:scale-105 transition-all duration-300"
+          style={getButtonStyles('primary')}
         >
           Join Now
-          <span className="absolute inset-0 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-300" style={{ border: `1px solid ${colors.border.purple}` }}></span>
         </Link>
       </section>
     </div>

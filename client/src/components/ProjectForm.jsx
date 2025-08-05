@@ -181,7 +181,7 @@ const handleSubmit = async (e) => {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="title" className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>
             Project Title *
           </label>
           <input
@@ -191,12 +191,15 @@ const handleSubmit = async (e) => {
             onChange={handleChange}
             placeholder="Enter your project title..."
             required
-            className="w-full p-3 bg-slate-800/50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all"
+            className="w-full p-3 rounded-lg transition-all duration-200"
+            style={getInputStyles()}
+            onFocus={(e) => Object.assign(e.target.style, getInputStyles(true))}
+            onBlur={(e) => Object.assign(e.target.style, getInputStyles(false))}
           />
         </div>
 
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="description" className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>
             Project Description *
           </label>
           <textarea
@@ -207,12 +210,15 @@ const handleSubmit = async (e) => {
             placeholder="Describe your project goals, methodology, and expected outcomes..."
             required
             rows={5}
-            className="w-full p-3 bg-slate-800/50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all resize-none"
+            className="w-full p-3 rounded-lg transition-all duration-200 resize-none"
+            style={getInputStyles()}
+            onFocus={(e) => Object.assign(e.target.style, getInputStyles(true))}
+            onBlur={(e) => Object.assign(e.target.style, getInputStyles(false))}
           />
         </div>
 
         <div>
-          <label htmlFor="link" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="link" className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>
             Project Link
           </label>
           <input
@@ -222,26 +228,32 @@ const handleSubmit = async (e) => {
             value={formData.link}
             onChange={handleChange}
             placeholder="https://example.com/your-project-report-or-blog"
-            className="w-full p-3 bg-slate-800/50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all"
+            className="w-full p-3 rounded-lg transition-all duration-200"
+            style={getInputStyles()}
+            onFocus={(e) => Object.assign(e.target.style, getInputStyles(true))}
+            onBlur={(e) => Object.assign(e.target.style, getInputStyles(false))}
           />
-          <p className="text-gray-400 text-xs mt-1">
+          <p className="text-xs mt-1" style={{ color: colors.text.muted }}>
             Provide a link to your project report, blog post, GitHub repository, or documentation
           </p>
         </div>
 
         {/* Thesis Draft Section */}
-        <div className="border border-gray-600 rounded-lg p-4 bg-slate-800/30">
-          <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+        <div className="border rounded-lg p-4" style={{ 
+          borderColor: colors.border.secondary, 
+          backgroundColor: colors.background.card 
+        }}>
+          <h3 className="text-lg font-medium mb-4 flex items-center gap-2" style={{ color: colors.text.primary }}>
             <FileText size={20} />
             Project Report
           </h3>
-          <p className="text-gray-400 text-sm mb-4">
-  You must provide either a Project Link or a Project Report (PDF upload or external link). One is required.
-</p>
+          <p className="text-sm mb-4" style={{ color: colors.text.muted }}>
+            You must provide either a Project Link or a Project Report (PDF upload or external link). One is required.
+          </p>
           <div className="space-y-4">
             {/* File Upload */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>
                 Upload PDF Draft
               </label>
               <div className="relative">
@@ -254,28 +266,43 @@ const handleSubmit = async (e) => {
                 />
                 <label
                   htmlFor="thesis-file"
-                  className="flex items-center justify-center w-full p-4 border-2 border-dashed border-gray-600 rounded-lg cursor-pointer hover:border-sky-400 hover:bg-slate-800/50 transition-all"
+                  className="flex items-center justify-center w-full p-4 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200"
+                  style={{ 
+                    borderColor: colors.border.primary,
+                    backgroundColor: colors.background.glass
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.borderColor = colors.primary.blue[400];
+                    e.target.style.backgroundColor = colors.background.card;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.borderColor = colors.border.primary;
+                    e.target.style.backgroundColor = colors.background.glass;
+                  }}
                 >
                   <div className="text-center">
-                    <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                    <span className="text-sm text-gray-300">
+                    <Upload className="mx-auto h-8 w-8 mb-2" style={{ color: colors.icon.secondary }} />
+                    <span className="text-sm" style={{ color: colors.text.secondary }}>
                       {selectedFile ? 'Change PDF file' : 'Click to upload PDF file'}
                     </span>
-                    <p className="text-xs text-gray-500 mt-1">PDF files only, max 10MB</p>
+                    <p className="text-xs mt-1" style={{ color: colors.text.muted }}>PDF files only, max 10MB</p>
                   </div>
                 </label>
               </div>
               
               {selectedFile && (
-                <div className="mt-2 flex items-center justify-between bg-slate-700 p-2 rounded">
-                  <span className="text-sm text-white flex items-center gap-2">
+                <div className="mt-2 flex items-center justify-between p-2 rounded" style={{ backgroundColor: colors.background.tertiary }}>
+                  <span className="text-sm flex items-center gap-2" style={{ color: colors.text.primary }}>
                     <FileText size={16} />
                     {selectedFile.name} ({(selectedFile.size / (1024 * 1024)).toFixed(2)} MB)
                   </span>
                   <button
                     type="button"
                     onClick={removeFile}
-                    className="text-red-400 hover:text-red-300"
+                    className="transition-colors duration-200"
+                    style={{ color: colors.status.error.text }}
+                    onMouseEnter={(e) => e.target.style.color = colors.accent.red[300]}
+                    onMouseLeave={(e) => e.target.style.color = colors.status.error.text}
                   >
                     <X size={16} />
                   </button>
@@ -283,11 +310,11 @@ const handleSubmit = async (e) => {
               )}
             </div>
 
-            <div className="text-center text-gray-400 text-sm">OR</div>
+            <div className="text-center text-sm" style={{ color: colors.text.muted }}>OR</div>
 
             {/* External Link */}
             <div>
-              <label htmlFor="thesisDraft.externalLink" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="thesisDraft.externalLink" className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>
                 External Link to Project Report
               </label>
               <input
@@ -297,16 +324,19 @@ const handleSubmit = async (e) => {
                 value={formData.thesisDraft.externalLink}
                 onChange={handleChange}
                 placeholder="https://drive.google.com/... or https://dropbox.com/..."
-                className="w-full p-3 bg-slate-800/50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all"
+                className="w-full p-3 rounded-lg transition-all duration-200"
+                style={getInputStyles()}
+                onFocus={(e) => Object.assign(e.target.style, getInputStyles(true))}
+                onBlur={(e) => Object.assign(e.target.style, getInputStyles(false))}
               />
-              <p className="text-gray-400 text-xs mt-1">
+              <p className="text-xs mt-1" style={{ color: colors.text.muted }}>
                 Link to Google Drive, Dropbox, or other cloud storage
               </p>
             </div>
 
             {/* Draft Description */}
             <div>
-              <label htmlFor="thesisDraft.description" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="thesisDraft.description" className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>
                 Draft Description
               </label>
               <textarea
@@ -316,14 +346,17 @@ const handleSubmit = async (e) => {
                 onChange={handleChange}
                 placeholder="Brief description of the thesis draft, version notes, or current status..."
                 rows={3}
-                className="w-full p-3 bg-slate-800/50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all resize-none"
+                className="w-full p-3 rounded-lg transition-all duration-200 resize-none"
+                style={getInputStyles()}
+                onFocus={(e) => Object.assign(e.target.style, getInputStyles(true))}
+                onBlur={(e) => Object.assign(e.target.style, getInputStyles(false))}
               />
             </div>
           </div>
         </div>
 
         <div>
-          <label htmlFor="tags" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="tags" className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>
             Research Tags
           </label>
           <input
@@ -332,20 +365,36 @@ const handleSubmit = async (e) => {
             value={formData.tags}
             onChange={handleChange}
             placeholder="e.g., Machine Learning, Climate Science, Data Analysis"
-            className="w-full p-3 bg-slate-800/50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all"
+            className="w-full p-3 rounded-lg transition-all duration-200"
+            style={getInputStyles()}
+            onFocus={(e) => Object.assign(e.target.style, getInputStyles(true))}
+            onBlur={(e) => Object.assign(e.target.style, getInputStyles(false))}
           />
-          <p className="text-gray-400 text-xs mt-1">Separate multiple tags with commas</p>
+          <p className="text-xs mt-1" style={{ color: colors.text.muted }}>Separate multiple tags with commas</p>
         </div>
 
         <div className="flex gap-3 pt-4">
           <button
             type="submit"
             disabled={loading || !isFormValid()}
-            className={`flex-1 py-3 px-6 rounded-lg font-medium transition-all duration-200 ${
+            className="flex-1 py-3 px-6 rounded-lg font-medium transition-all duration-200"
+            style={
               loading || !isFormValid()
-                ? 'bg-gray-600 cursor-not-allowed text-gray-400'
-                : 'bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02]'
-            }`}
+                ? getButtonStyles('primary', true)
+                : getButtonStyles('primary')
+            }
+            onMouseEnter={!loading && isFormValid() ? (e) => {
+              Object.assign(e.target.style, {
+                background: colors.button.primary.backgroundHover,
+                transform: 'scale(1.02)'
+              });
+            } : undefined}
+            onMouseLeave={!loading && isFormValid() ? (e) => {
+              Object.assign(e.target.style, {
+                background: colors.button.primary.background,
+                transform: 'scale(1)'
+              });
+            } : undefined}
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">

@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import RoleBasedDashboard from './components/RoleBasedDashboard';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
@@ -8,6 +9,8 @@ import Explore from './pages/Explore';
 import ProjectHub from './pages/ProjectHub';
 import Publications from './pages/Publication';
 import Dashboard from './pages/Dashboard';
+import MentorDashboard from './pages/MentorDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import Settings from './pages/Settings';
 import Auth from './components/Auth';
 import MyProjects from './pages/MyProjects';  
@@ -20,6 +23,8 @@ import { colors } from './styles/colors';
 function AppContent() {
   const location = useLocation();
   const hideNavbar = location.pathname === '/dashboard' || 
+                     location.pathname === '/mentor-dashboard' ||
+                     location.pathname === '/admin-dashboard' ||
                      location.pathname === '/settings' || 
                      location.pathname === '/profile' || 
                      location.pathname === '/my-projects' ||
@@ -35,7 +40,17 @@ function AppContent() {
           <Route path="/signup" element={<Auth isSignup={true} />} />
           <Route path="/dashboard" element={
             <ProtectedRoute>
-              <Dashboard />
+              <RoleBasedDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/mentor-dashboard" element={
+            <ProtectedRoute requiredRole="mentor">
+              <MentorDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin-dashboard" element={
+            <ProtectedRoute requiredRole="admin">
+              <AdminDashboard />
             </ProtectedRoute>
           } />
           <Route path="/settings" element={

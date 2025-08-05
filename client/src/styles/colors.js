@@ -1,188 +1,212 @@
-/**
- * Centralized Color Scheme for ThesisConnect
- * All color values used throughout the application
- */
-
 export const colors = {
-  // Primary Brand Colors
   primary: {
     blue: {
-      50: '#eff6ff',
-      100: '#dbeafe', 
-      200: '#bfdbfe',
-      300: '#93c5fd',
-      400: '#60a5fa', // Main blue
-      500: '#3b82f6',
-      600: '#2563eb', // Primary blue
-      700: '#1d4ed8', // Darker blue
-      800: '#1e40af',
-      900: '#1e3a8a'
+      50: '#f5faff',
+      100: '#e0f2ff',
+      200: '#b9ddff',
+      300: '#7ec2ff',
+      400: '#51a9f7',
+      500: '#2b91ea', // new primary
+      600: '#1e81ce',
+      700: '#1867a8',
+      800: '#145087',
+      900: '#0d375e'
     },
     purple: {
-      50: '#faf5ff',
-      100: '#f3e8ff',
-      200: '#e9d5ff',
-      300: '#d8b4fe',
-      400: '#c084fc', // Main purple
-      500: '#a855f7',
-      600: '#9333ea', // Primary purple
-      700: '#7c3aed',
-      800: '#6b21a8', // Purple-800
-      900: '#581c87' // Purple-900
+      50: '#f9f5ff',
+      100: '#e8ddff',
+      200: '#cbb7ff',
+      300: '#ad90ff',
+      400: '#9771f2',
+      500: '#7f56d9',
+      600: '#6932cc', // new primary purple
+      700: '#5c2db6',
+      800: '#43208a',
+      900: '#2e1462'
     },
     pink: {
-      400: '#f472b6', // Main pink
-      500: '#ec4899',
-      600: '#db2777'
+      400: '#f38cb5',
+      500: '#ec6aa2',
+      600: '#d95091'
     }
   },
 
-  // Background Colors
-  background: {
-    primary: '#0f172a', // slate-900
-    secondary: '#1e293b', // slate-800  
-    tertiary: '#334155', // slate-700
-    dark: '#020617', // slate-950
-    gray: {
-      700: '#374151', // gray-700
-      800: '#1f2937', // gray-800
-      900: '#111827'  // gray-900
+  accent: {
+    green: {
+      300: '#b1e9c4',
+      400: '#6dd3a7',
+      500: '#3cbf90',
+      600: '#1f9c75'
     },
-    card: 'rgba(30, 41, 59, 0.3)', // slate-800/30
-    glass: 'rgba(255, 255, 255, 0.05)', // white/5
-    overlay: 'rgba(0, 0, 0, 0.5)'
+    orange: {
+      300: '#ffddb0',
+      400: '#ffb871',
+      500: '#f78a3c',
+      600: '#dc6825'
+    },
+    red: {
+      300: '#f9b3b3',
+      400: '#f77979',
+      500: '#ec4c4c',
+      600: '#c93030'
+    },
+    yellow: {
+      300: '#fde68a',
+      400: '#facc15',
+      500: '#eab308',
+      600: '#ca8a04'
+    }
   },
 
-  // Text Colors
+  background: {
+    primary: '#ffffff',       // white background
+    secondary: '#f9fafb',     // light gray for cards/sections
+    tertiary: '#e5e7eb',      // soft gray for subtle contrast
+    dark: '#d1d5db',          // light gray, not really dark
+    gray: {
+      700: '#4b5563',
+      800: '#374151',
+      900: '#1f2937'
+    },
+    card: 'rgba(243, 244, 246, 0.7)',   // light glass effect
+    glass: 'rgba(255, 255, 255, 0.6)',  // white glass effect
+    overlay: 'rgba(255, 255, 255, 0.45)'// lighter overlay
+  },
+
+  surface: {
+    primary: '#ffffff',    // white card background
+    secondary: '#f3f4f6',  // light gray card alternative
+    muted: '#e5e7eb'       // subtle backgrounds
+  },
+
   text: {
-    primary: '#ffffff', // white
-    secondary: '#d1d5db', // gray-300
-    muted: '#9ca3af', // gray-400
-    disabled: '#6b7280', // gray-500
-    error: '#fca5a5', // red-300
-    success: '#86efac', // green-300
-    warning: '#fde047', // yellow-300
+    primary: '#1f2937',  // dark gray-800 for main text
+    secondary: '#4b5563',// gray-600
+    muted: '#6b7280',    // gray-500 for disabled/placeholder text
+    disabled: '#9ca3af', // gray-400
+    error: '#ef4444',
+    success: '#22c55e',
+    warning: '#eab308',
     transparent: 'transparent'
   },
 
-  // Border Colors
   border: {
-    primary: '#4b5563', // gray-600
-    secondary: 'rgba(255, 255, 255, 0.1)', // white/10
-    light: 'rgba(255, 255, 255, 0.3)', // white/30
-    blue: 'rgba(96, 165, 250, 0.3)', // blue-400/30
-    purple: 'rgba(192, 132, 252, 0.3)', // purple-400/30
-    error: 'rgba(248, 113, 113, 0.5)', // red-500/50
-    success: 'rgba(34, 197, 94, 0.5)' // green-500/50
+    primary: '#d1d5db', // gray-300
+    secondary: 'rgba(0, 0, 0, 0.1)', // subtle shadow
+    light: 'rgba(0, 0, 0, 0.05)',
+    blue: 'rgba(43, 145, 234, 0.3)', // light blue border
+    purple: 'rgba(127, 86, 217, 0.3)',
+    error: 'rgba(239, 68, 68, 0.3)',
+    success: 'rgba(34, 197, 94, 0.3)'
   },
 
-  // State Colors
   status: {
     error: {
-      background: 'rgba(153, 27, 27, 0.3)', // red-900/30
-      border: 'rgba(248, 113, 113, 0.5)', // red-500/50
-      text: '#fca5a5' // red-300
+      background: 'rgba(239, 68, 68, 0.2)',
+      border: 'rgba(239, 68, 68, 0.4)',
+      text: '#ef4444'
     },
     success: {
-      background: 'rgba(20, 83, 45, 0.3)', // green-900/30
-      border: 'rgba(34, 197, 94, 0.5)', // green-500/50
-      text: '#86efac' // green-300
+      background: 'rgba(34, 197, 94, 0.15)',
+      border: 'rgba(34, 197, 94, 0.4)',
+      text: '#86efac'
     },
     warning: {
-      background: 'rgba(146, 64, 14, 0.3)', // orange-900/30
-      border: 'rgba(251, 146, 60, 0.5)', // orange-500/50
-      text: '#fed7aa' // orange-200
+      background: 'rgba(251, 191, 36, 0.2)',
+      border: 'rgba(251, 191, 36, 0.4)',
+      text: '#fcd34d'
     }
   },
 
-  // Gradient Definitions
   gradients: {
-    // Brand gradients
     brand: {
-      primary: 'linear-gradient(to right, #60a5fa, #c084fc)', // blue-400 to purple-400
-      secondary: 'linear-gradient(to right, #60a5fa, #c084fc, #f472b6)', // blue-400 via purple-400 to pink-400
-      dark: 'linear-gradient(to right, #2563eb, #9333ea)', // blue-600 to purple-600
-      darkHover: 'linear-gradient(to right, #1d4ed8, #7c3aed)' // blue-700 to purple-700
+      primary: 'linear-gradient(90deg, #2b91ea 0%, #7f56d9 100%)',
+      secondary: 'linear-gradient(90deg, #145087 0%, #7f56d9 50%, #ec6aa2 100%)',
+      dark: 'linear-gradient(90deg, #e0f2ff 0%, #ede9fe 100%)',      // softer gradient for light bg
+      darkHover: 'linear-gradient(90deg, #dbeafe 0%, #cbb7ff 100%)'
     },
-    
-    // Background gradients
     background: {
-      main: 'linear-gradient(to bottom, #0f172a, #1f2937)', // slate-900 to gray-800
-      hero: 'linear-gradient(to right, #1e293b, #6b21a8, #1e293b)', // slate-800 via purple-800 to slate-800
-      overlay: 'linear-gradient(to right, rgba(96, 165, 250, 0.2), rgba(192, 132, 252, 0.2))', // blue-400/20 to purple-400/20
-      radial: 'radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.1), transparent 50%)', // sky-400/10
-      page: 'linear-gradient(to bottom right, rgba(88, 28, 135, 0.2), #0f172a, rgba(30, 58, 138, 0.2))' // purple-900/20 via slate-900 to blue-900/20
+      main: 'linear-gradient(180deg, #ffffff, #f9fafb)',               // subtle white gradient bg
+      hero: 'linear-gradient(90deg, #e0f2ff, #ad90ff, #e0f2ff)',
+      overlay: 'linear-gradient(90deg, rgba(43, 145, 234, 0.1), rgba(127, 86, 217, 0.1))',
+      radial: 'radial-gradient(circle at center, rgba(43, 145, 234, 0.1), transparent 70%)',
+      page: 'linear-gradient(135deg, rgba(127, 86, 217, 0.1), #ffffff, rgba(43, 145, 234, 0.1))'
+    },
+    accent: {
+      blue: 'linear-gradient(90deg, #2b91ea, #7ec2ff)',
+      green: 'linear-gradient(90deg, #3cbf90, #b1e9c4)',
+      purple: 'linear-gradient(90deg, #7f56d9, #d8b4fe)',
+      orange: 'linear-gradient(90deg, #f78a3c, #ffddb0)',
+      red: 'linear-gradient(90deg, #ec4c4c, #f9b3b3)',
+      yellow: 'linear-gradient(90deg, #facc15, #fde68a)'
     }
   },
 
-  // Button Colors
   button: {
     primary: {
-      background: 'linear-gradient(to right, #2563eb, #9333ea)',
-      backgroundHover: 'linear-gradient(to right, #1d4ed8, #7c3aed)',
+      background: 'linear-gradient(to right, #2b91ea, #7f56d9)',
+      backgroundHover: 'linear-gradient(to right, #1e81ce, #5c2db6)',
       text: '#ffffff',
       border: 'transparent'
     },
     secondary: {
       background: 'transparent',
-      backgroundHover: '#c084fc',
-      text: '#c084fc',
+      backgroundHover: '#7f56d9',
+      text: '#7f56d9',
       textHover: '#ffffff',
-      border: '#c084fc'
+      border: '#7f56d9'
     },
     outline: {
       background: 'transparent',
-      backgroundHover: 'rgba(255, 255, 255, 0.1)',
-      text: '#d1d5db',
-      textHover: '#ffffff',
-      border: '#4b5563'
+      backgroundHover: 'rgba(127, 86, 217, 0.1)',
+      text: '#7f56d9',
+      textHover: '#5c2db6',
+      border: '#7f56d9'
     },
     danger: {
-      background: '#dc2626',
-      backgroundHover: '#b91c1c',
+      background: '#ec4c4c',
+      backgroundHover: '#c93030',
       text: '#ffffff',
       border: 'transparent'
     },
     success: {
-      background: '#059669',
-      backgroundHover: '#047857',
+      background: '#3cbf90',
+      backgroundHover: '#1f9c75',
       text: '#ffffff',
       border: 'transparent'
     },
     disabled: {
-      background: '#6b7280',
+      background: '#d1d5db',
       text: '#9ca3af',
       border: 'transparent'
     }
   },
 
-  // Form Input Colors
   input: {
-    background: 'rgba(30, 41, 59, 0.5)', // slate-800/50
-    border: '#4b5563', // gray-600
-    borderFocus: '#60a5fa', // blue-400
-    text: '#ffffff',
-    placeholder: '#9ca3af' // gray-400
+    background: 'rgba(243, 244, 246, 0.8)',
+    border: '#d1d5db',
+    borderFocus: '#51a9f7',
+    text: '#1f2937',
+    placeholder: '#6b7280'
   },
 
-  // Icon Colors
   icon: {
-    primary: '#60a5fa', // blue-400
-    secondary: '#9ca3af', // gray-400
-    muted: '#6b7280', // gray-500
-    error: '#f87171', // red-400
-    success: '#4ade80', // green-400
-    warning: '#fbbf24' // amber-400
+    primary: '#2b91ea',
+    secondary: '#6b7280',
+    muted: '#9ca3af',
+    error: '#ec4c4c',
+    success: '#4ade80',
+    warning: '#facc15'
   },
 
-  // Shadow Colors (for box-shadow utilities)
   shadow: {
-    default: 'rgba(0, 0, 0, 0.1)',
-    lg: 'rgba(0, 0, 0, 0.15)',
-    xl: 'rgba(0, 0, 0, 0.25)',
-    '2xl': 'rgba(0, 0, 0, 0.35)'
+    default: 'rgba(0, 0, 0, 0.06)',
+    lg: 'rgba(0, 0, 0, 0.12)',
+    xl: 'rgba(0, 0, 0, 0.18)',
+    '2xl': 'rgba(0, 0, 0, 0.24)'
   }
 };
+
 
 // Utility function to get CSS custom properties
 export const getCSSCustomProperties = () => {

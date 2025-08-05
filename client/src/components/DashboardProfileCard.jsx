@@ -1,10 +1,39 @@
 import React from 'react';
 import { User, MapPin, BookOpen, Users, GraduationCap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../styles/colors';
+import colors from '../styles/colors'; // named export not destructuring
 
 const ProfileCard = ({ userStats = null, loadingStats = false }) => {
   const { user, loading } = useAuth();
+
+  const getRoleBadgeStyle = (role) => {
+    switch (role) {
+      case 'admin':
+        return {
+          backgroundColor: `${colors.accent.red[400]}33`,
+          color: colors.accent.red[300],
+        };
+      case 'mentor':
+        return {
+          backgroundColor: `${colors.primary.blue[500]}33`,
+          color: colors.primary.blue[300],
+        };
+      case 'student':
+        return {
+          backgroundColor: `${colors.accent.green[400]}33`,
+          color: colors.accent.green[300],
+        };
+      default:
+        return {
+          backgroundColor: `${colors.background.gray[700]}33`,
+          color: colors.background.gray[700],
+        };
+    }
+  };
+
+  const displayRole = user?.role
+    ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
+    : 'Unknown';
 
   if (loading) {
     return (
@@ -12,7 +41,7 @@ const ProfileCard = ({ userStats = null, loadingStats = false }) => {
         <div
           className="absolute inset-0 rounded-xl blur-sm"
           style={{
-            background: `linear-gradient(to right, ${colors.primary.purple[600]}20, ${colors.primary.blue[600]}20)`
+            background: `linear-gradient(to right, ${colors.primary.purple[600]}33, ${colors.primary.blue[600]}33)`
           }}
         ></div>
         <div
@@ -45,50 +74,50 @@ const ProfileCard = ({ userStats = null, loadingStats = false }) => {
     );
   }
 
-  // Capitalize role name
-  const displayRole = user?.role
-    ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
-    : 'Unknown';
-
-  // Determine badge styles by role
-  const getRoleBadgeStyle = (role) => {
-    switch (role) {
-      case 'admin':
-        return 'bg-red-500/20 text-red-300';
-      case 'mentor':
-        return 'bg-blue-500/20 text-blue-300';
-      case 'student':
-        return 'bg-green-500/20 text-green-300';
-      default:
-        return 'bg-gray-500/20 text-gray-300';
-    }
-  };
-
   return (
     <div className="relative group">
-      <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20 rounded-xl blur-sm group-hover:blur-none transition-all duration-300"></div>
-      <div className="relative bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300">
+      <div
+        className="absolute inset-0 rounded-xl blur-sm group-hover:blur-none transition-all duration-300"
+        style={{
+          background: `linear-gradient(to right, ${colors.primary.purple[600]}33, ${colors.primary.blue[600]}33)`
+        }}
+      ></div>
+      <div
+        className="relative rounded-xl p-6 hover:scale-105 transition-all duration-300"
+        style={{
+          backgroundColor: colors.background.glass,
+          backdropFilter: 'blur(16px)',
+          border: `1px solid ${colors.border.secondary}`
+        }}
+      >
         <div className="flex items-center mb-4">
-          <div className="w-16 h-16 bg-gradient-to-r from-sky-400 to-purple-400 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center font-bold text-xl mr-4"
+            style={{
+              background: `linear-gradient(to right, ${colors.primary.blue[400]}, ${colors.primary.purple[400]})`,
+              color: colors.text.primary
+            }}
+          >
             {user?.name ? user.name.charAt(0).toUpperCase() : <User size={24} />}
           </div>
           <div>
-            <h3 className="text-white font-semibold text-lg">
+            <h3 className="font-semibold text-lg" style={{ color: colors.text.primary }}>
               {user?.name || 'User'}
             </h3>
-            <p className="text-white/70 text-sm flex items-center gap-1">
+            <p className="text-sm flex items-center gap-1" style={{ color: colors.text.secondary }}>
               <MapPin size={14} />
               {user?.university || 'University not specified'}
             </p>
             {user?.domain && (
-              <p className="text-white/60 text-xs flex items-center gap-1 mt-1">
+              <p className="text-xs flex items-center gap-1 mt-1" style={{ color: colors.text.muted }}>
                 <GraduationCap size={12} />
                 {user.domain}
               </p>
             )}
             <div className="flex items-center gap-1 mt-1">
               <span
-                className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleBadgeStyle(user?.role)}`}
+                className="px-2 py-1 rounded-full text-xs font-medium"
+                style={getRoleBadgeStyle(user?.role)}
               >
                 {displayRole}
               </span>
@@ -99,31 +128,31 @@ const ProfileCard = ({ userStats = null, loadingStats = false }) => {
         {/* Stats Section */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-white/80 text-sm flex items-center gap-2">
+            <span className="text-sm flex items-center gap-2" style={{ color: colors.text.secondary }}>
               <BookOpen size={16} />
               Active Projects
             </span>
-            <span className="text-sky-400 font-semibold">
+            <span style={{ color: colors.primary.blue[400], fontWeight: 600 }}>
               {loadingStats ? '...' : (userStats?.projects?.total || 0)}
             </span>
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-white/80 text-sm flex items-center gap-2">
+            <span className="text-sm flex items-center gap-2" style={{ color: colors.text.secondary }}>
               <Users size={16} />
               Collaborators
             </span>
-            <span className="text-purple-400 font-semibold">
+            <span style={{ color: colors.primary.purple[400], fontWeight: 600 }}>
               {loadingStats ? '...' : (userStats?.collaborators?.total || 0)}
             </span>
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-white/80 text-sm flex items-center gap-2">
+            <span className="text-sm flex items-center gap-2" style={{ color: colors.text.secondary }}>
               <BookOpen size={16} />
               Publications
             </span>
-            <span className="text-green-400 font-semibold">
+            <span style={{ color: colors.accent.green[500], fontWeight: 600 }}>
               {loadingStats ? '...' : (userStats?.publications?.total || 0)}
             </span>
           </div>
@@ -131,19 +160,31 @@ const ProfileCard = ({ userStats = null, loadingStats = false }) => {
 
         {/* Keywords */}
         {user?.keywords?.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-white/10">
-            <div className="text-xs text-white/60 mb-2">Research Keywords</div>
+          <div className="mt-4 pt-4" style={{ borderTop: `1px solid ${colors.border.light}` }}>
+            <div className="text-xs mb-2" style={{ color: colors.text.muted }}>
+              Research Keywords
+            </div>
             <div className="flex flex-wrap gap-1">
               {user.keywords.slice(0, 3).map((keyword, index) => (
                 <span
                   key={index}
-                  className="px-2 py-1 bg-white/10 text-white/80 text-xs rounded-full"
+                  className="px-2 py-1 text-xs rounded-full"
+                  style={{
+                    backgroundColor: colors.background.overlay,
+                    color: colors.text.secondary
+                  }}
                 >
                   {keyword}
                 </span>
               ))}
               {user.keywords.length > 3 && (
-                <span className="px-2 py-1 bg-white/10 text-white/60 text-xs rounded-full">
+                <span
+                  className="px-2 py-1 text-xs rounded-full"
+                  style={{
+                    backgroundColor: colors.background.overlay,
+                    color: colors.text.muted
+                  }}
+                >
                   +{user.keywords.length - 3} more
                 </span>
               )}
@@ -153,15 +194,21 @@ const ProfileCard = ({ userStats = null, loadingStats = false }) => {
 
         {/* External Links */}
         {(user?.scholarLink || user?.githubLink) && (
-          <div className="mt-4 pt-4 border-t border-white/10">
-            <div className="text-xs text-white/60 mb-2">External Links</div>
+          <div className="mt-4 pt-4" style={{ borderTop: `1px solid ${colors.border.light}` }}>
+            <div className="text-xs mb-2" style={{ color: colors.text.muted }}>
+              External Links
+            </div>
             <div className="flex gap-2">
               {user.scholarLink && (
                 <a
                   href={user.scholarLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3 py-1 bg-blue-500/20 text-blue-300 text-xs rounded-full hover:bg-blue-500/30 transition-colors"
+                  className="px-3 py-1 text-xs rounded-full transition-colors"
+                  style={{
+                    backgroundColor: `${colors.primary.blue[500]}33`,
+                    color: colors.primary.blue[800]
+                  }}
                 >
                   Scholar
                 </a>
@@ -171,7 +218,11 @@ const ProfileCard = ({ userStats = null, loadingStats = false }) => {
                   href={user.githubLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3 py-1 bg-gray-500/20 text-gray-300 text-xs rounded-full hover:bg-gray-500/30 transition-colors"
+                  className="px-3 py-1 text-xs rounded-full transition-colors"
+                  style={{
+                    backgroundColor: `${colors.background.gray[700]}33`,
+                    color: colors.background.gray[700]
+                  }}
                 >
                   GitHub
                 </a>

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import ProjectForm from '../components/ProjectForm';
 import ProjectCard from '../components/ProjectCard';
 import axios from '../axios';
+import { getButtonStyles } from '../styles/styleUtils';
+import { colors } from '../styles/colors';
 
 export default function ProjectHub() {
   const [projects, setProjects] = useState([]);
@@ -54,7 +56,15 @@ export default function ProjectHub() {
           <p className="text-red-300 mb-4">{error}</p>
           <button 
             onClick={fetchProjects}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 rounded transition-colors"
+            style={getButtonStyles('primary')}
+            onMouseEnter={(e) => {
+              Object.assign(e.target.style, getButtonStyles('primary'));
+              e.target.style.background = colors.button.primary.backgroundHover;
+            }}
+            onMouseLeave={(e) => {
+              Object.assign(e.target.style, getButtonStyles('primary'));
+            }}
           >
             Try Again
           </button>

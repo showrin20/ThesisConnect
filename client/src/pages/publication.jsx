@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import axios from '../axios'; // Use the configured axios instance
 import { BookOpen, Tag, Calendar, MapPin, Search, Filter, X, ExternalLink, Award, Users, FileText } from 'lucide-react';
+import { colors } from '../styles/colors';
+import { getButtonStyles } from '../styles/styleUtils';
 
 export default function Publications() {
   const [publications, setPublications] = useState([]);
@@ -138,7 +140,15 @@ export default function Publications() {
                 {/* Filter Toggle */}
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className="flex items-center gap-2 px-4 py-3 bg-white/80 border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition-all duration-200 shadow-sm"
+                  className="flex items-center gap-2 px-4 py-3 border rounded-lg transition-all duration-200 shadow-sm"
+                  style={getButtonStyles('outline')}
+                  onMouseEnter={(e) => {
+                    Object.assign(e.target.style, getButtonStyles('outline'));
+                    e.target.style.backgroundColor = colors.button.outline.backgroundHover;
+                  }}
+                  onMouseLeave={(e) => {
+                    Object.assign(e.target.style, getButtonStyles('outline'));
+                  }}
                 >
                   <Filter size={16} />
                   Filters
@@ -219,11 +229,26 @@ export default function Publications() {
                         <button
                           key={tag}
                           onClick={() => toggleTag(tag)}
-                          className={`px-3 py-1 rounded-full text-xs border transition-all duration-200 ${
+                          className="px-3 py-1 rounded-full text-xs border transition-all duration-200 shadow-sm"
+                          style={
                             selectedTags.includes(tag)
-                              ? 'bg-blue-500 text-white border-blue-400 shadow-sm'
-                              : 'bg-white/80 text-slate-600 border-slate-300 hover:bg-slate-50 shadow-sm'
-                          }`}
+                              ? {
+                                  backgroundColor: colors.primary.blue[500],
+                                  color: colors.text.primary,
+                                  borderColor: colors.primary.blue[400]
+                                }
+                              : getButtonStyles('outline')
+                          }
+                          onMouseEnter={(e) => {
+                            if (!selectedTags.includes(tag)) {
+                              e.target.style.backgroundColor = colors.button.outline.backgroundHover;
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!selectedTags.includes(tag)) {
+                              Object.assign(e.target.style, getButtonStyles('outline'));
+                            }
+                          }}
                         >
                           {tag}
                         </button>
@@ -236,7 +261,18 @@ export default function Publications() {
                   <div className="flex justify-end mt-4">
                     <button
                       onClick={clearFilters}
-                      className="flex items-center gap-2 px-4 py-2 text-slate-500 hover:text-slate-700 transition-colors duration-200"
+                      className="flex items-center gap-2 px-4 py-2 transition-colors duration-200"
+                      style={{
+                        color: colors.text.muted,
+                        backgroundColor: 'transparent',
+                        border: 'none'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.color = colors.text.secondary;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.color = colors.text.muted;
+                      }}
                     >
                       <X className="w-4 h-4" />
                       <span>Clear Filters</span>

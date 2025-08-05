@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import axios from '../axios';
+import { colors } from '../styles/colors';
 
 export default function PublicationForm({ onPublicationCreated }) {
   const [formData, setFormData] = useState({
@@ -84,17 +85,33 @@ export default function PublicationForm({ onPublicationCreated }) {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-4">
-          <p className="text-red-300 text-sm">{error}</p>
+        <div 
+          className="rounded-lg p-4 border"
+          style={{
+            backgroundColor: `${colors.accent.red[500]}33`,
+            borderColor: `${colors.accent.red[500]}80`
+          }}
+        >
+          <p className="text-sm" style={{ color: colors.accent.red[300] }}>{error}</p>
         </div>
       )}
 
       {success && (
-        <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-4">
+        <div 
+          className="rounded-lg p-4 border"
+          style={{
+            backgroundColor: `${colors.accent.green[500]}33`,
+            borderColor: `${colors.accent.green[500]}80`
+          }}
+        >
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+            <div 
+              className="w-5 h-5 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: colors.accent.green[500] }}
+            >
               <svg
-                className="w-3 h-3 text-white"
+                className="w-3 h-3"
+                style={{ color: colors.background.primary }}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -102,7 +119,7 @@ export default function PublicationForm({ onPublicationCreated }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <p className="text-green-300 text-sm font-medium">Publication added successfully!</p>
+            <p className="text-sm font-medium" style={{ color: colors.accent.green[300] }}>Publication added successfully!</p>
           </div>
         </div>
       )}
@@ -110,7 +127,7 @@ export default function PublicationForm({ onPublicationCreated }) {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Required fields */}
         <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="title" className="block text-sm font-medium mb-2" style={{ color: colors.text.primary }}>
             Title *
           </label>
           <input
@@ -120,13 +137,26 @@ export default function PublicationForm({ onPublicationCreated }) {
             onChange={handleChange}
             placeholder="Publication title"
             required
-            className="w-full p-3 bg-slate-800/50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
+            className="w-full p-3 rounded-lg border focus:outline-none focus:ring-2"
+            style={{
+              backgroundColor: colors.input.background,
+              borderColor: colors.input.border,
+              color: colors.input.text
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = colors.input.borderFocus;
+              e.target.style.boxShadow = `0 0 0 2px ${colors.primary.blue[400]}1A`;
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = colors.input.border;
+              e.target.style.boxShadow = 'none';
+            }}
           />
         </div>
 
         <div>
-          <label htmlFor="authors" className="block text-sm font-medium text-gray-300 mb-2">
-            Authors * <span className="text-xs text-gray-400">(comma separated)</span>
+          <label htmlFor="authors" className="block text-sm font-medium mb-2" style={{ color: colors.text.primary }}>
+            Authors * <span className="text-xs" style={{ color: colors.text.muted }}>(comma separated)</span>
           </label>
           <input
             id="authors"
@@ -135,12 +165,25 @@ export default function PublicationForm({ onPublicationCreated }) {
             onChange={handleChange}
             placeholder="Your Name, Co-author, Another Author"
             required
-            className="w-full p-3 bg-slate-800/50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
+            className="w-full p-3 rounded-lg border focus:outline-none focus:ring-2"
+            style={{
+              backgroundColor: colors.input.background,
+              borderColor: colors.input.border,
+              color: colors.input.text
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = colors.input.borderFocus;
+              e.target.style.boxShadow = `0 0 0 2px ${colors.primary.blue[400]}1A`;
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = colors.input.border;
+              e.target.style.boxShadow = 'none';
+            }}
           />
         </div>
 
         <div>
-          <label htmlFor="year" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="year" className="block text-sm font-medium mb-2" style={{ color: colors.text.primary }}>
             Year *
           </label>
           <input
@@ -153,12 +196,25 @@ export default function PublicationForm({ onPublicationCreated }) {
             onChange={handleChange}
             placeholder="e.g., 2024"
             required
-            className="w-full p-3 bg-slate-800/50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
+            className="w-full p-3 rounded-lg border focus:outline-none focus:ring-2"
+            style={{
+              backgroundColor: colors.input.background,
+              borderColor: colors.input.border,
+              color: colors.input.text
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = colors.input.borderFocus;
+              e.target.style.boxShadow = `0 0 0 2px ${colors.primary.blue[400]}1A`;
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = colors.input.border;
+              e.target.style.boxShadow = 'none';
+            }}
           />
         </div>
 
         <div>
-          <label htmlFor="venue" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="venue" className="block text-sm font-medium mb-2" style={{ color: colors.text.primary }}>
             Venue (Journal/Conference) *
           </label>
           <input
@@ -168,12 +224,25 @@ export default function PublicationForm({ onPublicationCreated }) {
             onChange={handleChange}
             placeholder="e.g., IEEE Transactions on Geoscience"
             required
-            className="w-full p-3 bg-slate-800/50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
+            className="w-full p-3 rounded-lg border focus:outline-none focus:ring-2"
+            style={{
+              backgroundColor: colors.input.background,
+              borderColor: colors.input.border,
+              color: colors.input.text
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = colors.input.borderFocus;
+              e.target.style.boxShadow = `0 0 0 2px ${colors.primary.blue[400]}1A`;
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = colors.input.border;
+              e.target.style.boxShadow = 'none';
+            }}
           />
         </div>
 
         <div>
-          <label htmlFor="type" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="type" className="block text-sm font-medium mb-2" style={{ color: colors.text.primary }}>
             Type *
           </label>
           <select
@@ -182,7 +251,20 @@ export default function PublicationForm({ onPublicationCreated }) {
             value={formData.type}
             onChange={handleChange}
             required
-            className="w-full p-3 bg-slate-800/50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
+            className="w-full p-3 rounded-lg border focus:outline-none focus:ring-2"
+            style={{
+              backgroundColor: colors.input.background,
+              borderColor: colors.input.border,
+              color: colors.input.text
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = colors.input.borderFocus;
+              e.target.style.boxShadow = `0 0 0 2px ${colors.primary.blue[400]}1A`;
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = colors.input.border;
+              e.target.style.boxShadow = 'none';
+            }}
           >
             <option value="" disabled>
               Select publication type
@@ -197,7 +279,7 @@ export default function PublicationForm({ onPublicationCreated }) {
 
         {/* Optional fields */}
         <div>
-          <label htmlFor="genre" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="genre" className="block text-sm font-medium mb-2" style={{ color: colors.text.primary }}>
             Genre
           </label>
           <input
@@ -206,12 +288,25 @@ export default function PublicationForm({ onPublicationCreated }) {
             value={formData.genre}
             onChange={handleChange}
             placeholder="e.g., Machine Learning"
-            className="w-full p-3 bg-slate-800/50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
+            className="w-full p-3 rounded-lg border focus:outline-none focus:ring-2"
+            style={{
+              backgroundColor: colors.input.background,
+              borderColor: colors.input.border,
+              color: colors.input.text
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = colors.input.borderFocus;
+              e.target.style.boxShadow = `0 0 0 2px ${colors.primary.blue[400]}1A`;
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = colors.input.border;
+              e.target.style.boxShadow = 'none';
+            }}
           />
         </div>
 
         <div>
-          <label htmlFor="quality" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="quality" className="block text-sm font-medium mb-2" style={{ color: colors.text.primary }}>
             Quality (Q1, Q2, Q3, Q4, A, A*, N/A)
           </label>
           <select
@@ -219,7 +314,20 @@ export default function PublicationForm({ onPublicationCreated }) {
             name="quality"
             value={formData.quality}
             onChange={handleChange}
-            className="w-full p-3 bg-slate-800/50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
+            className="w-full p-3 rounded-lg border focus:outline-none focus:ring-2"
+            style={{
+              backgroundColor: colors.input.background,
+              borderColor: colors.input.border,
+              color: colors.input.text
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = colors.input.borderFocus;
+              e.target.style.boxShadow = `0 0 0 2px ${colors.primary.blue[400]}1A`;
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = colors.input.border;
+              e.target.style.boxShadow = 'none';
+            }}
           >
             <option value="">Select quality</option>
             <option value="Q1">Q1</option>
@@ -233,7 +341,7 @@ export default function PublicationForm({ onPublicationCreated }) {
         </div>
 
         <div>
-          <label htmlFor="tags" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="tags" className="block text-sm font-medium mb-2" style={{ color: colors.text.primary }}>
             Research Tags
           </label>
           <input
@@ -242,13 +350,26 @@ export default function PublicationForm({ onPublicationCreated }) {
             value={formData.tags}
             onChange={handleChange}
             placeholder="e.g., Deep Learning, Flood Prediction, Satellite Imagery"
-            className="w-full p-3 bg-slate-800/50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
+            className="w-full p-3 rounded-lg border focus:outline-none focus:ring-2"
+            style={{
+              backgroundColor: colors.input.background,
+              borderColor: colors.input.border,
+              color: colors.input.text
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = colors.input.borderFocus;
+              e.target.style.boxShadow = `0 0 0 2px ${colors.primary.blue[400]}1A`;
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = colors.input.border;
+              e.target.style.boxShadow = 'none';
+            }}
           />
-          <p className="text-gray-400 text-xs mt-1">Separate multiple tags with commas</p>
+          <p className="text-xs mt-1" style={{ color: colors.text.muted }}>Separate multiple tags with commas</p>
         </div>
 
         <div>
-          <label htmlFor="doi" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="doi" className="block text-sm font-medium mb-2" style={{ color: colors.text.primary }}>
             DOI
           </label>
           <input
@@ -257,12 +378,25 @@ export default function PublicationForm({ onPublicationCreated }) {
             value={formData.doi}
             onChange={handleChange}
             placeholder="e.g., 10.1109/TGRS.2024.1234567"
-            className="w-full p-3 bg-slate-800/50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
+            className="w-full p-3 rounded-lg border focus:outline-none focus:ring-2"
+            style={{
+              backgroundColor: colors.input.background,
+              borderColor: colors.input.border,
+              color: colors.input.text
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = colors.input.borderFocus;
+              e.target.style.boxShadow = `0 0 0 2px ${colors.primary.blue[400]}1A`;
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = colors.input.border;
+              e.target.style.boxShadow = 'none';
+            }}
           />
         </div>
 
         <div>
-          <label htmlFor="abstract" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="abstract" className="block text-sm font-medium mb-2" style={{ color: colors.text.primary }}>
             Abstract
           </label>
           <textarea
@@ -272,12 +406,25 @@ export default function PublicationForm({ onPublicationCreated }) {
             onChange={handleChange}
             placeholder="Brief summary of the publication"
             rows={4}
-            className="w-full p-3 bg-slate-800/50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400 resize-none"
+            className="w-full p-3 rounded-lg border focus:outline-none focus:ring-2 resize-none"
+            style={{
+              backgroundColor: colors.input.background,
+              borderColor: colors.input.border,
+              color: colors.input.text
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = colors.input.borderFocus;
+              e.target.style.boxShadow = `0 0 0 2px ${colors.primary.blue[400]}1A`;
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = colors.input.border;
+              e.target.style.boxShadow = 'none';
+            }}
           />
         </div>
 
         <div>
-          <label htmlFor="citations" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="citations" className="block text-sm font-medium mb-2" style={{ color: colors.text.primary }}>
             Citations
           </label>
           <input
@@ -288,12 +435,25 @@ export default function PublicationForm({ onPublicationCreated }) {
             value={formData.citations}
             onChange={handleChange}
             placeholder="Number of citations"
-            className="w-full p-3 bg-slate-800/50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
+            className="w-full p-3 rounded-lg border focus:outline-none focus:ring-2"
+            style={{
+              backgroundColor: colors.input.background,
+              borderColor: colors.input.border,
+              color: colors.input.text
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = colors.input.borderFocus;
+              e.target.style.boxShadow = `0 0 0 2px ${colors.primary.blue[400]}1A`;
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = colors.input.border;
+              e.target.style.boxShadow = 'none';
+            }}
           />
         </div>
 
         <div>
-          <label htmlFor="location" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="location" className="block text-sm font-medium mb-2" style={{ color: colors.text.primary }}>
             Location
           </label>
           <input
@@ -302,7 +462,20 @@ export default function PublicationForm({ onPublicationCreated }) {
             value={formData.location}
             onChange={handleChange}
             placeholder="e.g., United States"
-            className="w-full p-3 bg-slate-800/50 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
+            className="w-full p-3 rounded-lg border focus:outline-none focus:ring-2"
+            style={{
+              backgroundColor: colors.input.background,
+              borderColor: colors.input.border,
+              color: colors.input.text
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = colors.input.borderFocus;
+              e.target.style.boxShadow = `0 0 0 2px ${colors.primary.blue[400]}1A`;
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = colors.input.border;
+              e.target.style.boxShadow = 'none';
+            }}
           />
         </div>
 
@@ -317,20 +490,55 @@ export default function PublicationForm({ onPublicationCreated }) {
               !formData.venue.trim() ||
               !formData.type.trim()
             }
-            className={`flex-1 py-3 px-6 rounded-lg font-medium transition-all duration-200 ${
-              loading ||
+            className="flex-1 py-3 px-6 rounded-lg font-medium transition-all duration-200"
+            style={{
+              backgroundColor: loading ||
               !formData.title.trim() ||
               !formData.authors.trim() ||
               !formData.year.trim() ||
               !formData.venue.trim() ||
               !formData.type.trim()
-                ? 'bg-gray-600 cursor-not-allowed text-gray-400'
-                : 'bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02]'
-            }`}
+                ? colors.button.disabled.background
+                : colors.button.primary.background,
+              color: loading ||
+              !formData.title.trim() ||
+              !formData.authors.trim() ||
+              !formData.year.trim() ||
+              !formData.venue.trim() ||
+              !formData.type.trim()
+                ? colors.button.disabled.text
+                : colors.button.primary.text,
+              cursor: loading ||
+              !formData.title.trim() ||
+              !formData.authors.trim() ||
+              !formData.year.trim() ||
+              !formData.venue.trim() ||
+              !formData.type.trim()
+                ? 'not-allowed'
+                : 'pointer'
+            }}
+            onMouseEnter={(e) => {
+              if (!e.target.disabled) {
+                e.target.style.backgroundColor = colors.button.primary.backgroundHover;
+                e.target.style.transform = 'scale(1.02)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!e.target.disabled) {
+                e.target.style.backgroundColor = colors.button.primary.background;
+                e.target.style.transform = 'scale(1)';
+              }
+            }}
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <div 
+                  className="w-4 h-4 border-2 rounded-full animate-spin"
+                  style={{
+                    borderColor: `${colors.button.primary.text}4D`,
+                    borderTopColor: colors.button.primary.text
+                  }}
+                ></div>
                 Adding Publication...
               </span>
             ) : (

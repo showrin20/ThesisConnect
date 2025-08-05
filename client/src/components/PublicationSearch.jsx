@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Search, ExternalLink, Users, Calendar, Book, Plus, Check } from 'lucide-react';
+import { colors } from '../styles/colors';
 
 const PublicationSearch = ({ onPublicationAdd }) => {
   const [query, setQuery] = useState('');
@@ -72,29 +73,60 @@ const PublicationSearch = ({ onPublicationAdd }) => {
   return (
     <div className="w-full max-w-5xl mx-auto">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-          <Search className="text-blue-400" size={24} />
+        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2" style={{ color: colors.text.primary }}>
+          <Search style={{ color: colors.primary.blue[400] }} size={24} />
           Browse External Publications
         </h2>
         <form onSubmit={handleSearch} className="flex gap-3">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50" size={18} />
+            <Search 
+              className="absolute left-3 top-1/2 transform -translate-y-1/2" 
+              style={{ color: `${colors.text.secondary}80` }}
+              size={18} 
+            />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Enter keywords (e.g., transformers, neural networks, machine learning)..."
-              className="w-full bg-white/10 border border-white/20 rounded-lg pl-10 pr-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50"
+              className="w-full border rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2"
+              style={{
+                backgroundColor: `${colors.background.glass}66`,
+                borderColor: `${colors.border.secondary}33`,
+                color: colors.text.primary,
+                '--placeholder-color': `${colors.text.secondary}80`
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = `${colors.primary.blue[400]}80`;
+                e.target.style.boxShadow = `0 0 0 2px ${colors.primary.blue[400]}1A`;
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = `${colors.border.secondary}33`;
+                e.target.style.boxShadow = 'none';
+              }}
             />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="bg-blue-500/20 text-blue-400 border border-blue-500/30 px-6 py-3 rounded-lg hover:bg-blue-500/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-6 py-3 rounded-lg border transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            style={{
+              backgroundColor: `${colors.primary.blue[500]}33`,
+              color: colors.primary.blue[400],
+              borderColor: `${colors.primary.blue[500]}4D`
+            }}
+            onMouseEnter={(e) => !loading && (e.target.style.backgroundColor = `${colors.primary.blue[500]}4D`)}
+            onMouseLeave={(e) => !loading && (e.target.style.backgroundColor = `${colors.primary.blue[500]}33`)}
           >
             {loading ? (
               <>
-                <div className="w-4 h-4 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin"></div>
+                <div 
+                  className="w-4 h-4 border-2 rounded-full animate-spin"
+                  style={{
+                    borderColor: `${colors.primary.blue[400]}4D`,
+                    borderTopColor: colors.primary.blue[400]
+                  }}
+                ></div>
                 Searching...
               </>
             ) : (
@@ -109,15 +141,24 @@ const PublicationSearch = ({ onPublicationAdd }) => {
 
       {publications.length > 0 && (
         <div className="space-y-4">
-          <p className="text-white/70 text-sm">Found {publications.length} publications</p>
+          <p className="text-sm" style={{ color: `${colors.text.secondary}B3` }}>Found {publications.length} publications</p>
           {publications.map((pub) => (
-            <div key={pub.id} className="bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10 hover:bg-white/10 transition-all duration-200">
+            <div 
+              key={pub.id} 
+              className="backdrop-blur-lg rounded-xl p-6 border transition-all duration-200"
+              style={{
+                backgroundColor: colors.background.glass,
+                borderColor: colors.border.secondary
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.background.glass}CC`}
+              onMouseLeave={(e) => e.target.style.backgroundColor = colors.background.glass}
+            >
               <div className="space-y-3">
-                <h3 className="font-semibold text-lg text-white leading-tight">
+                <h3 className="font-semibold text-lg leading-tight" style={{ color: colors.text.primary }}>
                   {pub.title}
                 </h3>
                 
-                <div className="flex flex-wrap gap-4 text-sm text-white/70">
+                <div className="flex flex-wrap gap-4 text-sm" style={{ color: `${colors.text.secondary}B3` }}>
                   <div className="flex items-center gap-1">
                     <Users size={14} />
                     <span>
@@ -142,14 +183,14 @@ const PublicationSearch = ({ onPublicationAdd }) => {
 
                   {pub.cited_by_count && (
                     <div className="flex items-center gap-1">
-                      <span className="text-yellow-400">📊</span>
+                      <span style={{ color: colors.accent.yellow[400] }}>📊</span>
                       <span>{pub.cited_by_count} citations</span>
                     </div>
                   )}
                 </div>
 
                 {pub.abstract_inverted_index && (
-                  <p className="text-white/60 text-sm line-clamp-2">
+                  <p className="text-sm line-clamp-2" style={{ color: `${colors.text.secondary}99` }}>
                     {Object.keys(pub.abstract_inverted_index).slice(0, 30).join(' ')}...
                   </p>
                 )}
@@ -159,7 +200,11 @@ const PublicationSearch = ({ onPublicationAdd }) => {
                     {pub.concepts?.slice(0, 3).map((concept, idx) => (
                       <span
                         key={idx}
-                        className="px-2 py-1 bg-blue-500/20 text-blue-300 text-xs rounded-full"
+                        className="px-2 py-1 text-xs rounded-full"
+                        style={{
+                          backgroundColor: `${colors.primary.blue[500]}33`,
+                          color: colors.primary.blue[300]
+                        }}
                       >
                         {concept.display_name}
                       </span>
@@ -167,31 +212,14 @@ const PublicationSearch = ({ onPublicationAdd }) => {
                   </div>
                   
                   <div className="flex items-center gap-3">
-                    {/* {onPublicationAdd && (
-                      <button
-                        onClick={() => handleAddToCollection(pub)}
-                        disabled={addingPubs.has(pub.id)}
-                        className="flex items-center gap-1 bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1 rounded-lg hover:bg-green-500/30 transition-all duration-200 disabled:opacity-50 text-sm"
-                      >
-                        {addingPubs.has(pub.id) ? (
-                          <>
-                            <Check size={14} />
-                            Added
-                          </>
-                        ) : (
-                          <>
-                            <Plus size={14} />
-                            Add to Collection
-                          </>
-                        )}
-                      </button>
-                    )} */}
-                    
                     <a
                       href={pub.primary_location?.source?.url || pub.doi || pub.id}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
+                      className="flex items-center gap-1 text-sm font-medium transition-colors"
+                      style={{ color: colors.primary.blue[400] }}
+                      onMouseEnter={(e) => e.target.style.color = colors.primary.blue[300]}
+                      onMouseLeave={(e) => e.target.style.color = colors.primary.blue[400]}
                     >
                       <span>View</span>
                       <ExternalLink size={14} />
@@ -206,17 +234,17 @@ const PublicationSearch = ({ onPublicationAdd }) => {
 
       {!loading && publications.length === 0 && query && (
         <div className="text-center py-12">
-          <Search className="mx-auto text-white/30 mb-4" size={48} />
-          <p className="text-white/60">No publications found for "{query}"</p>
-          <p className="text-white/40 text-sm mt-2">Try different keywords or check your spelling</p>
+          <Search className="mx-auto mb-4" style={{ color: `${colors.text.secondary}4D` }} size={48} />
+          <p style={{ color: `${colors.text.secondary}99` }}>No publications found for "{query}"</p>
+          <p className="text-sm mt-2" style={{ color: `${colors.text.secondary}66` }}>Try different keywords or check your spelling</p>
         </div>
       )}
 
       {!query && (
         <div className="text-center py-12">
-          <Search className="mx-auto text-white/30 mb-4" size={48} />
-          <p className="text-white/60">Enter keywords to search for publications</p>
-          <p className="text-white/40 text-sm mt-2">Search millions of academic papers from OpenAlex</p>
+          <Search className="mx-auto mb-4" style={{ color: `${colors.text.secondary}4D` }} size={48} />
+          <p style={{ color: `${colors.text.secondary}99` }}>Enter keywords to search for publications</p>
+          <p className="text-sm mt-2" style={{ color: `${colors.text.secondary}66` }}>Search millions of academic papers from OpenAlex</p>
         </div>
       )}
     </div>

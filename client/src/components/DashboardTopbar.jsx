@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Menu, X, Bell, User, LogOut, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { colors } from '../styles/colors';
 
 const Topbar = ({ onMenuToggle, user, onLogout, isLoggingOut }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -15,7 +16,13 @@ const Topbar = ({ onMenuToggle, user, onLogout, isLoggingOut }) => {
   };
 
   return (
-    <header className="bg-white/5 backdrop-blur-xl border-b border-white/10 sticky top-0 z-30">
+    <header 
+      className="backdrop-blur-xl border-b sticky top-0 z-30"
+      style={{
+        backgroundColor: colors.background.glass,
+        borderColor: colors.border.secondary
+      }}
+    >
       <div className="px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Left Side */}
@@ -23,17 +30,28 @@ const Topbar = ({ onMenuToggle, user, onLogout, isLoggingOut }) => {
             {/* Mobile Menu Button */}
             <button
               onClick={onMenuToggle}
-              className="lg:hidden p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
+              className="lg:hidden p-2 rounded-lg transition-all duration-200"
+              style={{ 
+                color: `${colors.text.secondary}B3`
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.color = colors.text.primary;
+                e.target.style.backgroundColor = colors.background.glass;
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.color = `${colors.text.secondary}B3`;
+                e.target.style.backgroundColor = 'transparent';
+              }}
             >
               <Menu size={20} />
             </button>
 
             {/* Welcome Message */}
             <div className="hidden sm:block">
-              <h1 className="text-xl font-bold bg-gradient-to-r from-sky-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                 Welcome back, {user?.name || 'Dr. Rahman'}!
               </h1>
-              <p className="text-white/60 text-sm">
+              <p className="text-sm" style={{ color: `${colors.text.muted}99` }}>
                 Track your research progress and discover new collaboration opportunities.
               </p>
             </div>
@@ -45,9 +63,28 @@ const Topbar = ({ onMenuToggle, user, onLogout, isLoggingOut }) => {
           {/* Right Side */}
           <div className="flex items-center gap-3">
             {/* Notifications */}
-            <button className="relative p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200">
+            <button 
+              className="relative p-2 rounded-lg transition-all duration-200"
+              style={{ 
+                color: `${colors.text.secondary}B3`
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.color = colors.text.primary;
+                e.target.style.backgroundColor = colors.background.glass;
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.color = `${colors.text.secondary}B3`;
+                e.target.style.backgroundColor = 'transparent';
+              }}
+            >
               <Bell size={20} />
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+              <span 
+                className="absolute -top-1 -right-1 w-5 h-5 text-xs rounded-full flex items-center justify-center"
+                style={{
+                  backgroundColor: colors.accent.red[500],
+                  color: colors.surface.primary
+                }}
+              >
                 3
               </span>
             </button>
@@ -56,9 +93,26 @@ const Topbar = ({ onMenuToggle, user, onLogout, isLoggingOut }) => {
             <div className="relative">
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="flex items-center gap-2 p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
+                className="flex items-center gap-2 p-2 rounded-lg transition-all duration-200"
+                style={{ 
+                  color: `${colors.text.secondary}B3`
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.color = colors.text.primary;
+                  e.target.style.backgroundColor = colors.background.glass;
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.color = `${colors.text.secondary}B3`;
+                  e.target.style.backgroundColor = 'transparent';
+                }}
               >
-                <div className="w-8 h-8 bg-gradient-to-r from-sky-400 to-purple-400 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                <div 
+                  className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm"
+                  style={{
+                    background: `linear-gradient(45deg, ${colors.primary.blue[400]}, ${colors.primary.purple[400]})`,
+                    color: colors.surface.primary
+                  }}
+                >
                   {user?.name ? user.name.charAt(0).toUpperCase() : <User size={16} />}
                 </div>
                 <span className="hidden sm:block text-sm font-medium">
@@ -68,12 +122,29 @@ const Topbar = ({ onMenuToggle, user, onLogout, isLoggingOut }) => {
 
               {/* Dropdown Menu */}
               {isProfileOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-gray-900/70 rounded-xl border border-white/20 shadow-xl z-50">
+                <div 
+                  className="absolute right-0 mt-2 w-48 rounded-xl border shadow-xl z-50"
+                  style={{
+                    backgroundColor: `${colors.background.gray[900]}B3`,
+                    borderColor: colors.border.light
+                  }}
+                >
                   <div className="p-2">
                     <Link 
                       to="/profile" 
                       onClick={() => setIsProfileOpen(false)}
-                      className="block px-3 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg text-sm flex items-center gap-2"
+                      className="block px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-all"
+                      style={{ 
+                        color: `${colors.text.secondary}CC`
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.color = colors.text.primary;
+                        e.target.style.backgroundColor = colors.background.glass;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.color = `${colors.text.secondary}CC`;
+                        e.target.style.backgroundColor = 'transparent';
+                      }}
                     >
                       <User size={14} />
                       View Profile
@@ -81,20 +152,46 @@ const Topbar = ({ onMenuToggle, user, onLogout, isLoggingOut }) => {
                     <Link 
                       to="/settings" 
                       onClick={() => setIsProfileOpen(false)}
-                      className="block px-3 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg text-sm flex items-center gap-2"
+                      className="block px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-all"
+                      style={{ 
+                        color: `${colors.text.secondary}CC`
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.color = colors.text.primary;
+                        e.target.style.backgroundColor = colors.background.glass;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.color = `${colors.text.secondary}CC`;
+                        e.target.style.backgroundColor = 'transparent';
+                      }}
                     >
                       <Settings size={14} />
                       Settings
                     </Link>
-                    <hr className="my-2 border-white/10" />
+                    <hr className="my-2" style={{ borderColor: colors.border.secondary }} />
                     <button
                       onClick={handleLogoutClick}
                       disabled={isLoggingOut}
                       className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-all duration-200 ${
-                        isLoggingOut 
-                          ? 'text-white/50 cursor-not-allowed' 
-                          : 'text-red-400 hover:text-red-300 hover:bg-red-500/10'
+                        isLoggingOut ? 'cursor-not-allowed' : ''
                       }`}
+                      style={isLoggingOut ? {
+                        color: `${colors.text.primary}80`
+                      } : {
+                        color: colors.accent.red[400]
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isLoggingOut) {
+                          e.target.style.color = colors.accent.red[300];
+                          e.target.style.backgroundColor = `${colors.accent.red[500]}1A`;
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isLoggingOut) {
+                          e.target.style.color = colors.accent.red[400];
+                          e.target.style.backgroundColor = 'transparent';
+                        }
+                      }}
                     >
                       <LogOut size={14} />
                       {isLoggingOut ? 'Logging out...' : 'Logout'}

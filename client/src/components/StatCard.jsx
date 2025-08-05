@@ -1,20 +1,40 @@
 import React from 'react';
+import { colors } from '../styles/colors';
 
-const StatCard = ({ number, label, icon: Icon, color = 'text-sky-400' }) => {
+const StatCard = ({ number, label, icon: Icon, color = colors.primary.blue[500] }) => {
   return (
     <div className="relative group">
-      <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20 rounded-xl blur-sm group-hover:blur-none transition-all duration-300"></div>
-      <div className="relative bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-105">
+      <div 
+        className="absolute inset-0 rounded-xl blur-sm group-hover:blur-none transition-all duration-300"
+        style={{
+          background: `linear-gradient(to right, ${colors.primary.purple[600]}33, ${colors.primary.blue[600]}33)`
+        }}
+      ></div>
+      <div 
+        className="relative backdrop-blur-lg rounded-xl p-6 border hover:scale-105 transition-all duration-300"
+        style={{
+          backgroundColor: `${colors.background.glass}66`,
+          borderColor: `${colors.border.secondary}33`
+        }}
+        onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.background.glass}99`}
+        onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.background.glass}66`}
+      >
         <div className="flex items-center justify-between">
           <div>
-            <div className={`text-3xl font-bold ${color} mb-1`}>
+            <div 
+              className="text-3xl font-bold mb-1"
+              style={{ color }}
+            >
               {number}
             </div>
-            <div className="text-white/80 text-sm font-medium">
+            <div className="text-sm font-medium" style={{ color: `${colors.text.secondary}CC` }}>
               {label}
             </div>
           </div>
-          <div className={`${color} opacity-60 group-hover:opacity-100 transition-opacity duration-300`}>
+          <div
+            className="group-hover:opacity-100 transition-opacity duration-300"
+            style={{ color}}
+          >
             <Icon size={32} />
           </div>
         </div>

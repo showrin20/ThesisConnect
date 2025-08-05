@@ -1,18 +1,37 @@
 import React from 'react';
 import { Clock } from 'lucide-react';
+import { colors } from '../styles/colors';
 
 const ForumActivityCard = ({ title, snippet, tags, time, category }) => {
   return (
     <div className="relative group">
-      <div className="absolute inset-0 bg-gradient-to-r from-purple-600/5 to-blue-600/5 rounded-xl blur-sm group-hover:blur-none transition-all duration-300"></div>
-      <div className="relative bg-white/5 backdrop-blur-lg rounded-xl p-5 border border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-[1.01]">
+      <div 
+        className="absolute inset-0 rounded-xl blur-sm group-hover:blur-none transition-all duration-300"
+        style={{
+          background: `linear-gradient(to right, ${colors.primary.purple[600]}0D, ${colors.primary.blue[600]}0D)`
+        }}
+      ></div>
+      <div 
+        className="relative backdrop-blur-lg rounded-xl p-5 border hover:scale-[1.01] transition-all duration-300"
+        style={{
+          backgroundColor: colors.background.glass,
+          borderColor: colors.border.secondary
+        }}
+        onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.background.glass}CC`}
+        onMouseLeave={(e) => e.target.style.backgroundColor = colors.background.glass}
+      >
         <div className="flex justify-between items-start mb-3">
-          <h4 className="text-white font-medium text-base group-hover:text-sky-400 transition-colors duration-300 line-clamp-2">
+          <h4 
+            className="font-medium text-base transition-colors duration-300 line-clamp-2"
+            style={{ color: colors.text.primary }}
+            onMouseEnter={(e) => e.target.style.color = colors.primary.blue[400]}
+            onMouseLeave={(e) => e.target.style.color = colors.text.primary}
+          >
             {title}
           </h4>
         </div>
         
-        <p className="text-white/70 text-sm mb-3 line-clamp-2">
+        <p className="text-sm mb-3 line-clamp-2" style={{ color: `${colors.text.secondary}B3` }}>
           {snippet}
         </p>
         
@@ -20,14 +39,19 @@ const ForumActivityCard = ({ title, snippet, tags, time, category }) => {
           {tags.map((tag, index) => (
             <span 
               key={index}
-              className="px-2 py-1 bg-purple-500/20 text-purple-300 rounded-md text-xs font-medium border border-purple-500/30"
+              className="px-2 py-1 rounded-md text-xs font-medium border"
+              style={{
+                backgroundColor: `${colors.primary.purple[500]}33`,
+                color: colors.primary.purple[300],
+                borderColor: `${colors.primary.purple[500]}4D`
+              }}
             >
               {tag}
             </span>
           ))}
         </div>
         
-        <div className="flex items-center justify-between text-xs text-white/50">
+        <div className="flex items-center justify-between text-xs" style={{ color: `${colors.text.secondary}80` }}>
           <span>{category}</span>
           <div className="flex items-center gap-1">
             <Clock size={12} />

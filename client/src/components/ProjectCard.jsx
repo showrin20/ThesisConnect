@@ -1,17 +1,34 @@
 import React from 'react';
 import { ExternalLink } from 'lucide-react';
+import { colors } from '../styles/colors';
 
 const ProjectCard = ({ title, description, link, tags, status, category }) => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'Active':
-        return 'bg-green-500/20 text-green-400 border-green-500/30';
+        return {
+          backgroundColor: `${colors.accent.green[500]}33`,
+          color: colors.accent.green[400],
+          borderColor: `${colors.accent.green[500]}4D`
+        };
       case 'Review':
-        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+        return {
+          backgroundColor: `${colors.accent.yellow[500]}33`,
+          color: colors.accent.yellow[400],
+          borderColor: `${colors.accent.yellow[500]}4D`
+        };
       case 'Completed':
-        return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+        return {
+          backgroundColor: `${colors.primary.blue[500]}33`,
+          color: colors.primary.blue[400],
+          borderColor: `${colors.primary.blue[500]}4D`
+        };
       default:
-        return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+        return {
+          backgroundColor: `${colors.text.disabled}33`,
+          color: colors.text.disabled,
+          borderColor: `${colors.text.disabled}4D`
+        };
     }
   };
 
@@ -19,18 +36,39 @@ const ProjectCard = ({ title, description, link, tags, status, category }) => {
 
   return (
     <div className="relative group">
-      <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-blue-600/10 rounded-xl blur-sm group-hover:blur-none transition-all duration-300"></div>
-      <div className="relative bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-[1.02]">
+      <div 
+        className="absolute inset-0 rounded-xl blur-sm group-hover:blur-none transition-all duration-300"
+        style={{
+          background: `linear-gradient(to right, ${colors.primary.purple[600]}1A, ${colors.primary.blue[600]}1A)`
+        }}
+      ></div>
+      <div 
+        className="relative backdrop-blur-lg rounded-xl p-6 border hover:scale-[1.02] transition-all duration-300"
+        style={{
+          backgroundColor: colors.background.glass,
+          borderColor: colors.border.secondary
+        }}
+        onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.background.glass}CC`}
+        onMouseLeave={(e) => e.target.style.backgroundColor = colors.background.glass}
+      >
         <div className="flex justify-between items-start mb-4">
-          <h3 className="text-white font-semibold text-lg group-hover:text-sky-400 transition-colors duration-300">
+          <h3 
+            className="font-semibold text-lg transition-colors duration-300"
+            style={{ color: colors.text.primary }}
+            onMouseEnter={(e) => e.target.style.color = colors.primary.blue[400]}
+            onMouseLeave={(e) => e.target.style.color = colors.text.primary}
+          >
             {title}
           </h3>
-          <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(status)}`}>
+          <span 
+            className="px-3 py-1 rounded-full text-xs font-medium border"
+            style={getStatusColor(status)}
+          >
             {status}
           </span>
         </div>
         
-        <p className="text-white/70 text-sm mb-4 line-clamp-2">
+        <p className="text-sm mb-4 line-clamp-2" style={{ color: `${colors.text.secondary}B3` }}>
           {description}
         </p>
         
@@ -38,7 +76,12 @@ const ProjectCard = ({ title, description, link, tags, status, category }) => {
           {tags && tags.map((tag, index) => (
             <span 
               key={index}
-              className="px-2 py-1 bg-sky-500/20 text-sky-300 rounded-md text-xs font-medium border border-sky-500/30"
+              className="px-2 py-1 rounded-md text-xs font-medium border"
+              style={{
+                backgroundColor: `${colors.primary.blue[500]}33`,
+                color: colors.primary.blue[300],
+                borderColor: `${colors.primary.blue[500]}4D`
+              }}
             >
               {tag}
             </span>
@@ -46,7 +89,7 @@ const ProjectCard = ({ title, description, link, tags, status, category }) => {
         </div>
         
         <div className="flex items-center justify-between">
-          <div className="text-xs text-white/50">
+          <div className="text-xs" style={{ color: `${colors.text.secondary}80` }}>
             Category: {category || 'Research'}
           </div>
           {trimmedLink ? (
@@ -54,13 +97,20 @@ const ProjectCard = ({ title, description, link, tags, status, category }) => {
               href={trimmedLink.startsWith('http') ? trimmedLink : `https://${trimmedLink}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 px-3 py-1 bg-sky-500/20 text-sky-400 border border-sky-500/30 rounded-lg hover:bg-sky-500/30 transition-all duration-200 text-xs font-medium"
+              className="flex items-center gap-1 px-3 py-1 border rounded-lg transition-all duration-200 text-xs font-medium"
+              style={{
+                backgroundColor: `${colors.primary.blue[500]}33`,
+                color: colors.primary.blue[400],
+                borderColor: `${colors.primary.blue[500]}4D`
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.primary.blue[500]}4D`}
+              onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.primary.blue[500]}33`}
             >
               <span>View Project</span>
               <ExternalLink size={12} />
             </a>
           ) : (
-            <span className="text-xs text-gray-400 italic">No project link available</span>
+            <span className="text-xs italic" style={{ color: colors.text.disabled }}>No project link available</span>
           )}
         </div>
       </div>
