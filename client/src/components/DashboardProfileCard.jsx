@@ -1,6 +1,7 @@
 import React from 'react';
 import { User, MapPin, BookOpen, Users, GraduationCap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { colors } from '../styles/colors';
 
 const ProfileCard = ({ userStats = null, loadingStats = false }) => {
   const { user, loading } = useAuth();
@@ -8,21 +9,33 @@ const ProfileCard = ({ userStats = null, loadingStats = false }) => {
   if (loading) {
     return (
       <div className="relative group">
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20 rounded-xl blur-sm"></div>
-        <div className="relative bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
+        <div
+          className="absolute inset-0 rounded-xl blur-sm"
+          style={{
+            background: `linear-gradient(to right, ${colors.primary.purple[600]}20, ${colors.primary.blue[600]}20)`
+          }}
+        ></div>
+        <div
+          className="relative rounded-xl p-6"
+          style={{
+            backgroundColor: colors.background.glass,
+            backdropFilter: 'blur(16px)',
+            border: `1px solid ${colors.border.secondary}`
+          }}
+        >
           <div className="animate-pulse">
             <div className="flex items-center mb-4">
-              <div className="w-16 h-16 bg-gray-400/20 rounded-full mr-4"></div>
+              <div className="w-16 h-16 rounded-full mr-4" style={{ backgroundColor: `${colors.text.muted}20` }}></div>
               <div>
-                <div className="h-4 bg-gray-400/20 rounded w-32 mb-2"></div>
-                <div className="h-3 bg-gray-400/20 rounded w-40"></div>
+                <div className="h-4 rounded w-32 mb-2" style={{ backgroundColor: `${colors.text.muted}20` }}></div>
+                <div className="h-3 rounded w-40" style={{ backgroundColor: `${colors.text.muted}20` }}></div>
               </div>
             </div>
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="flex items-center justify-between">
-                  <div className="h-3 bg-gray-400/20 rounded w-24"></div>
-                  <div className="h-3 bg-gray-400/20 rounded w-8"></div>
+                  <div className="h-3 rounded w-24" style={{ backgroundColor: `${colors.text.muted}20` }}></div>
+                  <div className="h-3 rounded w-8" style={{ backgroundColor: `${colors.text.muted}20` }}></div>
                 </div>
               ))}
             </div>
@@ -31,6 +44,25 @@ const ProfileCard = ({ userStats = null, loadingStats = false }) => {
       </div>
     );
   }
+
+  // Capitalize role name
+  const displayRole = user?.role
+    ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
+    : 'Unknown';
+
+  // Determine badge styles by role
+  const getRoleBadgeStyle = (role) => {
+    switch (role) {
+      case 'admin':
+        return 'bg-red-500/20 text-red-300';
+      case 'mentor':
+        return 'bg-blue-500/20 text-blue-300';
+      case 'student':
+        return 'bg-green-500/20 text-green-300';
+      default:
+        return 'bg-gray-500/20 text-gray-300';
+    }
+  };
 
   return (
     <div className="relative group">
@@ -55,17 +87,16 @@ const ProfileCard = ({ userStats = null, loadingStats = false }) => {
               </p>
             )}
             <div className="flex items-center gap-1 mt-1">
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                user?.role === 'admin' ? 'bg-red-500/20 text-red-300' :
-                user?.role === 'mentor' ? 'bg-blue-500/20 text-blue-300' :
-                'bg-green-500/20 text-green-300'
-              }`}>
-                {user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1) || 'Student'}
+              <span
+                className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleBadgeStyle(user?.role)}`}
+              >
+                {displayRole}
               </span>
             </div>
           </div>
         </div>
-        
+
+        {/* Stats Section */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-white/80 text-sm flex items-center gap-2">
@@ -76,7 +107,7 @@ const ProfileCard = ({ userStats = null, loadingStats = false }) => {
               {loadingStats ? '...' : (userStats?.projects?.total || 0)}
             </span>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <span className="text-white/80 text-sm flex items-center gap-2">
               <Users size={16} />
@@ -86,7 +117,7 @@ const ProfileCard = ({ userStats = null, loadingStats = false }) => {
               {loadingStats ? '...' : (userStats?.collaborators?.total || 0)}
             </span>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <span className="text-white/80 text-sm flex items-center gap-2">
               <BookOpen size={16} />
@@ -98,8 +129,8 @@ const ProfileCard = ({ userStats = null, loadingStats = false }) => {
           </div>
         </div>
 
-        {/* Keywords Section */}
-        {user?.keywords && user.keywords.length > 0 && (
+        {/* Keywords */}
+        {user?.keywords?.length > 0 && (
           <div className="mt-4 pt-4 border-t border-white/10">
             <div className="text-xs text-white/60 mb-2">Research Keywords</div>
             <div className="flex flex-wrap gap-1">
@@ -119,9 +150,8 @@ const ProfileCard = ({ userStats = null, loadingStats = false }) => {
             </div>
           </div>
         )}
-        
- 
-        {/* Links Section */}
+
+        {/* External Links */}
         {(user?.scholarLink || user?.githubLink) && (
           <div className="mt-4 pt-4 border-t border-white/10">
             <div className="text-xs text-white/60 mb-2">External Links</div>

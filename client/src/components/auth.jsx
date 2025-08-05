@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import loginPic from '../assets/loginPic.png';   // Bigger login image
-import signupPic from '../assets/signupPic.png'; // Bigger signup image
+import loginPic from '../assets/loginPic.png';
+import signupPic from '../assets/signupPic.png';
 
 // 🎨 Theme Variables
 const colors = {
@@ -26,7 +26,7 @@ export default function Auth({ isSignup = false }) {
     domain: '',
     scholarLink: '',
     githubLink: '',
-    role: 'student',
+    role: 'student', // ✅ Default role set
   });
 
   const [error, setError] = useState('');
@@ -48,13 +48,16 @@ export default function Auth({ isSignup = false }) {
     try {
       let result;
       if (isSignup) {
-        result = await register(formData);
+        result = await register(formData); // ✅ full formData including role
       } else {
         result = await login({ email: formData.email, password: formData.password });
       }
 
-      if (result.success) navigate('/dashboard');
-      else setError(result.error || 'An unexpected error occurred');
+      if (result.success) {
+        navigate('/dashboard');
+      } else {
+        setError(result.error || 'An unexpected error occurred');
+      }
     } catch (err) {
       console.error('Auth error:', err);
       setError(err.message || 'An unexpected error occurred');
@@ -92,12 +95,15 @@ export default function Auth({ isSignup = false }) {
                 <Input label="Google Scholar Link" name="scholarLink" value={formData.scholarLink} onChange={handleChange} />
                 <Input label="GitHub Link" name="githubLink" value={formData.githubLink} onChange={handleChange} />
                 <div>
-                  <label className={`block text-sm font-medium mb-1 ${colors.labelText}`}>Role</label>
+                  <label className={`block text-sm font-medium mb-1 ${colors.labelText}`}>
+                    Role <span className="text-red-400">*</span>
+                  </label>
                   <select
                     name="role"
                     value={formData.role}
                     onChange={handleChange}
-                    className={`w-full border ${colors.inputBorder} p-3 rounded-lg bg-slate-700/50 text-white`}
+                    required
+                    className={`w-full border ${colors.inputBorder} p-3 rounded-lg bg-slate-700/50 text-white focus:outline-none`}
                   >
                     <option value="student">Student</option>
                     <option value="mentor">Mentor</option>
@@ -149,6 +155,7 @@ export default function Auth({ isSignup = false }) {
   );
 }
 
+// 🧩 Reusable Input Component
 function Input({ label, name, value, onChange, type = 'text', required = false }) {
   return (
     <div>

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { FaUserPlus, FaSignInAlt, FaGraduationCap } from "react-icons/fa";
+import { colors } from '../styles/colors';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,7 +11,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 shadow-2xl p-4 md:p-10 fixed w-full top-0 left-0 z-50 backdrop-blur-md">
+    <nav className="shadow-2xl p-4 md:p-10 fixed w-full top-0 left-0 z-50 backdrop-blur-md" style={{ background: colors.gradients.background.hero }}>
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         <div className="flex justify-between items-center h-12 md:h-16">
           {/* Brand Logo & Name */}
@@ -24,7 +25,12 @@ const Navbar = () => {
                   className="w-full h-full object-contain relative z-10" 
                 />
               </div>
-              <h1 className="text-lg md:text-2xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+              <h1 className="text-lg md:text-2xl font-bold" style={{ 
+                background: colors.gradients.brand.secondary,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}>
                 ThesisConnect
               </h1>
             </Link>
@@ -35,18 +41,24 @@ const Navbar = () => {
           <div className="hidden md:flex flex-1 justify-center space-x-8">
             <Link 
               to="/" 
-              className="relative text-gray-300 hover:text-white transition-all duration-300 group font-medium"
+              className="relative transition-all duration-300 group font-medium"
+              style={{ color: colors.text.secondary }}
+              onMouseEnter={(e) => e.target.style.color = colors.text.primary}
+              onMouseLeave={(e) => e.target.style.color = colors.text.secondary}
             >
               Home
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-400 to-purple-400 group-hover:w-full transition-all duration-300"></span>
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 group-hover:w-full transition-all duration-300" style={{ background: colors.gradients.brand.primary }}></span>
             </Link>
         
             <Link 
               to="/explore" 
-              className="relative text-gray-300 hover:text-white transition-all duration-300 group font-medium"
+              className="relative transition-all duration-300 group font-medium"
+              style={{ color: colors.text.secondary }}
+              onMouseEnter={(e) => e.target.style.color = colors.text.primary}
+              onMouseLeave={(e) => e.target.style.color = colors.text.secondary}
             >
               Explore
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-400 to-purple-400 group-hover:w-full transition-all duration-300"></span>
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 group-hover:w-full transition-all duration-300" style={{ background: colors.gradients.brand.primary }}></span>
             </Link>
             <Link 
               to="/publications" 

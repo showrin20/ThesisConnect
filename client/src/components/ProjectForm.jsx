@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import axios from '../axios';
 import { Upload, Link as LinkIcon, FileText, X } from 'lucide-react';
+import { colors } from '../styles/colors';
+import { getInputStyles, getButtonStyles, getStatusStyles } from '../styles/styleUtils';
 
 export default function ProjectForm({ onProjectCreated }) {
   const [formData, setFormData] = useState({
@@ -159,20 +161,20 @@ const handleSubmit = async (e) => {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-4">
-          <p className="text-red-300 text-sm">{error}</p>
+        <div className="rounded-lg p-4" style={getStatusStyles('error')}>
+          <p className="text-sm">{error}</p>
         </div>
       )}
 
       {success && (
-        <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-4">
+        <div className="rounded-lg p-4" style={getStatusStyles('success')}>
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: colors.status.success.border }}>
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: colors.text.primary }}>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <p className="text-green-300 text-sm font-medium">Project created successfully!</p>
+            <p className="text-sm font-medium">Project created successfully!</p>
           </div>
         </div>
       )}

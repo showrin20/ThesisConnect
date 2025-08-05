@@ -13,6 +13,7 @@ import Auth from './components/Auth';
 import MyProjects from './pages/MyProjects';  
 import MyPublications from './pages/MyPublications';
 import PublicationSearch from './components/PublicationSearch';
+import { colors } from './styles/colors';
 
 
 // Component to conditionally render navbar
@@ -25,7 +26,7 @@ function AppContent() {
                      location.pathname === '/my-publications';
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 to-gray-800">
+    <div className="min-h-screen" style={{ background: colors.gradients.background.main }}>
       {!hideNavbar && <Navbar />}
       <main className={hideNavbar ? "" : "pt-36"}>
         <Routes>

@@ -5,6 +5,8 @@ import axios from '../axios'; // your axios instance configured with baseURL
 import ProjectCard from '../components/ProjectCard';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import statsService from '../services/statsService';
+import { colors } from '../styles/colors';
+import { getInputStyles, getButtonStyles, getStatusStyles, getCardStyles, getGradientTextStyles } from '../styles/styleUtils';
 
 // Import Dashboard components
 import Sidebar from '../components/DashboardSidebar';
@@ -20,6 +22,7 @@ export default function MyProjects() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [editingProject, setEditingProject] = useState(null);
+  const [deletingProject, setDeletingProject] = useState(null);
   
   // User statistics state
   const [userStats, setUserStats] = useState({
@@ -87,6 +90,22 @@ export default function MyProjects() {
     fetchMyProjects();
   }, []);
 
+  // Handle escape key for modals
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        if (deletingProject) {
+          setDeletingProject(null);
+        } else if (editingProject) {
+          cancelForm();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [deletingProject, editingProject]);
+
   const handleChange = (e) => {
     setFormData(prev => ({
       ...prev,
@@ -118,15 +137,21 @@ export default function MyProjects() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this project?')) return;
-
     try {
       await axios.delete(`/projects/${id}`);
-      alert('Project deleted successfully!');
+      setDeletingProject(null);
       fetchMyProjects();
     } catch (err) {
       alert(err.response?.data?.msg || 'Failed to delete project');
     }
+  };
+
+  const confirmDelete = (project) => {
+    setDeletingProject(project);
+  };
+
+  const cancelDelete = () => {
+    setDeletingProject(null);
   };
 
   const startEditing = (project) => {
@@ -143,14 +168,15 @@ export default function MyProjects() {
 
   const cancelForm = () => {
     setEditingProject(null);
+    setDeletingProject(null);
     setFormData({ title: '', description: '', link: '', tags: '', status: 'Planned', collaborators: '' });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900/20 via-slate-900 to-blue-900/20">
+    <div className="min-h-screen" style={{ background: colors.gradients.background.page }}>
       {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="h-full w-full bg-[radial-gradient(circle_at_50%_50%,rgba(56,189,248,0.1),transparent_50%)]"></div>
+      <div className="absolute inset-0" style={{ opacity: 0.3 }}>
+        <div className="h-full w-full" style={{ background: colors.gradients.background.radial }}></div>
       </div>
 
       <div className="relative flex h-screen">
@@ -171,52 +197,202 @@ export default function MyProjects() {
           <main className="flex-1 overflow-y-auto p-6">
             <div className="container mx-auto">
               <h1 className="text-4xl font-bold mb-8 text-center">
-                <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                <span style={getGradientTextStyles('secondary')}>
                   My Projects
                 </span>
               </h1>
 
         {editingProject && (
-          <form onSubmit={handleUpdate} className="max-w-2xl mx-auto bg-white/5 backdrop-blur-lg rounded-xl p-8 mb-8 border border-white/10 shadow-lg">
+          <form onSubmit={handleUpdate} className="max-w-2xl mx-auto rounded-xl p-8 mb-8 shadow-lg" style={getCardStyles('glass')}>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-semibold text-white">Edit Project</h2>
-              <button type="button" onClick={cancelForm} className="text-gray-400 hover:text-white text-2xl">✕</button>
+              <h2 className="text-2xl font-semibold" style={{ color: colors.text.primary }}>Edit Project</h2>
+              <button type="button" onClick={cancelForm} className="text-2xl transition-colors" style={{ color: colors.text.muted }}
+                onMouseEnter={(e) => e.target.style.color = colors.text.primary}
+                onMouseLeave={(e) => e.target.style.color = colors.text.muted}>
+                ✕
+              </button>
             </div>
 
             <div className="space-y-4">
-              <input type="text" name="title" value={formData.title} onChange={handleChange} required placeholder="Title" className="w-full p-3 rounded-lg bg-slate-800/50 text-white" />
-              <textarea name="description" value={formData.description} onChange={handleChange} required rows={4} placeholder="Description" className="w-full p-3 rounded-lg bg-slate-800/50 text-white" />
-              <input type="url" name="link" value={formData.link} onChange={handleChange} required placeholder="Project Link" className="w-full p-3 rounded-lg bg-slate-800/50 text-white" />
-              <input type="text" name="tags" value={formData.tags} onChange={handleChange} placeholder="Tags (comma separated)" className="w-full p-3 rounded-lg bg-slate-800/50 text-white" />
-              <select name="status" value={formData.status} onChange={handleChange} className="w-full p-3 rounded-lg bg-slate-800/50 text-white">
+              <input 
+                type="text" 
+                name="title" 
+                value={formData.title} 
+                onChange={handleChange} 
+                required 
+                placeholder="Title" 
+                className="w-full p-3 rounded-lg transition-all duration-200"
+                style={getInputStyles()}
+                onFocus={(e) => Object.assign(e.target.style, getInputStyles(true))}
+                onBlur={(e) => Object.assign(e.target.style, getInputStyles(false))}
+              />
+              <textarea 
+                name="description" 
+                value={formData.description} 
+                onChange={handleChange} 
+                required 
+                rows={4} 
+                placeholder="Description" 
+                className="w-full p-3 rounded-lg transition-all duration-200"
+                style={getInputStyles()}
+                onFocus={(e) => Object.assign(e.target.style, getInputStyles(true))}
+                onBlur={(e) => Object.assign(e.target.style, getInputStyles(false))}
+              />
+              <input 
+                type="url" 
+                name="link" 
+                value={formData.link} 
+                onChange={handleChange} 
+                required 
+                placeholder="Project Link" 
+                className="w-full p-3 rounded-lg transition-all duration-200"
+                style={getInputStyles()}
+                onFocus={(e) => Object.assign(e.target.style, getInputStyles(true))}
+                onBlur={(e) => Object.assign(e.target.style, getInputStyles(false))}
+              />
+              <input 
+                type="text" 
+                name="tags" 
+                value={formData.tags} 
+                onChange={handleChange} 
+                placeholder="Tags (comma separated)" 
+                className="w-full p-3 rounded-lg transition-all duration-200"
+                style={getInputStyles()}
+                onFocus={(e) => Object.assign(e.target.style, getInputStyles(true))}
+                onBlur={(e) => Object.assign(e.target.style, getInputStyles(false))}
+              />
+              <select 
+                name="status" 
+                value={formData.status} 
+                onChange={handleChange} 
+                className="w-full p-3 rounded-lg transition-all duration-200"
+                style={getInputStyles()}
+                onFocus={(e) => Object.assign(e.target.style, getInputStyles(true))}
+                onBlur={(e) => Object.assign(e.target.style, getInputStyles(false))}
+              >
                 <option value="Planned">Planned</option>
                 <option value="In Progress">In Progress</option>
                 <option value="Completed">Completed</option>
               </select>
-              <input type="text" name="collaborators" value={formData.collaborators} onChange={handleChange} placeholder="Collaborators (comma separated)" className="w-full p-3 rounded-lg bg-slate-800/50 text-white" />
+              <input 
+                type="text" 
+                name="collaborators" 
+                value={formData.collaborators} 
+                onChange={handleChange} 
+                placeholder="Collaborators (comma separated)" 
+                className="w-full p-3 rounded-lg transition-all duration-200"
+                style={getInputStyles()}
+                onFocus={(e) => Object.assign(e.target.style, getInputStyles(true))}
+                onBlur={(e) => Object.assign(e.target.style, getInputStyles(false))}
+              />
             </div>
 
             <div className="flex justify-between mt-6">
-              <button type="submit" className="px-6 py-3 bg-blue-600 text-white rounded-lg">Update</button>
-              <button type="button" onClick={cancelForm} className="px-6 py-3 border text-white border-gray-500 rounded-lg">Cancel</button>
+              <button 
+                type="submit" 
+                className="px-6 py-3 rounded-lg font-medium transition-all duration-200"
+                style={getButtonStyles('primary')}
+                onMouseEnter={(e) => Object.assign(e.target.style, getButtonStyles('primary'), { transform: 'scale(1.02)' })}
+                onMouseLeave={(e) => Object.assign(e.target.style, getButtonStyles('primary'), { transform: 'scale(1)' })}
+              >
+                Update
+              </button>
+              <button 
+                type="button" 
+                onClick={cancelForm} 
+                className="px-6 py-3 rounded-lg font-medium transition-all duration-200"
+                style={getButtonStyles('outline')}
+                onMouseEnter={(e) => Object.assign(e.target.style, getButtonStyles('outline'), { backgroundColor: colors.button.outline.backgroundHover })}
+                onMouseLeave={(e) => Object.assign(e.target.style, getButtonStyles('outline'))}
+              >
+                Cancel
+              </button>
             </div>
           </form>
         )}
 
+        {/* Delete Confirmation Modal */}
+        {deletingProject && (
+          <div 
+            className="fixed inset-0 z-50 flex items-center justify-center p-4" 
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                cancelDelete();
+              }
+            }}
+          >
+            <div className="relative w-full max-w-md rounded-xl p-6 shadow-2xl" style={getCardStyles('glass')}>
+              <div className="text-center">
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4" style={{ backgroundColor: colors.status.error.background }}>
+                  <Trash2 size={24} style={{ color: colors.status.error.text }} />
+                </div>
+                
+                <h3 className="text-lg font-medium mb-2" style={{ color: colors.text.primary }}>
+                  Delete Project
+                </h3>
+                
+                <p className="text-sm mb-6" style={{ color: colors.text.secondary }}>
+                  Are you sure you want to delete "<span style={{ color: colors.text.primary, fontWeight: '500' }}>{deletingProject.title}</span>"? This action cannot be undone.
+                </p>
+                
+                <div className="flex gap-3 justify-center">
+                  <button
+                    onClick={cancelDelete}
+                    className="px-4 py-2 rounded-lg font-medium transition-all duration-200"
+                    style={getButtonStyles('outline')}
+                    onMouseEnter={(e) => Object.assign(e.target.style, getButtonStyles('outline'), { backgroundColor: colors.button.outline.backgroundHover })}
+                    onMouseLeave={(e) => Object.assign(e.target.style, getButtonStyles('outline'))}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleDelete(deletingProject._id)}
+                    className="px-4 py-2 rounded-lg font-medium transition-all duration-200"
+                    style={getButtonStyles('danger')}
+                    onMouseEnter={(e) => Object.assign(e.target.style, getButtonStyles('danger'), { transform: 'scale(1.02)' })}
+                    onMouseLeave={(e) => Object.assign(e.target.style, getButtonStyles('danger'), { transform: 'scale(1)' })}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {loading ? (
-          <p className="text-white text-center">Loading...</p>
+          <p className="text-center" style={{ color: colors.text.primary }}>Loading...</p>
         ) : error ? (
-          <p className="text-red-400 text-center">{error}</p>
+          <p className="text-center" style={{ color: colors.status.error.text }}>{error}</p>
         ) : projects.length === 0 ? (
-          <p className="text-white text-center">No projects found.</p>
+          <p className="text-center" style={{ color: colors.text.primary }}>No projects found.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map((project) => (
               <div key={project._id} className="relative group">
                 <ProjectCard {...project} />
                 <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => startEditing(project)} title="Edit" className="p-2 bg-yellow-500/20 text-yellow-300 rounded-lg"><Edit size={16} /></button>
-                  <button onClick={() => handleDelete(project._id)} title="Delete" className="p-2 bg-red-500/20 text-red-300 rounded-lg"><Trash2 size={16} /></button>
+                  <button 
+                    onClick={() => startEditing(project)} 
+                    title="Edit" 
+                    className="p-2 rounded-lg transition-colors"
+                    style={{ backgroundColor: `${colors.status.warning.background}`, color: colors.status.warning.text }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = colors.primary.blue[600]}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = colors.status.warning.background}
+                  >
+                    <Edit size={16} />
+                  </button>
+                  <button 
+                    onClick={() => confirmDelete(project)} 
+                    title="Delete" 
+                    className="p-2 rounded-lg transition-colors"
+                    style={{ backgroundColor: `${colors.status.error.background}`, color: colors.status.error.text }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = colors.button.danger.background}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = colors.status.error.background}
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               </div>
             ))}
