@@ -60,7 +60,7 @@ const lightColors = {
   },
 
   background: {
-    primary: '#fefefe',         // Soft off-white, easier than pure white
+    primary: '#F2F2F2',         // Soft off-white, easier than pure white
     secondary: '#faf9f7',       // Warm cream tone
     tertiary: '#f5f4f1',        // Gentle beige
     dark: '#ebe8e3',           // Soft taupe for contrast elements

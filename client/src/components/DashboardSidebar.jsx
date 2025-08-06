@@ -11,7 +11,8 @@ import {
   ChevronDown,
   ChevronRight,
   Users,
-  TrendingUp
+  TrendingUp,
+  MessageSquare
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { colors } from '../styles/colors';
@@ -41,6 +42,7 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
     { icon: Home, label: 'My Dashboard', active: true, path: '/dashboard' },
     { icon: FolderOpen, label: 'My Projects', path: '/my-projects' },
     { icon: BookOpen, label: 'My Publications', path: '/my-publications' },  // Changed here
+    { icon: MessageSquare, label: 'My Community Posts', path: '/my-community-posts' },
     { icon: Settings, label: 'Settings', path: '/settings' },
   ];
 

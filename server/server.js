@@ -9,6 +9,7 @@ const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/users');
 const projectRoutes = require('./routes/projects');
 const publicationRoutes = require('./routes/publications');
+const communityPostRoutes = require('./routes/communityPost');
 const protectedRoutes = require('./routes/protectedRoutes'); 
 
 // Load environment variables
@@ -45,6 +46,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/publications', publicationRoutes);
+app.use('/api/community-posts', communityPostRoutes);
 app.use('/api/protected', protectedRoutes); // <-- Here it is!
 
 // 404 handler for API routes

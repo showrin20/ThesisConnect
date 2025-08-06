@@ -24,6 +24,9 @@ import ProjectForm from '../components/ProjectForm';
 import PublicationForm from '../components/PublicationForm';
 import PublicationCard from '../components/ PublicationCard';
 import PublicationSearch from '../components/PublicationSearch';
+import CommunityPostCard from '../components/CommunityPostCard';
+import CommunityPostForm from '../components/CommunityPostForm';
+
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -33,6 +36,7 @@ export default function Dashboard() {
   const [showProjectForm, setShowProjectForm] = useState(false);
   const [showPublicationForm, setShowPublicationForm] = useState(false);
   const [showPublicationSearch, setShowPublicationSearch] = useState(false);
+  const [showCommunityPostForm, setShowCommunityPostForm] = useState(false);
 
   // Projects state
   const [recentProjects, setRecentProjects] = useState([]);
@@ -43,6 +47,12 @@ export default function Dashboard() {
   const [recentPublications, setRecentPublications] = useState([]);
   const [loadingPublications, setLoadingPublications] = useState(false);
   const [publicationsError, setPublicationsError] = useState(null);
+
+  // Forum activity state
+  const [recentCommunityPosts, setRecentCommunityPosts] = useState([]);
+  const [loadingCommunityPosts, setLoadingCommunityPosts] = useState(false);
+  const [communityPostsError, setCommunityPostsError] = useState(null);
+
 
   // Statistics state
   const [userStats, setUserStats] = useState({
@@ -56,6 +66,7 @@ export default function Dashboard() {
 
   // Forum activity state
   const [forumActivity, setForumActivity] = useState([]);
+
 
   // Fetch user statistics on mount
   useEffect(() => {
@@ -113,6 +124,27 @@ export default function Dashboard() {
     };
     fetchPublications();
   }, []);
+
+  // Fetch community posts on mount
+  useEffect(() => {
+    const fetchCommunityPosts = async () => {
+      setLoadingCommunityPosts(true);
+      setCommunityPostsError(null);
+      try {
+        const response = await axios.get('/community-posts');
+        setRecentCommunityPosts(response.data?.data?.posts || []);
+      } catch (error) {
+        setCommunityPostsError('Failed to load community posts');
+        setRecentCommunityPosts([]);
+      } finally {
+        setLoadingCommunityPosts(false);
+      }
+    };
+    fetchCommunityPosts();
+  }, []);
+
+
+
 
   // Stats grid with dynamic numbers from API
   const stats = [
@@ -186,6 +218,20 @@ export default function Dashboard() {
     const publicationData = newPublication?.data || newPublication;
     setRecentPublications([publicationData, ...recentPublications]);
     setShowPublicationForm(false);
+    
+    // Refresh user stats
+    if (user?.id) {
+      statsService.getUserStats(user.id)
+        .then(stats => setUserStats(stats))
+        .catch(error => console.error('Failed to refresh stats:', error));
+    }
+  };
+
+  // Add new community post to list & close form & refresh stats
+  const handleCommunityPostCreated = (newPost) => {
+    const postData = newPost?.data || newPost;
+    setRecentCommunityPosts([postData, ...recentCommunityPosts]);
+    setShowCommunityPostForm(false);
     
     // Refresh user stats
     if (user?.id) {
@@ -271,6 +317,7 @@ export default function Dashboard() {
                   <TrendingUp size={16} />
                   Start New Project
                 </button>
+                
                 <button
                   onClick={() => setShowPublicationForm(true)}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200"
@@ -285,7 +332,9 @@ export default function Dashboard() {
                   <BookOpen size={16} />
                   Add Publication
                 </button>
-                <button 
+                
+                <button
+                  onClick={() => setShowCommunityPostForm(true)}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200"
                   style={{
                     backgroundColor: `${colors.primary.purple[500]}33`,
@@ -294,6 +343,19 @@ export default function Dashboard() {
                   }}
                   onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.primary.purple[500]}4D`}
                   onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.primary.purple[500]}33`}
+                >
+                  <Users size={16} />
+                  Create Community Post
+                </button>
+                <button 
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200"
+                  style={{
+                    backgroundColor: `${colors.accent.orange[500]}33`,
+                    color: colors.accent.orange[400],
+                    borderColor: `${colors.accent.orange[500]}4D`
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.accent.orange[500]}4D`}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.accent.orange[500]}33`}
                 >
                   <Users size={16} />
                   Find Collaborators
@@ -391,6 +453,30 @@ export default function Dashboard() {
                 </div>
               )}
 
+              {communityPostsError && (
+                <div 
+                  className="mb-6 p-4 rounded-lg border"
+                  style={{
+                    backgroundColor: `${colors.accent.red[500]}33`,
+                    borderColor: `${colors.accent.red[500]}80`
+                  }}
+                >
+                  <p className="text-sm" style={{ color: colors.accent.red[300] }}>{communityPostsError}</p>
+                  <button 
+                    onClick={() => {
+                      axios.get('/community-posts').then(res => setRecentCommunityPosts(res.data?.data?.posts || []));
+                      setCommunityPostsError(null);
+                    }}
+                    className="mt-2 text-sm underline transition-colors"
+                    style={{ color: colors.primary.purple[400] }}
+                    onMouseEnter={(e) => e.target.style.color = colors.primary.purple[300]}
+                    onMouseLeave={(e) => e.target.style.color = colors.primary.purple[400]}
+                  >
+                    Try Again
+                  </button>
+                </div>
+              )}
+
               {/* Modals */}
               {showProjectForm && (
                 <div 
@@ -461,6 +547,30 @@ export default function Dashboard() {
                     </button>
                   </div>
                   <PublicationSearch onPublicationAdd={handleAddPublicationFromSearch} />
+                </div>
+              )}
+
+              {showCommunityPostForm && (
+                <div 
+                  className="mb-6 p-6 backdrop-blur-lg rounded-xl border"
+                  style={{
+                    backgroundColor: colors.background.glass,
+                    borderColor: colors.border.secondary
+                  }}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold" style={{ color: colors.text.primary }}>Create Community Post</h3>
+                    <button
+                      onClick={() => setShowCommunityPostForm(false)}
+                      className="transition-colors"
+                      style={{ color: colors.text.muted }}
+                      onMouseEnter={(e) => e.target.style.color = colors.text.primary}
+                      onMouseLeave={(e) => e.target.style.color = colors.text.muted}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <CommunityPostForm onPostCreated={handleCommunityPostCreated} />
                 </div>
               )}
 
@@ -601,6 +711,72 @@ export default function Dashboard() {
                             tags={pub.tags}
                             doi={pub.doi}
                             abstract={pub.abstract}
+                          />
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Recent Community Posts */}
+                  <div 
+                    className="backdrop-blur-lg rounded-xl p-6 border"
+                    style={{
+                      backgroundColor: colors.background.glass,
+                      borderColor: colors.border.secondary
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-xl font-semibold" style={{ color: colors.text.primary }}>Recent Community Posts</h2>
+                      <button 
+                        className="flex items-center gap-2 text-sm font-medium transition-colors"
+                        style={{ color: colors.primary.purple[400] }}
+                        onMouseEnter={(e) => e.target.style.color = colors.primary.purple[300]}
+                        onMouseLeave={(e) => e.target.style.color = colors.primary.purple[400]}
+                      >
+                        <span>View All</span>
+                        <ExternalLink size={14} />
+                      </button>
+                    </div>
+                    <div className="space-y-4">
+                      {loadingCommunityPosts ? (
+                        <div className="flex items-center justify-center py-8">
+                          <div 
+                            className="w-6 h-6 border-2 rounded-full animate-spin"
+                            style={{
+                              borderColor: `${colors.primary.purple[400]}4D`,
+                              borderTopColor: colors.primary.purple[400]
+                            }}
+                          ></div>
+                          <span className="ml-2" style={{ color: `${colors.text.secondary}99` }}>Loading community posts...</span>
+                        </div>
+                      ) : (!Array.isArray(recentCommunityPosts) || recentCommunityPosts.length === 0) ? (
+                        <div className="text-center py-8">
+                          <p className="text-sm italic mb-4" style={{ color: `${colors.text.secondary}99` }}>No community posts yet.</p>
+                          <button
+                            onClick={() => setShowCommunityPostForm(true)}
+                            className="text-sm underline transition-colors"
+                            style={{ color: colors.primary.purple[400] }}
+                            onMouseEnter={(e) => e.target.style.color = colors.primary.purple[300]}
+                            onMouseLeave={(e) => e.target.style.color = colors.primary.purple[400]}
+                          >
+                            Create your first community post
+                          </button>
+                        </div>
+                      ) : (
+                        (Array.isArray(recentCommunityPosts) ? recentCommunityPosts : []).slice(0, 3).map((post, idx) => (
+                          <CommunityPostCard
+                            key={post._id || idx}
+                            postId={post.postId}
+                            type={post.type}
+                            title={post.title}
+                            content={post.content}
+                            author={post.author?.name || post.authorId}
+                            tags={post.tags}
+                            skillsNeeded={post.skillsNeeded}
+                            status={post.status}
+                            createdAt={post.createdAt}
+                            likes={post.likes}
+                            comments={post.comments}
                           />
                         ))
                       )}

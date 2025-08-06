@@ -16,6 +16,7 @@ import Settings from './pages/Settings';
 import Auth from './components/Auth';
 import MyProjects from './pages/MyProjects';  
 import MyPublications from './pages/MyPublications';
+import MyCommunityPosts from './pages/MyCommunityPosts';
 import PublicationSearch from './components/PublicationSearch';
 import { colors } from './styles/colors';
 
@@ -29,7 +30,8 @@ function AppContent() {
                      location.pathname === '/settings' || 
                      location.pathname === '/profile' || 
                      location.pathname === '/my-projects' ||
-                     location.pathname === '/my-publications';
+                     location.pathname === '/my-publications' ||
+                     location.pathname === '/my-community-posts';
 
   return (
     <div className="min-h-screen" style={{ background: colors.gradients.background.main }}>
@@ -79,6 +81,11 @@ function AppContent() {
           <Route path="/my-publications" element={
             <ProtectedRoute>
               <MyPublications />
+            </ProtectedRoute>
+          } />
+          <Route path="/my-community-posts" element={
+            <ProtectedRoute>
+              <MyCommunityPosts />
             </ProtectedRoute>
           } />
 
