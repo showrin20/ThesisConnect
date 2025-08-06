@@ -1,12 +1,34 @@
 import React, { useState } from 'react';
 import { User, Bell, Shield, Save, AlertCircle, CheckCircle, MapPin, Phone, Globe, Briefcase } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/DashboardSidebar';
+import Topbar from '../components/DashboardTopbar';
 import { colors } from '../styles/colors';
 import { getInputStyles, getButtonStyles, getStatusStyles, getCardStyles } from '../styles/styleUtils';
 
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      navigate('/login');
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+
+
+
+
 const Settings = () => {
-  const { user, loading, error, clearError, updateUser } = useAuth();
+  const { user, loading, error, clearError, updateUser, logout } = useAuth();
+  const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [formData, setFormData] = useState({
     university: user?.university || '',
     domain: user?.domain || '',
@@ -34,6 +56,19 @@ const Settings = () => {
     profileVisibility: 'public',
     showEmail: false,
   });
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      navigate('/login');
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   // Update form data when user data loads
   React.useEffect(() => {
@@ -314,23 +349,41 @@ const Settings = () => {
   if (loading) {
     return (
       <div className="min-h-screen" style={{ background: colors.gradients.background.page }}>
-        <div className="container mx-auto px-6 py-8 max-w-4xl">
-          <div className="animate-pulse">
-            <div className="h-8 rounded w-48 mb-4" style={{ backgroundColor: colors.background.glass }}></div>
-            <div className="h-4 rounded w-96 mb-8" style={{ backgroundColor: colors.background.glass }}></div>
-            {[1, 2, 3].map(i => (
-              <div key={i} className="rounded-xl p-6 mb-6" style={{ backgroundColor: colors.background.card }}>
-                <div className="h-6 rounded w-32 mb-4" style={{ backgroundColor: colors.background.glass }}></div>
-                <div className="space-y-4">
-                  {[1, 2].map(j => (
-                    <div key={j} className="rounded-lg p-4" style={{ backgroundColor: colors.background.card }}>
-                      <div className="h-4 rounded w-24 mb-2" style={{ backgroundColor: colors.background.glass }}></div>
-                      <div className="h-3 rounded w-48" style={{ backgroundColor: colors.background.glass }}></div>
+        <div className="flex h-screen">
+          <Sidebar 
+            isOpen={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+          />
+
+          <div className="flex-1 flex flex-col lg:ml-0">
+            <Topbar 
+              onMenuToggle={() => setSidebarOpen(!sidebarOpen)} 
+              user={user}
+              onLogout={handleLogout}
+              isLoggingOut={isLoggingOut}
+            />
+
+            <main className="flex-1 overflow-y-auto p-6">
+              <div className="container mx-auto max-w-4xl">
+                <div className="animate-pulse">
+                  <div className="h-8 rounded w-48 mb-4" style={{ backgroundColor: colors.background.glass }}></div>
+                  <div className="h-4 rounded w-96 mb-8" style={{ backgroundColor: colors.background.glass }}></div>
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="rounded-xl p-6 mb-6" style={{ backgroundColor: colors.background.card }}>
+                      <div className="h-6 rounded w-32 mb-4" style={{ backgroundColor: colors.background.glass }}></div>
+                      <div className="space-y-4">
+                        {[1, 2].map(j => (
+                          <div key={j} className="rounded-lg p-4" style={{ backgroundColor: colors.background.card }}>
+                            <div className="h-4 rounded w-24 mb-2" style={{ backgroundColor: colors.background.glass }}></div>
+                            <div className="h-3 rounded w-48" style={{ backgroundColor: colors.background.glass }}></div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
-            ))}
+            </main>
           </div>
         </div>
       </div>
@@ -339,10 +392,22 @@ const Settings = () => {
 
   return (
     <div className="min-h-screen" style={{ background: colors.gradients.background.page }}>
-      <div className="flex">
-        <Sidebar />
-        <div className="flex-1 p-6 ml-10"> {/* Changed from ml-64 to ml-16 */}
-          <div className="container mx-auto max-w-4xl">
+      <div className="flex h-screen">
+        <Sidebar 
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
+
+        <div className="flex-1 flex flex-col lg:ml-0">
+          <Topbar 
+            onMenuToggle={() => setSidebarOpen(!sidebarOpen)} 
+            user={user}
+            onLogout={handleLogout}
+            isLoggingOut={isLoggingOut}
+          />
+
+          <main className="flex-1 overflow-y-auto p-6">
+            <div className="container mx-auto max-w-4xl">
             {/* Header */}
             <div className="mb-8">
               <h1 className="text-3xl font-bold mb-2" style={{ color: colors.text.primary }}>
@@ -532,11 +597,10 @@ const Settings = () => {
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
-          </div>
+            </div>
+          </main>
         </div>
       </div>
     </div>
   );
-};
-
-export default Settings;
+};export default Settings;

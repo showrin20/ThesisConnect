@@ -206,8 +206,8 @@ const ProfileCard = ({ userStats = null, loadingStats = false }) => {
                   rel="noopener noreferrer"
                   className="px-3 py-1 text-xs rounded-full transition-colors"
                   style={{
-                    backgroundColor: `${colors.primary.blue[500]}33`,
-                    color: colors.primary.blue[800]
+                    backgroundColor: `${colors.primary.blue[200]}33`,
+                    color: colors.primary.blue[200]
                   }}
                 >
                   Scholar
@@ -220,8 +220,8 @@ const ProfileCard = ({ userStats = null, loadingStats = false }) => {
                   rel="noopener noreferrer"
                   className="px-3 py-1 text-xs rounded-full transition-colors"
                   style={{
-                    backgroundColor: `${colors.background.gray[700]}33`,
-                    color: colors.background.gray[700]
+                    backgroundColor: `${colors.background.gray[300]}33`,
+                    color: colors.background.gray[200]
                   }}
                 >
                   GitHub

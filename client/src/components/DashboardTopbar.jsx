@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Menu, X, Bell, User, LogOut, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { colors } from '../styles/colors';
+import ThemeToggle from './ThemeToggle';
 
 const Topbar = ({ onMenuToggle, user, onLogout, isLoggingOut }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -62,6 +63,9 @@ const Topbar = ({ onMenuToggle, user, onLogout, isLoggingOut }) => {
 
           {/* Right Side */}
           <div className="flex items-center gap-3">
+            {/* Theme Toggle */}
+            <ThemeToggle />
+            
             {/* Notifications */}
             <button 
               className="relative p-2 rounded-lg transition-all duration-200"

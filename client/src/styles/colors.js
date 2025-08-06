@@ -1,218 +1,471 @@
-export const colors = {
+// Light mode colors
+const lightColors = {
   primary: {
     blue: {
-      50: '#f5faff',
-      100: '#e0f2ff',
-      200: '#b9ddff',
-      300: '#7ec2ff',
-      400: '#51a9f7',
-      500: '#2b91ea', // new primary
-      600: '#1e81ce',
-      700: '#1867a8',
-      800: '#145087',
-      900: '#0d375e'
+      50: '#f0f9ff',
+      100: '#e0f2fe',
+      200: '#bae6fd',
+      300: '#7dd3fc',
+      400: '#38bdf8',
+      500: '#0ea5e9',  // Same vibrant blue works well in light mode
+      600: '#0284c7',
+      700: '#0369a1',
+      800: '#075985',
+      900: '#0c4a6e'
     },
     purple: {
-      50: '#f9f5ff',
-      100: '#e8ddff',
-      200: '#cbb7ff',
-      300: '#ad90ff',
-      400: '#9771f2',
-      500: '#7f56d9',
-      600: '#6932cc', // new primary purple
-      700: '#5c2db6',
-      800: '#43208a',
-      900: '#2e1462'
+      50: '#fdf4ff',
+      100: '#fae8ff',
+      200: '#f5d0fe',
+      300: '#f0abfc',
+      400: '#e879f9',
+      500: '#d946ef',  // Same vibrant purple
+      600: '#c026d3',
+      700: '#a21caf',
+      800: '#86198f',
+      900: '#701a75'
     },
     pink: {
-      400: '#f38cb5',
-      500: '#ec6aa2',
-      600: '#d95091'
+      400: '#f472b6',
+      500: '#ec4899',
+      600: '#db2777'
     }
   },
 
   accent: {
     green: {
-      300: '#b1e9c4',
-      400: '#6dd3a7',
-      500: '#3cbf90',
-      600: '#1f9c75'
+      300: '#86efac',
+      400: '#4ade80',
+      500: '#38a169',  // Softer, more muted green
+      600: '#2f855a'
     },
     orange: {
-      300: '#ffddb0',
-      400: '#ffb871',
-      500: '#f78a3c',
-      600: '#dc6825'
+      300: '#fed7aa',
+      400: '#fdba74',
+      500: '#dd6b20',  // Warmer, less aggressive orange
+      600: '#c05621'
     },
     red: {
-      300: '#f9b3b3',
-      400: '#f77979',
-      500: '#ec4c4c',
-      600: '#c93030'
+      300: '#fca5a5',
+      400: '#f87171',
+      500: '#c53030',  // Softer, less harsh red
+      600: '#9c2a2a'
     },
     yellow: {
-      300: '#fde68a',
-      400: '#facc15',
-      500: '#eab308',
-      600: '#ca8a04'
+      300: '#fef3c7',
+      400: '#fed18c',
+      500: '#d69e2e',  // Gentler, warmer yellow
+      600: '#b7791f'
     }
   },
 
   background: {
-    primary: '#ffffff',       // white background
-    secondary: '#f9fafb',     // light gray for cards/sections
-    tertiary: '#e5e7eb',      // soft gray for subtle contrast
-    dark: '#d1d5db',          // light gray, not really dark
+    primary: '#fefefe',         // Soft off-white, easier than pure white
+    secondary: '#faf9f7',       // Warm cream tone
+    tertiary: '#f5f4f1',        // Gentle beige
+    dark: '#ebe8e3',           // Soft taupe for contrast elements
     gray: {
-      700: '#4b5563',
-      800: '#374151',
-      900: '#1f2937'
+      700: '#4a5568',          // Softer dark gray
+      800: '#2d3748',
+      900: '#1a202c'
     },
-    card: 'rgba(243, 244, 246, 0.7)',   // light glass effect
-    glass: 'rgba(255, 255, 255, 0.6)',  // white glass effect
-    overlay: 'rgba(255, 255, 255, 0.45)'// lighter overlay
+    card: 'rgba(250, 249, 247, 0.98)',      // Warm card background
+    glass: 'rgba(255, 255, 255, 0.6)',      // Light glass effect
+    overlay: 'rgba(255, 255, 255, 0.45)'    // Light overlay effect
   },
 
   surface: {
-    primary: '#ffffff',    // white card background
-    secondary: '#f3f4f6',  // light gray card alternative
-    muted: '#e5e7eb'       // subtle backgrounds
+    primary: '#faf9f7',        // Warm cream surface
+    secondary: '#f5f4f1',      // Gentle beige
+    muted: '#ebe8e3'          // Soft taupe surface
   },
 
   text: {
-    primary: '#1f2937',  // dark gray-800 for main text
-    secondary: '#4b5563',// gray-600
-    muted: '#6b7280',    // gray-500 for disabled/placeholder text
-    disabled: '#9ca3af', // gray-400
-    error: '#ef4444',
-    success: '#22c55e',
-    warning: '#eab308',
+    primary: '#1a1816',       // Soft blackish-brown, easier than pure black
+    secondary: '#2d2926',     // Warm charcoal
+    muted: '#4a453f',         // Medium warm gray-brown
+    disabled: '#9b958f',      // Soft warm gray for disabled
+    error: '#c53030',         // Softer, warmer red
+    success: '#38a169',       // Gentler green
+    warning: '#dd6b20',       // Warmer orange
     transparent: 'transparent'
   },
 
   border: {
-    primary: '#d1d5db', // gray-300
-    secondary: 'rgba(0, 0, 0, 0.1)', // subtle shadow
-    light: 'rgba(0, 0, 0, 0.05)',
-    blue: 'rgba(43, 145, 234, 0.3)', // light blue border
-    purple: 'rgba(127, 86, 217, 0.3)',
-    error: 'rgba(239, 68, 68, 0.3)',
-    success: 'rgba(34, 197, 94, 0.3)'
+    primary: '#ebe8e3',                    // Soft warm border
+    secondary: 'rgba(139, 128, 109, 0.15)', // Gentle warm borders
+    light: 'rgba(139, 128, 109, 0.08)',     // Very light warm borders
+    blue: 'rgba(14, 165, 233, 0.15)',       // Softer blue accent
+    purple: 'rgba(217, 70, 239, 0.15)',     // Softer purple accent
+    error: 'rgba(197, 48, 48, 0.15)',       // Gentle error border
+    success: 'rgba(56, 161, 105, 0.15)'     // Soft success border
   },
 
   status: {
     error: {
-      background: 'rgba(239, 68, 68, 0.2)',
-      border: 'rgba(239, 68, 68, 0.4)',
-      text: '#ef4444'
+      background: 'rgba(197, 48, 48, 0.04)',
+      border: 'rgba(197, 48, 48, 0.15)',
+      text: '#c53030'
     },
     success: {
-      background: 'rgba(34, 197, 94, 0.15)',
-      border: 'rgba(34, 197, 94, 0.4)',
-      text: '#86efac'
+      background: 'rgba(56, 161, 105, 0.04)',
+      border: 'rgba(56, 161, 105, 0.15)',
+      text: '#38a169'
     },
     warning: {
-      background: 'rgba(251, 191, 36, 0.2)',
-      border: 'rgba(251, 191, 36, 0.4)',
-      text: '#fcd34d'
+      background: 'rgba(221, 107, 32, 0.04)',
+      border: 'rgba(221, 107, 32, 0.15)',
+      text: '#dd6b20'
     }
   },
 
   gradients: {
     brand: {
-      primary: 'linear-gradient(90deg, #2b91ea 0%, #7f56d9 100%)',
-      secondary: 'linear-gradient(90deg, #145087 0%, #7f56d9 50%, #ec6aa2 100%)',
-      dark: 'linear-gradient(90deg, #e0f2ff 0%, #ede9fe 100%)',      // softer gradient for light bg
-      darkHover: 'linear-gradient(90deg, #dbeafe 0%, #cbb7ff 100%)'
+      primary: 'linear-gradient(135deg, #0ea5e9 0%, #d946ef 100%)',        // Same vibrant gradient
+      secondary: 'linear-gradient(135deg, #0284c7 0%, #c026d3 50%, #ec4899 100%)',
+      dark: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',          // Light gradient
+      darkHover: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)'      // Hover state
     },
     background: {
-      main: 'linear-gradient(180deg, #ffffff, #f9fafb)',               // subtle white gradient bg
-      hero: 'linear-gradient(90deg, #e0f2ff, #ad90ff, #e0f2ff)',
-      overlay: 'linear-gradient(90deg, rgba(43, 145, 234, 0.1), rgba(127, 86, 217, 0.1))',
-      radial: 'radial-gradient(circle at center, rgba(43, 145, 234, 0.1), transparent 70%)',
-      page: 'linear-gradient(135deg, rgba(127, 86, 217, 0.1), #ffffff, rgba(43, 145, 234, 0.1))'
+      main: 'linear-gradient(180deg, #fefefe, #faf9f7)',
+      hero: 'linear-gradient(135deg, #0ea5e9, #d946ef, #ec4899)',
+      overlay: 'linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(217, 70, 239, 0.1))',
+      radial: 'radial-gradient(circle at center, rgba(14, 165, 233, 0.1), transparent 70%)',
+      page: 'linear-gradient(135deg, rgba(217, 70, 239, 0.015), #fefefe, rgba(14, 165, 233, 0.015))'
     },
     accent: {
-      blue: 'linear-gradient(90deg, #2b91ea, #7ec2ff)',
-      green: 'linear-gradient(90deg, #3cbf90, #b1e9c4)',
-      purple: 'linear-gradient(90deg, #7f56d9, #d8b4fe)',
-      orange: 'linear-gradient(90deg, #f78a3c, #ffddb0)',
-      red: 'linear-gradient(90deg, #ec4c4c, #f9b3b3)',
-      yellow: 'linear-gradient(90deg, #facc15, #fde68a)'
+      blue: 'linear-gradient(135deg, #0ea5e9, #7dd3fc)',
+      green: 'linear-gradient(135deg, #38a169, #86efac)',
+      purple: 'linear-gradient(135deg, #d946ef, #f0abfc)',
+      orange: 'linear-gradient(135deg, #dd6b20, #fed7aa)',
+      red: 'linear-gradient(135deg, #c53030, #fca5a5)',
+      yellow: 'linear-gradient(135deg, #d69e2e, #fed18c)'
     }
   },
 
   button: {
     primary: {
-      background: 'linear-gradient(to right, #2b91ea, #7f56d9)',
-      backgroundHover: 'linear-gradient(to right, #1e81ce, #5c2db6)',
+      background: 'linear-gradient(135deg, #0ea5e9, #d946ef)',  // Same vibrant gradient
+      backgroundHover: 'linear-gradient(135deg, #0284c7, #c026d3)',
       text: '#ffffff',
       border: 'transparent'
     },
     secondary: {
       background: 'transparent',
-      backgroundHover: '#7f56d9',
-      text: '#7f56d9',
-      textHover: '#ffffff',
-      border: '#7f56d9'
+      backgroundHover: 'rgba(217, 70, 239, 0.05)',  // Very subtle hover
+      text: '#d946ef',
+      textHover: '#c026d3',
+      border: '#d946ef'
     },
     outline: {
       background: 'transparent',
-      backgroundHover: 'rgba(127, 86, 217, 0.1)',
-      text: '#7f56d9',
-      textHover: '#5c2db6',
-      border: '#7f56d9'
+      backgroundHover: 'rgba(217, 70, 239, 0.03)',
+      text: '#d946ef',
+      textHover: '#c026d3',
+      border: '#d946ef'
     },
     danger: {
-      background: '#ec4c4c',
-      backgroundHover: '#c93030',
+      background: '#c53030',  // Softer red for light mode
+      backgroundHover: '#9c2a2a',
       text: '#ffffff',
       border: 'transparent'
     },
     success: {
-      background: '#3cbf90',
-      backgroundHover: '#1f9c75',
+      background: '#38a169',  // Gentler green
+      backgroundHover: '#2f855a',
       text: '#ffffff',
       border: 'transparent'
     },
     disabled: {
-      background: '#d1d5db',
-      text: '#9ca3af',
+      background: '#ebe8e3',  // Warm light disabled
+      text: '#9b958f',
       border: 'transparent'
     }
   },
 
   input: {
-    background: 'rgba(243, 244, 246, 0.8)',
-    border: '#d1d5db',
-    borderFocus: '#51a9f7',
-    text: '#1f2937',
-    placeholder: '#6b7280'
+    background: 'rgba(250, 249, 247, 0.98)',  // Warm cream input
+    border: '#ebe8e3',                         // Soft warm border
+    borderFocus: '#0ea5e9',                    // Blue focus state
+    text: '#1a1816',                           // Soft blackish-brown text
+    placeholder: '#6b6560'                     // Warm gray placeholder
   },
 
   icon: {
-    primary: '#2b91ea',
-    secondary: '#6b7280',
-    muted: '#9ca3af',
-    error: '#ec4c4c',
-    success: '#4ade80',
-    warning: '#facc15'
+    primary: '#0ea5e9',      // Blue primary icon
+    secondary: '#6b6560',    // Warm gray secondary
+    muted: '#9b958f',        // Soft warm gray muted
+    error: '#c53030',        // Softer red error
+    success: '#38a169',      // Gentler green success
+    warning: '#dd6b20'       // Warm orange warning
   },
 
   shadow: {
-    default: 'rgba(0, 0, 0, 0.06)',
-    lg: 'rgba(0, 0, 0, 0.12)',
-    xl: 'rgba(0, 0, 0, 0.18)',
-    '2xl': 'rgba(0, 0, 0, 0.24)'
+    default: 'rgba(139, 128, 109, 0.08)',    // Warm, very subtle shadows
+    lg: 'rgba(139, 128, 109, 0.12)',
+    xl: 'rgba(139, 128, 109, 0.16)',
+    '2xl': 'rgba(139, 128, 109, 0.2)'
   }
 };
 
+// Dark mode colors
+const darkColors = {
+  primary: {
+    blue: {
+      50: '#f0f9ff',
+      100: '#e0f2fe',
+      200: '#bae6fd',
+      300: '#7dd3fc',
+      400: '#38bdf8',
+      500: '#0ea5e9',  // Softer, less harsh blue
+      600: '#0284c7',
+      700: '#0369a1',
+      800: '#075985',
+      900: '#0c4a6e'
+    },
+    purple: {
+      50: '#fdf4ff',
+      100: '#fae8ff',
+      200: '#f5d0fe',
+      300: '#f0abfc',
+      400: '#e879f9',
+      500: '#d946ef',  // Softer magenta-purple, easier on eyes
+      600: '#c026d3',
+      700: '#a21caf',
+      800: '#86198f',
+      900: '#701a75'
+    },
+    pink: {
+      400: '#f472b6',
+      500: '#ec4899',
+      600: '#db2777'
+    }
+  },
+
+  accent: {
+    green: {
+      300: '#86efac',
+      400: '#4ade80',
+      500: '#10d050',  // Gentler green, less electric
+      600: '#16a34a'
+    },
+    orange: {
+      300: '#fed7aa',
+      400: '#fdba74',
+      500: '#fb923c',  // Warmer, softer orange
+      600: '#ea580c'
+    },
+    red: {
+      300: '#fca5a5',
+      400: '#f87171',
+      500: '#f56565',  // Softer red, less aggressive
+      600: '#e53e3e'
+    },
+    yellow: {
+      300: '#fef3c7',
+      400: '#fed18c',
+      500: '#f6cc15',  // Warmer, creamier yellow
+      600: '#d69e2e'
+    }
+  },
+
+  background: {
+    primary: '#1a202c',         // Warmer dark blue-gray, easier on eyes
+    secondary: '#2d3748',       // Soft transition
+    tertiary: '#4a5568',        // Gentle progression
+    dark: '#171923',           // Less harsh than pure black
+    gray: {
+      700: '#4a5568',
+      800: '#2d3748',
+      900: '#1a202c'
+    },
+    card: 'rgba(45, 55, 72, 0.85)',      // Warmer card background
+    glass: 'rgba(203, 213, 225, 0.06)',  // Very subtle warm glass
+    overlay: 'rgba(203, 213, 225, 0.03)'
+  },
+
+  surface: {
+    primary: '#2d3748',        // Warm, comfortable surface
+    secondary: '#4a5568',      // Gentle elevation
+    muted: '#718096'          // Soft, muted tone
+  },
+
+  text: {
+    primary: '#f1f5f9',       // Slightly off-white — clean for dark mode
+    secondary: '#e2e8f0',     // Light gray — readable subtitles
+    muted: '#cbd5e1',         // Softer muted text for dark mode
+    disabled: '#64748b',      // Medium gray, low emphasis
+    error: '#ef4444',         // Vivid red — alert pop
+    success: '#22c55e',       // Vivid green — success clarity
+    warning: '#f59e0b',       // Bright amber — good contrast
+    transparent: 'transparent'
+  },
+
+  border: {
+    primary: '#718096',                    // Warm, soft border
+    secondary: 'rgba(203, 213, 225, 0.15)', // Very gentle borders
+    light: 'rgba(203, 213, 225, 0.08)',
+    blue: 'rgba(14, 165, 233, 0.3)',      // Softer blue accent
+    purple: 'rgba(217, 70, 239, 0.3)',    // Softer purple accent
+    error: 'rgba(245, 101, 101, 0.3)',    // Gentle error border
+    success: 'rgba(16, 208, 80, 0.3)'     // Soft success border
+  },
+
+  status: {
+    error: {
+      background: 'rgba(245, 101, 101, 0.08)',
+      border: 'rgba(245, 101, 101, 0.25)',
+      text: '#fc8181'
+    },
+    success: {
+      background: 'rgba(16, 208, 80, 0.08)',
+      border: 'rgba(16, 208, 80, 0.25)',
+      text: '#68d391'
+    },
+    warning: {
+      background: 'rgba(246, 224, 94, 0.1)',
+      border: 'rgba(246, 224, 94, 0.3)',
+      text: '#f6e05e'
+    }
+  },
+
+  gradients: {
+    brand: {
+      primary: 'linear-gradient(135deg, #0ea5e9 0%, #d946ef 100%)',        // Softer brand gradient
+      secondary: 'linear-gradient(135deg, #0284c7 0%, #c026d3 50%, #ec4899 100%)',
+      dark: 'linear-gradient(135deg, #1a202c 0%, #2d3748 100%)',
+      darkHover: 'linear-gradient(135deg, #2d3748 0%, #4a5568 100%)'
+    },
+    background: {
+      main: 'linear-gradient(180deg, #1a202c, #2d3748)',
+      hero: 'linear-gradient(135deg, #0ea5e9, #d946ef, #ec4899)',
+      overlay: 'linear-gradient(135deg, rgba(14, 165, 233, 0.06), rgba(217, 70, 239, 0.06))',
+      radial: 'radial-gradient(circle at center, rgba(14, 165, 233, 0.06), transparent 70%)',
+      page: 'linear-gradient(135deg, rgba(217, 70, 239, 0.04), #1a202c, rgba(14, 165, 233, 0.04))'
+    },
+    accent: {
+      blue: 'linear-gradient(135deg, #0ea5e9, #7dd3fc)',
+      green: 'linear-gradient(135deg, #10d050, #86efac)',
+      purple: 'linear-gradient(135deg, #d946ef, #f0abfc)',
+      orange: 'linear-gradient(135deg, #fb923c, #fed7aa)',
+      red: 'linear-gradient(135deg, #f56565, #fca5a5)',
+      yellow: 'linear-gradient(135deg, #f6cc15, #fed18c)'
+    }
+  },
+
+  button: {
+    primary: {
+      background: 'linear-gradient(135deg, #0ea5e9, #d946ef)',  // Softer primary button
+      backgroundHover: 'linear-gradient(135deg, #0284c7, #c026d3)',
+      text: '#ffffff',
+      border: 'transparent'
+    },
+    secondary: {
+      background: 'transparent',
+      backgroundHover: 'rgba(217, 70, 239, 0.08)',  // Very subtle hover
+      text: '#d946ef',
+      textHover: '#c026d3',
+      border: '#d946ef'
+    },
+    outline: {
+      background: 'transparent',
+      backgroundHover: 'rgba(217, 70, 239, 0.06)',
+      text: '#d946ef',
+      textHover: '#c026d3',
+      border: '#d946ef'
+    },
+    danger: {
+      background: '#f56565',  // Softer danger button
+      backgroundHover: '#e53e3e',
+      text: '#ffffff',
+      border: 'transparent'
+    },
+    success: {
+      background: '#10d050',  // Gentler success
+      backgroundHover: '#16a34a',
+      text: '#ffffff',
+      border: 'transparent'
+    },
+    disabled: {
+      background: '#718096',  // Softer disabled
+      text: '#a0aec0',
+      border: 'transparent'
+    }
+  },
+
+  input: {
+    background: 'rgba(45, 55, 72, 0.95)',  // Warmer input background
+    border: '#718096',                      // Soft border
+    borderFocus: '#0ea5e9',                // Gentle focus state
+    text: '#f7fafc',
+    placeholder: '#a0aec0'                  // Softer placeholder
+  },
+
+  icon: {
+    primary: '#0ea5e9',      // Softer primary icon
+    secondary: '#e2e8f0',    // Warm secondary
+    muted: '#a0aec0',        // Gentler muted
+    error: '#fc8181',        // Soft error
+    success: '#68d391',      // Gentle success
+    warning: '#f6e05e'       // Soft warning
+  },
+
+  shadow: {
+    default: 'rgba(26, 32, 44, 0.25)',    // Warmer, softer shadows
+    lg: 'rgba(26, 32, 44, 0.35)',
+    xl: 'rgba(26, 32, 44, 0.45)',
+    '2xl': 'rgba(26, 32, 44, 0.55)'
+  }
+};
+
+// Theme management - Initialize with system preference
+let isDarkMode = typeof window !== 'undefined' ? 
+  window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches :
+  false;
+let currentColors = isDarkMode ? darkColors : lightColors; // Cache current colors
+
+// Function to get current colors based on theme
+export const getColors = () => {
+  currentColors = isDarkMode ? darkColors : lightColors;
+  return currentColors;
+};
+
+// Function to toggle theme
+export const toggleTheme = () => {
+  isDarkMode = !isDarkMode;
+  currentColors = getColors(); // Update cached colors
+  // Update the colors export
+  Object.assign(colors, currentColors);
+  // Trigger re-render by dispatching a custom event
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('themeChange', { detail: { isDarkMode } }));
+  }
+  return isDarkMode;
+};
+
+// Function to set specific theme
+export const setTheme = (darkMode) => {
+  isDarkMode = darkMode;
+  currentColors = getColors(); // Update cached colors
+  // Update the colors export
+  Object.assign(colors, currentColors);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('themeChange', { detail: { isDarkMode } }));
+  }
+  return isDarkMode;
+};
+
+// Function to get current theme
+export const getCurrentTheme = () => isDarkMode;
+
+// Export colors for backward compatibility (will return current theme colors)
+export const colors = { ...(isDarkMode ? darkColors : lightColors) }; // Start with system preference
 
 // Utility function to get CSS custom properties
 export const getCSSCustomProperties = () => {
   const flattenColors = (obj, prefix = '') => {
     let result = {};
-    
+
     for (const [key, value] of Object.entries(obj)) {
       if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
         result = { ...result, ...flattenColors(value, `${prefix}${key}-`) };
@@ -220,11 +473,11 @@ export const getCSSCustomProperties = () => {
         result[`--color-${prefix}${key}`] = value;
       }
     }
-    
+
     return result;
   };
-  
-  return flattenColors(colors);
+
+  return flattenColors(getColors());
 };
 
 export default colors;
