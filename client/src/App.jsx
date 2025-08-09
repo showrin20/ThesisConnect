@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { AlertProvider } from './context/AlertContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleBasedDashboard from './components/RoleBasedDashboard';
 import Navbar from './components/Navbar';
@@ -17,7 +18,9 @@ import Auth from './components/Auth';
 import MyProjects from './pages/MyProjects';  
 import MyPublications from './pages/MyPublications';
 import MyCommunityPosts from './pages/MyCommunityPosts';
+import MyBlogs from './pages/MyBlogs';
 import PublicationSearch from './components/PublicationSearch';
+import BlogPage from './pages/BlogPage';
 import { colors } from './styles/colors';
 
 
@@ -31,7 +34,8 @@ function AppContent() {
                      location.pathname === '/profile' || 
                      location.pathname === '/my-projects' ||
                      location.pathname === '/my-publications' ||
-                     location.pathname === '/my-community-posts';
+                     location.pathname === '/my-community-posts' ||
+                     location.pathname === '/my-blogs';
 
   return (
     <div className="min-h-screen" style={{ background: colors.gradients.background.main }}>
@@ -68,6 +72,7 @@ function AppContent() {
           } />
           <Route path="/explore" element={<Explore />} />
           <Route path="/publications" element={<Publications />} />
+          <Route path="/blogs" element={<BlogPage />} />
           <Route path="/projects" element={
             <ProtectedRoute>
               <ProjectHub />
@@ -88,6 +93,11 @@ function AppContent() {
               <MyCommunityPosts />
             </ProtectedRoute>
           } />
+          <Route path="/my-blogs" element={
+            <ProtectedRoute>
+              <MyBlogs />
+            </ProtectedRoute>
+          } />
 
          <Route path="/search-publications" element={
             <ProtectedRoute>
@@ -105,9 +115,11 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <Router>
-          <AppContent />
-        </Router>
+        <AlertProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </AlertProvider>
       </AuthProvider>
     </ThemeProvider>
   );

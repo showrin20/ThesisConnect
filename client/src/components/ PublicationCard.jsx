@@ -71,7 +71,7 @@ const PublicationCard = ({
               className="px-2 py-1 rounded-md text-xs font-medium border"
               style={{
                 backgroundColor: `${colors.accent.green[500]}33`,
-                color: colors.accent.green[800],
+                color: colors.text.primary,
                 borderColor: `${colors.accent.green[500]}4D`
               }}
             >
@@ -88,11 +88,11 @@ const PublicationCard = ({
               className="flex items-center gap-1 px-3 py-1 border rounded-lg transition-all duration-200 text-xs font-medium"
               style={{
                 backgroundColor: `${colors.accent.green[500]}33`,
-                color: colors.accent.green[800],
+                color: colors.text.primary,
                 borderColor: `${colors.accent.green[500]}4D`
               }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.accent.green[500]}4D`}
-              onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.accent.green[500]}33`}
+              onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.text.primary}4D`}
+              onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.text.primary}33`}
             >
               <span>View Publication</span>
               <ExternalLink size={12} />

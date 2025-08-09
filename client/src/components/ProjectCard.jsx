@@ -79,7 +79,7 @@ const ProjectCard = ({ title, description, link, tags, status, category }) => {
               className="px-2 py-1 rounded-md text-xs font-medium border"
               style={{
                 backgroundColor: `${colors.primary.blue[500]}33`,
-                color: colors.primary.blue[300],
+                color: colors.text.primary,
                 borderColor: `${colors.primary.blue[500]}4D`
               }}
             >
@@ -100,7 +100,7 @@ const ProjectCard = ({ title, description, link, tags, status, category }) => {
               className="flex items-center gap-1 px-3 py-1 border rounded-lg transition-all duration-200 text-xs font-medium"
               style={{
                 backgroundColor: `${colors.primary.blue[500]}33`,
-                color: colors.primary.blue[400],
+                color: colors.text.primary,
                 borderColor: `${colors.primary.blue[500]}4D`
               }}
               onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.primary.blue[500]}4D`}

@@ -65,7 +65,7 @@ const CommunityPostCard = ({ postId, type, content, title, skillsNeeded, status,
                       style={{ 
                         backgroundColor: `${colors.primary.purple[500]}33`,
                         borderColor: `${colors.primary.purple[500]}4D`,
-                        color: colors.primary.purple[400]
+                        color: colors.text.primary
                       }}
                       title="Linked to project">
                   📎
@@ -77,7 +77,7 @@ const CommunityPostCard = ({ postId, type, content, title, skillsNeeded, status,
                 className="px-2 py-1 rounded-md text-xs font-medium border"
                 style={{
                   backgroundColor: type === 'collab' ? `${colors.primary.purple[500]}33` : `${colors.accent.green[500]}33`,
-                  color: type === 'collab' ? colors.primary.purple[400] : colors.accent.green[400],
+                  color: type === 'collab' ? colors.primary.purple[400] : colors.text.primary,
                   borderColor: type === 'collab' ? `${colors.primary.purple[500]}4D` : `${colors.accent.green[500]}4D`
                 }}
               >
@@ -109,7 +109,7 @@ const CommunityPostCard = ({ postId, type, content, title, skillsNeeded, status,
                   className="px-2 py-1 rounded-md text-xs font-medium border"
                   style={{
                     backgroundColor: `${colors.primary.blue[500]}33`,
-                    color: colors.primary.blue[300],
+                    color: colors.text.primary,
                     borderColor: `${colors.primary.blue[500]}4D`
                   }}
                 >
@@ -130,7 +130,7 @@ const CommunityPostCard = ({ postId, type, content, title, skillsNeeded, status,
                   className="px-2 py-1 rounded-md text-xs font-medium border"
                   style={{
                     backgroundColor: `${colors.accent.orange[500]}33`,
-                    color: colors.accent.orange[400],
+                    color: colors.text.primary,
                     borderColor: `${colors.accent.orange[500]}4D`
                   }}
                 >
@@ -151,7 +151,7 @@ const CommunityPostCard = ({ postId, type, content, title, skillsNeeded, status,
             className="flex items-center gap-1 px-3 py-1 border rounded-lg transition-all duration-200 text-xs font-medium"
             style={{
               backgroundColor: `${colors.primary.blue[500]}33`,
-              color: colors.primary.blue[400],
+              color: colors.text.primary,
               borderColor: `${colors.primary.blue[500]}4D`
             }}
             onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.primary.blue[500]}4D`}

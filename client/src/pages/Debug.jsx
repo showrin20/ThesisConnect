@@ -80,13 +80,13 @@ const DebugPage = () => {
             <div>
               <div className="text-gray-300 mb-1">Expected Backend URL:</div>
               <div className="bg-gray-700 text-gray-300 p-2 rounded font-mono">
-                http://localhost:5001
+                http://localhost:1085
               </div>
             </div>
             <div>
               <div className="text-gray-300 mb-1">Axios Base URL:</div>
               <div className="bg-gray-700 text-gray-300 p-2 rounded font-mono">
-                {process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}
+                {process.env.REACT_APP_API_URL || 'http://localhost:1085/api'}
               </div>
             </div>
             <div>
@@ -103,7 +103,7 @@ const DebugPage = () => {
           <h2 className="text-xl font-bold text-white mb-4">⚡ Quick Actions</h2>
           <div className="flex flex-wrap gap-3">
             <button
-              onClick={() => window.open('http://localhost:5001/api/test', '_blank')}
+              onClick={() => window.open('http://localhost:1085/api/test', '_blank')}
               className="px-4 py-2 rounded transition-colors"
               style={getButtonStyles('primary')}
               onMouseEnter={(e) => {

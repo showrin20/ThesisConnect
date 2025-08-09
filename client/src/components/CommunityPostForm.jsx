@@ -43,7 +43,7 @@ export default function CommunityPostForm({ onPostCreated, onClose }) {
       
       setLoadingProjects(true);
       try {
-        const response = await axios.get('/projects', {
+        const response = await axios.get('/projects/my-projects', {
           headers: {
             'x-auth-token': localStorage.getItem('token')
           }

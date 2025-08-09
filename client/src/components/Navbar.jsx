@@ -115,7 +115,7 @@ const Navbar = () => {
               { to: "/", label: "Home", icon: FaHome },
               { to: "/explore", label: "Explore", icon: FaSearch },
               { to: "/publications", label: "Publications", icon: FaBook },
-              { to: "/resources", label: "Blog", icon: FaBlog }
+              { to: "/blogs", label: "Blog", icon: FaBlog }
             ].map((item, index) => (
               <Link 
                 key={item.to}

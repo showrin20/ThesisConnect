@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { auth } = require('../middlewares/auth');
 const CommunityPostService = require('../services/communityPostService');
+const Project = require('../models/Project'); // Added to fetch user projects
 const { body, validationResult, query } = require('express-validator');
 
 // Validation middleware
@@ -54,6 +55,17 @@ router.post('/', auth, validateCreatePost, handleValidationErrors, async (req, r
       ...req.body,
       postId: req.body.postId || `post_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     };
+
+    // Optional: Validate projectId ownership here if projectId provided
+    if (postData.projectId) {
+      const project = await Project.findById(postData.projectId);
+      if (!project || project.authorId.toString() !== req.user.id) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid project selected. You can only link your own projects.'
+        });
+      }
+    }
 
     const post = await CommunityPostService.createPost(postData, req.user.id);
 
@@ -238,6 +250,26 @@ router.post('/:postId/like', auth, async (req, res) => {
     res.status(statusCode).json({
       success: false,
       message: error.message || 'Failed to update post like',
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+// NEW ROUTE: GET /api/community-posts/my-projects
+router.get('/my-projects', auth, async (req, res) => {
+  try {
+    const projects = await Project.find({ authorId: req.user.id });
+
+    res.json({
+      success: true,
+      message: 'User projects fetched successfully',
+      data: { projects }
+    });
+  } catch (error) {
+    console.error('Error fetching user projects:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch user projects',
       error: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }

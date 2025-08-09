@@ -225,9 +225,7 @@ router.get('/my-projects', auth, async (req, res) => {
   }
 });
 
-//////////////////////////
-// ✏️ UPDATE PROJECT
-//////////////////////////
+
 router.put('/:id', auth, async (req, res) => {
   const projectId = req.params.id;
 
@@ -271,9 +269,7 @@ router.put('/:id', auth, async (req, res) => {
   }
 });
 
-//////////////////////////
-// ❌ DELETE PROJECT
-//////////////////////////
+
 router.delete('/:id', auth, async (req, res) => {
   const projectId = req.params.id;
 

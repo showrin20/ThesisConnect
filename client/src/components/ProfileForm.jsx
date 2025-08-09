@@ -16,7 +16,7 @@ export default function ProfileForm({ user }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem('token');
-    const res = await fetch('http://localhost:5001/api/users/profile', {
+    const res = await fetch('http://localhost:1085/api/users/profile', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

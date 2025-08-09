@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useAlert } from '../context/AlertContext';
 import { 
   Activity, 
   Users, 
   BookOpen, 
   TrendingUp,
-  ExternalLink
+  ExternalLink,
+  FileText
 } from 'lucide-react';
 import axios from '../axios';
 import statsService from '../services/statsService';
@@ -19,6 +21,7 @@ import Topbar from '../components/DashboardTopbar';
 import StatCard from '../components/StatCard';
 import ProjectCard from '../components/ProjectCard';
 import ForumActivityCard from '../components/ForumActivityCard';
+import BlogForm from '../components/BlogForm';
 import ProfileCard from '../components/DashboardProfileCard';
 import ProjectForm from '../components/ProjectForm';
 import PublicationForm from '../components/PublicationForm';
@@ -30,6 +33,7 @@ import CommunityPostForm from '../components/CommunityPostForm';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
+  const { showSuccess, showError, showWarning, showInfo } = useAlert();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -37,6 +41,9 @@ export default function Dashboard() {
   const [showPublicationForm, setShowPublicationForm] = useState(false);
   const [showPublicationSearch, setShowPublicationSearch] = useState(false);
   const [showCommunityPostForm, setShowCommunityPostForm] = useState(false);
+  const [showBlogForm, setShowBlogForm] = useState(false);
+  const [blogFormError, setBlogFormError] = useState(null);
+  const [blogFormLoading, setBlogFormLoading] = useState(false);
 
   // Projects state
   const [recentProjects, setRecentProjects] = useState([]);
@@ -80,7 +87,9 @@ export default function Dashboard() {
         setUserStats(stats);
       } catch (error) {
         console.error('Failed to fetch user stats:', error);
-        setStatsError('Failed to load statistics');
+        const errorMessage = error.response?.data?.message || error.message || 'Failed to load statistics';
+        setStatsError(errorMessage);
+        showError(`Error loading statistics: ${errorMessage}`);
       } finally {
         setLoadingStats(false);
       }
@@ -98,7 +107,15 @@ export default function Dashboard() {
         const response = await axios.get('/projects');
         setRecentProjects(response.data?.data || []);
       } catch (error) {
-        setProjectsError('Failed to load projects');
+        console.error('Failed to fetch projects:', error);
+        const errorMessage = error.response?.data?.message || error.message || 'Failed to load projects';
+        setProjectsError(errorMessage);
+        
+        if (error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED') {
+          showError('Cannot connect to server. Please make sure the backend server is running.');
+        } else {
+          showError(`Error loading projects: ${errorMessage}`);
+        }
         setRecentProjects([]);
       } finally {
         setLoadingProjects(false);
@@ -116,7 +133,15 @@ export default function Dashboard() {
         const response = await axios.get('/publications');
         setRecentPublications(response.data?.data || []);
       } catch (error) {
-        setPublicationsError('Failed to load publications');
+        console.error('Failed to fetch publications:', error);
+        const errorMessage = error.response?.data?.message || error.message || 'Failed to load publications';
+        setPublicationsError(errorMessage);
+        
+        if (error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED') {
+          showError('Cannot connect to server. Please make sure the backend server is running.');
+        } else {
+          showError(`Error loading publications: ${errorMessage}`);
+        }
         setRecentPublications([]);
       } finally {
         setLoadingPublications(false);
@@ -134,7 +159,15 @@ export default function Dashboard() {
         const response = await axios.get('/community-posts');
         setRecentCommunityPosts(response.data?.data?.posts || []);
       } catch (error) {
-        setCommunityPostsError('Failed to load community posts');
+        console.error('Failed to fetch community posts:', error);
+        const errorMessage = error.response?.data?.message || error.message || 'Failed to load community posts';
+        setCommunityPostsError(errorMessage);
+        
+        if (error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED') {
+          showError('Cannot connect to server. Please make sure the backend server is running.');
+        } else {
+          showError(`Error loading community posts: ${errorMessage}`);
+        }
         setRecentCommunityPosts([]);
       } finally {
         setLoadingCommunityPosts(false);
@@ -190,9 +223,13 @@ export default function Dashboard() {
     setIsLoggingOut(true);
     try {
       await logout();
+      showSuccess('Logged out successfully!');
       navigate('/login');
     } catch (error) {
       console.error('Logout error:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to logout';
+      showError(`Logout failed: ${errorMessage}`);
+      // Still navigate to login page even if logout fails
       navigate('/login');
     } finally {
       setIsLoggingOut(false);
@@ -201,43 +238,264 @@ export default function Dashboard() {
 
   // Add new project to list & close form & refresh stats
   const handleProjectCreated = (newProject) => {
-    const projectData = newProject?.data || newProject;
-    setRecentProjects([projectData, ...recentProjects]);
-    setShowProjectForm(false);
-    
-    // Refresh user stats
-    if (user?.id) {
-      statsService.getUserStats(user.id)
-        .then(stats => setUserStats(stats))
-        .catch(error => console.error('Failed to refresh stats:', error));
+    try {
+      const projectData = newProject?.data || newProject;
+      setRecentProjects([projectData, ...recentProjects]);
+      setShowProjectForm(false);
+      showSuccess('Project created successfully!');
+      
+      // Refresh user stats
+      if (user?.id) {
+        statsService.getUserStats(user.id)
+          .then(stats => setUserStats(stats))
+          .catch(error => {
+            console.error('Failed to refresh stats:', error);
+            showWarning('Project created but failed to refresh statistics. Please refresh the page.');
+          });
+      }
+    } catch (error) {
+      console.error('Error handling project creation:', error);
+      showError('Project may have been created but there was an error updating the display. Please refresh the page.');
     }
   };
 
   // Add new publication to list & close form & refresh stats
   const handlePublicationCreated = (newPublication) => {
-    const publicationData = newPublication?.data || newPublication;
-    setRecentPublications([publicationData, ...recentPublications]);
-    setShowPublicationForm(false);
-    
-    // Refresh user stats
-    if (user?.id) {
-      statsService.getUserStats(user.id)
-        .then(stats => setUserStats(stats))
-        .catch(error => console.error('Failed to refresh stats:', error));
+    try {
+      const publicationData = newPublication?.data || newPublication;
+      setRecentPublications([publicationData, ...recentPublications]);
+      setShowPublicationForm(false);
+      showSuccess('Publication added successfully!');
+      
+      // Refresh user stats
+      if (user?.id) {
+        statsService.getUserStats(user.id)
+          .then(stats => setUserStats(stats))
+          .catch(error => {
+            console.error('Failed to refresh stats:', error);
+            showWarning('Publication added but failed to refresh statistics. Please refresh the page.');
+          });
+      }
+    } catch (error) {
+      console.error('Error handling publication creation:', error);
+      showError('Publication may have been added but there was an error updating the display. Please refresh the page.');
     }
   };
 
   // Add new community post to list & close form & refresh stats
   const handleCommunityPostCreated = (newPost) => {
-    const postData = newPost?.data || newPost;
-    setRecentCommunityPosts([postData, ...recentCommunityPosts]);
-    setShowCommunityPostForm(false);
+    try {
+      const postData = newPost?.data || newPost;
+      setRecentCommunityPosts([postData, ...recentCommunityPosts]);
+      setShowCommunityPostForm(false);
+      showSuccess('Community post created successfully!');
+      
+      // Refresh user stats
+      if (user?.id) {
+        statsService.getUserStats(user.id)
+          .then(stats => setUserStats(stats))
+          .catch(error => {
+            console.error('Failed to refresh stats:', error);
+            showWarning('Community post created but failed to refresh statistics. Please refresh the page.');
+          });
+      }
+    } catch (error) {
+      console.error('Error handling community post creation:', error);
+      showError('Community post may have been created but there was an error updating the display. Please refresh the page.');
+    }
+  };
+
+  // Blog form state and handlers
+  const [blogFormData, setBlogFormData] = useState({
+    title: '',
+    content: '',
+    excerpt: '',
+    category: 'Technology',
+    tags: '',
+    status: 'draft',
+    featuredImage: null,
+  });
+
+  const handleBlogFormChange = (e) => {
+    const { name, value, files } = e.target;
+    setBlogFormData(prev => ({
+      ...prev,
+      [name]: files ? files[0] : value,
+    }));
+  };
+
+  const resetBlogForm = () => {
+    setBlogFormData({
+      title: '',
+      content: '',
+      excerpt: '',
+      category: 'Technology',
+      tags: '',
+      status: 'draft',
+      featuredImage: null,
+    });
+    setBlogFormError(null);
+    setBlogFormLoading(false);
+  };
+
+  const parseCSV = (str) =>
+    str.split(',').map(s => s.trim()).filter(Boolean);
+
+  // Test server connection function
+  const testServerConnection = async () => {
+    try {
+      console.log('🔍 Testing server connection...');
+      const response = await axios.get('/test');
+      console.log('✅ Server connection successful:', response.data);
+      showSuccess('✅ Server connection successful!');
+    } catch (error) {
+      console.error('❌ Server connection failed:', error);
+      if (error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED') {
+        showError('❌ Server is not running. Please start your backend server.');
+      } else {
+        showError(`❌ Connection test failed: ${error.message}`);
+      }
+    }
+  };
+
+  const handleBlogSubmit = async (e) => {
+    e.preventDefault();
+    setBlogFormLoading(true);
+    setBlogFormError(null);
     
-    // Refresh user stats
-    if (user?.id) {
-      statsService.getUserStats(user.id)
-        .then(stats => setUserStats(stats))
-        .catch(error => console.error('Failed to refresh stats:', error));
+    try {
+      console.log('🚀 Starting blog submission...');
+      console.log('📝 Blog form data:', blogFormData);
+      
+      // Validate required fields on frontend
+      if (!blogFormData.title?.trim()) {
+        setBlogFormError('Blog title is required');
+        return;
+      }
+      if (!blogFormData.content?.trim()) {
+        setBlogFormError('Blog content is required');
+        return;
+      }
+      if (!blogFormData.excerpt?.trim()) {
+        setBlogFormError('Blog excerpt is required');
+        return;
+      }
+      
+      const formDataToSend = new FormData();
+      formDataToSend.append('title', blogFormData.title.trim());
+      formDataToSend.append('content', blogFormData.content.trim());
+      formDataToSend.append('excerpt', blogFormData.excerpt.trim());
+      formDataToSend.append('category', blogFormData.category);
+      formDataToSend.append('status', blogFormData.status);
+      formDataToSend.append('tags', JSON.stringify(parseCSV(blogFormData.tags)));
+      
+      if (blogFormData.featuredImage) {
+        // Validate file size (5MB limit)
+        if (blogFormData.featuredImage.size > 5 * 1024 * 1024) {
+          setBlogFormError('Featured image must be less than 5MB');
+          return;
+        }
+        
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(blogFormData.featuredImage.type)) {
+          setBlogFormError('Please upload a valid image file (JPEG, PNG, GIF, or WebP)');
+          return;
+        }
+        
+        formDataToSend.append('featuredImage', blogFormData.featuredImage);
+      }
+
+      // Log FormData contents for debugging
+      console.log('📤 Sending FormData:');
+      for (let [key, value] of formDataToSend.entries()) {
+        if (value instanceof File) {
+          console.log(`${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
+        } else {
+          console.log(`${key}: ${value}`);
+        }
+      }
+
+      const res = await axios.post('/blogs', formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        timeout: 30000, // 30 second timeout
+      });
+
+      console.log('✅ Blog created successfully:', res.data);
+      
+      // Check response structure for both success and error cases
+      if (res.data.success === true) {
+        showSuccess(res.data.message || 'Blog created successfully!');
+        
+        // Success case - close form and reset
+        setShowBlogForm(false);
+        resetBlogForm();
+        
+        // Refresh user stats
+        if (user?.id) {
+          statsService.getUserStats(user.id)
+            .then(stats => setUserStats(stats))
+            .catch(error => {
+              console.error('Failed to refresh stats:', error);
+              showWarning('Blog created but failed to refresh statistics. Please refresh the page.');
+            });
+        }
+      } else if (res.data.success === false) {
+        // Handle validation errors from backend
+        if (res.data.errors && Array.isArray(res.data.errors)) {
+          const errorMessage = res.data.errors.join('\n');
+          setBlogFormError(errorMessage);
+          showError(`Validation Errors:\n${errorMessage}`);
+          return;
+        } else if (res.data.message) {
+          setBlogFormError(res.data.message);
+          showError(`Error: ${res.data.message}`);
+          return;
+        }
+      } else {
+        // Fallback for unexpected response structure
+        showSuccess('Blog created successfully!');
+        setShowBlogForm(false);
+        resetBlogForm();
+      }
+    } catch (err) {
+      console.error('❌ Blog creation error:', err);
+      
+      // Enhanced error handling
+      if (err.code === 'ECONNREFUSED' || err.code === 'ERR_NETWORK') {
+        const errorMsg = 'Server is not running. Please start your backend server and try again.';
+        setBlogFormError(errorMsg);
+        showError(`Network Error: ${errorMsg}`);
+      } else if (err.response) {
+        // Server responded with error
+        const errorData = err.response.data;
+        console.log('Server error response:', errorData);
+        
+        if (errorData?.errors && Array.isArray(errorData.errors)) {
+          const errorMessage = errorData.errors.join('\n');
+          setBlogFormError(errorMessage);
+          showError(`Validation Errors:\n${errorMessage}`);
+        } else if (errorData?.message) {
+          setBlogFormError(errorData.message);
+          showError(`Server Error: ${errorData.message}`);
+        } else {
+          const errorMsg = `Server error: ${err.response.status} ${err.response.statusText}`;
+          setBlogFormError(errorMsg);
+          showError(errorMsg);
+        }
+      } else if (err.request) {
+        const errorMsg = 'Network error: Unable to connect to the server. Please check your internet connection.';
+        setBlogFormError(errorMsg);
+        showError(errorMsg);
+      } else {
+        const errorMsg = `Request error: ${err.message}`;
+        setBlogFormError(errorMsg);
+        showError(errorMsg);
+      }
+    } finally {
+      setBlogFormLoading(false);
     }
   };
 
@@ -253,16 +511,29 @@ export default function Dashboard() {
       const newPublication = response.data?.data || response.data;
       setRecentPublications([newPublication, ...recentPublications]);
       
+      showSuccess('Publication added successfully from external search!');
+      
       // Refresh user stats
       if (user?.id) {
         statsService.getUserStats(user.id)
           .then(stats => setUserStats(stats))
-          .catch(error => console.error('Failed to refresh stats:', error));
+          .catch(error => {
+            console.error('Failed to refresh stats:', error);
+            showWarning('Publication added but failed to refresh statistics. Please refresh the page.');
+          });
       }
       
       return newPublication;
     } catch (error) {
       console.error('Failed to add publication:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to add publication';
+      
+      if (error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED') {
+        showError('Cannot connect to server. Please make sure the backend server is running.');
+      } else {
+        showError(`Failed to add publication: ${errorMessage}`);
+      }
+      
       throw error;
     }
   };
@@ -308,7 +579,7 @@ export default function Dashboard() {
                   className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200"
                   style={{
                     backgroundColor: `${colors.primary.blue[500]}33`,
-                    color: colors.primary.blue[400],
+                    color: colors.text.primary,
                     borderColor: `${colors.primary.blue[500]}4D`
                   }}
                   onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.primary.blue[500]}4D`}
@@ -323,7 +594,7 @@ export default function Dashboard() {
                   className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200"
                   style={{
                     backgroundColor: `${colors.accent.green[500]}33`,
-                    color: colors.accent.green[400],
+                    color: colors.text.primary,
                     borderColor: `${colors.accent.green[500]}4D`
                   }}
                   onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.accent.green[500]}4D`}
@@ -338,7 +609,7 @@ export default function Dashboard() {
                   className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200"
                   style={{
                     backgroundColor: `${colors.primary.purple[500]}33`,
-                    color: colors.primary.purple[400],
+                    color: colors.text.primary,
                     borderColor: `${colors.primary.purple[500]}4D`
                   }}
                   onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.primary.purple[500]}4D`}
@@ -347,7 +618,22 @@ export default function Dashboard() {
                   <Users size={16} />
                   Create Community Post
                 </button>
-                <button 
+                
+                <button
+                  onClick={() => setShowBlogForm(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200"
+                  style={{
+                    backgroundColor: `${colors.accent.yellow[500]}33`,
+                    color: colors.text.primary,
+                    borderColor: `${colors.accent.yellow[500]}4D`
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.accent.yellow[500]}4D`}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.accent.yellow[500]}33`}
+                >
+                  <FileText size={16} />
+                  Create Blog Post
+                </button>
+                {/* <button 
                   className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200"
                   style={{
                     backgroundColor: `${colors.accent.orange[500]}33`,
@@ -359,13 +645,16 @@ export default function Dashboard() {
                 >
                   <Users size={16} />
                   Find Collaborators
-                </button>
+                </button> */}
+
+
+                
                 <button 
                   onClick={handleBrowsePublications}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200"
                   style={{
-                    backgroundColor: `${colors.primary.blue[600]}33`,
-                    color: colors.primary.blue[400],
+                    backgroundColor: `${colors.primary.blue[300]}33`,
+                    color: colors.text.primary,
                     borderColor: `${colors.primary.blue[600]}4D`
                   }}
                   onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.primary.blue[600]}4D`}
@@ -374,6 +663,22 @@ export default function Dashboard() {
                   <BookOpen size={16} />
                   External Publication Finder
                 </button>
+                
+                {/* Temporary Debug Button */}
+                {/* <button 
+                  onClick={testServerConnection}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200"
+                  style={{
+                    backgroundColor: `${colors.accent.red[500]}33`,
+                    color: colors.accent.red[400],
+                    borderColor: `${colors.accent.red[500]}4D`
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.accent.red[500]}4D`}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.accent.red[500]}33`}
+                >
+                  <Activity size={16} />
+                  Test Server
+                </button> */}
               </div>
 
               {/* Error Messages */}
@@ -390,9 +695,16 @@ export default function Dashboard() {
                     onClick={() => {
                       if (user?.id) {
                         statsService.getUserStats(user.id)
-                          .then(stats => setUserStats(stats))
-                          .catch(error => console.error('Failed to refresh stats:', error));
-                        setStatsError(null);
+                          .then(stats => {
+                            setUserStats(stats);
+                            setStatsError(null);
+                            showSuccess('Statistics loaded successfully!');
+                          })
+                          .catch(error => {
+                            console.error('Failed to refresh stats:', error);
+                            const errorMessage = error.response?.data?.message || error.message || 'Failed to load statistics';
+                            showError(`Failed to reload statistics: ${errorMessage}`);
+                          });
                       }
                     }}
                     className="mt-2 text-sm underline transition-colors"
@@ -416,8 +728,17 @@ export default function Dashboard() {
                   <p className="text-sm" style={{ color: colors.accent.red[300] }}>{projectsError}</p>
                   <button 
                     onClick={() => {
-                      axios.get('/projects').then(res => setRecentProjects(res.data?.data || []));
-                      setProjectsError(null);
+                      axios.get('/projects')
+                        .then(res => {
+                          setRecentProjects(res.data?.data || []);
+                          setProjectsError(null);
+                          showSuccess('Projects loaded successfully!');
+                        })
+                        .catch(error => {
+                          console.error('Failed to reload projects:', error);
+                          const errorMessage = error.response?.data?.message || error.message || 'Failed to load projects';
+                          showError(`Failed to reload projects: ${errorMessage}`);
+                        });
                     }}
                     className="mt-2 text-sm underline transition-colors"
                     style={{ color: colors.primary.blue[400] }}
@@ -440,8 +761,17 @@ export default function Dashboard() {
                   <p className="text-sm" style={{ color: colors.accent.red[300] }}>{publicationsError}</p>
                   <button 
                     onClick={() => {
-                      axios.get('/publications').then(res => setRecentPublications(res.data?.data || []));
-                      setPublicationsError(null);
+                      axios.get('/publications')
+                        .then(res => {
+                          setRecentPublications(res.data?.data || []);
+                          setPublicationsError(null);
+                          showSuccess('Publications loaded successfully!');
+                        })
+                        .catch(error => {
+                          console.error('Failed to reload publications:', error);
+                          const errorMessage = error.response?.data?.message || error.message || 'Failed to load publications';
+                          showError(`Failed to reload publications: ${errorMessage}`);
+                        });
                     }}
                     className="mt-2 text-sm underline transition-colors"
                     style={{ color: colors.accent.green[400] }}
@@ -571,6 +901,42 @@ export default function Dashboard() {
                     </button>
                   </div>
                   <CommunityPostForm onPostCreated={handleCommunityPostCreated} />
+                </div>
+              )}
+
+              {showBlogForm && (
+                <div 
+                  className="mb-6 p-6 backdrop-blur-lg rounded-xl border"
+                  style={{
+                    backgroundColor: colors.background.glass,
+                    borderColor: colors.border.secondary
+                  }}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold" style={{ color: colors.text.primary }}>Create New Blog</h3>
+                    <button
+                      onClick={() => setShowBlogForm(false)}
+                      className="transition-colors"
+                      style={{ color: colors.text.muted }}
+                      onMouseEnter={(e) => e.target.style.color = colors.text.primary}
+                      onMouseLeave={(e) => e.target.style.color = colors.text.muted}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <BlogForm 
+                    formData={blogFormData}
+                    onChange={handleBlogFormChange}
+                    onSubmit={handleBlogSubmit}
+                    onCancel={() => {
+                      setShowBlogForm(false);
+                      resetBlogForm();
+                    }}
+                    isEditing={false}
+                    error={blogFormError}
+                    loading={blogFormLoading}
+                    success={false}
+                  />
                 </div>
               )}
 

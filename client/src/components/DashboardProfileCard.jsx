@@ -142,7 +142,7 @@ const ProfileCard = ({ userStats = null, loadingStats = false }) => {
               <Users size={16} />
               Collaborators
             </span>
-            <span style={{ color: colors.primary.purple[400], fontWeight: 600 }}>
+            <span style={{ color: colors.primary, fontWeight: 600 }}>
               {loadingStats ? '...' : (userStats?.collaborators?.total || 0)}
             </span>
           </div>
@@ -207,7 +207,7 @@ const ProfileCard = ({ userStats = null, loadingStats = false }) => {
                   className="px-3 py-1 text-xs rounded-full transition-colors"
                   style={{
                     backgroundColor: `${colors.primary.blue[200]}33`,
-                    color: colors.primary.blue[200]
+                    color: colors.text.primary
                   }}
                 >
                   Scholar
@@ -221,7 +221,7 @@ const ProfileCard = ({ userStats = null, loadingStats = false }) => {
                   className="px-3 py-1 text-xs rounded-full transition-colors"
                   style={{
                     backgroundColor: `${colors.background.gray[300]}33`,
-                    color: colors.background.gray[200]
+                    color: colors.text.primary
                   }}
                 >
                   GitHub

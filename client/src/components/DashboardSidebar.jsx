@@ -12,23 +12,26 @@ import {
   ChevronRight,
   Users,
   TrendingUp,
-  MessageSquare
+  MessageSquare,
+  FileText,
+  UserPlus,
+  MessageCircle,
+  UserCheck,
+  Star
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { colors } from '../styles/colors';
 
 const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
-  const [activeCategory, setActiveCategory] = useState('Computer Science');
   const [expandedSections, setExpandedSections] = useState({
-    categories: true,
+    actions: true,
     status: true,
   });
 
-  // Use dynamic counts from userStats if available, otherwise fallback to local calculation
   const plannedCount = userStats?.projects?.planned ?? projects.filter(p => p.status === 'Planned').length;
   const inProgressCount = userStats?.projects?.inProgress ?? projects.filter(p => p.status === 'In Progress').length;
   const completedCount = userStats?.projects?.completed ?? projects.filter(p => p.status === 'Completed').length;
-  const totalActiveCount = plannedCount + inProgressCount; // Active = Planned + In Progress
+  const totalActiveCount = plannedCount + inProgressCount;
   const totalProjects = userStats?.projects?.total ?? projects.length;
 
   const toggleSection = (section) => {
@@ -41,50 +44,26 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
   const quickNavItems = [
     { icon: Home, label: 'My Dashboard', active: true, path: '/dashboard' },
     { icon: FolderOpen, label: 'My Projects', path: '/my-projects' },
-    { icon: BookOpen, label: 'My Publications', path: '/my-publications' },  // Changed here
+    { icon: BookOpen, label: 'My Publications', path: '/my-publications' },
+    { icon: FileText, label: 'My Blogs', path: '/my-blogs' },
     { icon: MessageSquare, label: 'My Community Posts', path: '/my-community-posts' },
     { icon: Settings, label: 'Settings', path: '/settings' },
   ];
 
-  const categories = [
-    { icon: BookOpen, label: 'Computer Science' },
-    { icon: BookOpen, label: 'Data Science' },
-    { icon: BookOpen, label: 'Engineering' },
-    { icon: BookOpen, label: 'Mathematics' },
-    { icon: BookOpen, label: 'Biology' },
+  const actionButtons = [
+    { icon: UserPlus, label: 'Find Mentors', path: '/find-mentors', color: colors.primary.blue[400] },
+    { icon: Users, label: 'Find Collaborators', path: '/find-collaborators', color: colors.primary.purple[400] },
+    { icon: MessageCircle, label: 'Messages', path: '/messages', color: colors.accent.green[400] },
+    { icon: UserCheck, label: 'Collaboration Requests', path: '/collaboration-requests', color: colors.accent.yellow[400] },
+    { icon: Star, label: 'Project Reviews', path: '/project-reviews', color: colors.accent.red[400] },
   ];
 
   const projectStatus = [
-    { 
-      icon: Activity, 
-      label: 'Total Projects', 
-      count: totalProjects,
-      color: colors.gradients.accent.blue
-    },
-    { 
-      icon: Activity, 
-      label: 'Active Projects', 
-      count: totalActiveCount,
-      color: colors.primary.blue[400]
-    },
-    { 
-      icon: Clock, 
-      label: 'Planned', 
-      count: plannedCount,
-      color: colors.accent.yellow[400]
-    },
-    { 
-      icon: Clock, 
-      label: 'In Progress', 
-      count: inProgressCount,
-      color: colors.primary.purple[400]
-    },
-    { 
-      icon: CheckCircle, 
-      label: 'Completed', 
-      count: completedCount,
-      color: colors.accent.green[400]
-    },
+    { icon: Activity, label: 'Total Projects', count: totalProjects, color: colors.gradients.accent.blue },
+    { icon: Activity, label: 'Active Projects', count: totalActiveCount, color: colors.primary.blue[400] },
+    { icon: Clock, label: 'Planned', count: plannedCount, color: colors.accent.yellow[400] },
+    { icon: Clock, label: 'In Progress', count: inProgressCount, color: colors.primary.purple[400] },
+    { icon: CheckCircle, label: 'Completed', count: completedCount, color: colors.accent.green[400] },
   ];
 
   return (
@@ -97,18 +76,21 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
         />
       )}
 
-      <div className={`
-        fixed top-0 left-0 h-full w-80 backdrop-blur-xl border-r
-        transform transition-transform duration-300 z-50
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0 lg:static lg:z-auto
-      `}
-      style={{ 
-        backgroundColor: colors.background.glass,
-        borderColor: colors.border.secondary 
-      }}>
+      <div
+        className={`
+          fixed top-0 left-0 h-full w-80 backdrop-blur-xl border-r
+          transform transition-transform duration-300 z-50
+          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:translate-x-0 lg:static lg:z-auto
+        `}
+        style={{
+          backgroundColor: colors.background.glass,
+          borderColor: colors.border.secondary 
+        }}
+      >
         <div className="flex flex-col h-full">
 
+          {/* Logo + Search */}
           <div className="p-6 border-b" style={{ borderColor: colors.border.secondary }}>
             <Link to="/dashboard" className="flex items-center space-x-3 group mb-4">
               <div className="relative w-12 h-12">
@@ -136,9 +118,12 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
             </div>
           </div>
 
+          {/* Sidebar Content */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            
+            {/* Quick Navigation */}
             <div>
-              <h3 className="text-sm font-semibold mb-3" style={{ color: `${colors.text.secondary}CC` }}>Quick Navigation</h3>
+              <h3 className="text-sm font-semibold mb-3" style={{ color: colors.text.muted }}>Quick Navigation</h3>
               <nav className="space-y-1">
                 {quickNavItems.map((item, idx) => (
                   <Link
@@ -146,100 +131,60 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
                     to={item.path}
                     onClick={onClose}
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
-                      item.active 
-                        ? 'border' 
-                        : 'hover:bg-opacity-10'
+                      item.active ? 'border' : ''
                     }`}
-                    style={item.active ? {
-                      backgroundColor: `${colors.primary.blue[500]}33`,
-                      color: colors.primary.blue[400],
-                      borderColor: `${colors.primary.blue[500]}4D`
-                    } : {
-                      color: `${colors.text.secondary}B3`,
-                      '--hover-bg': colors.background.glass
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!item.active) {
-                        e.target.style.backgroundColor = colors.background.glass;
-                        e.target.style.color = colors.text.primary;
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!item.active) {
-                        e.target.style.backgroundColor = 'transparent';
-                        e.target.style.color = `${colors.text.secondary}B3`;
-                      }
+                    style={{
+                      backgroundColor: item.active ? `${colors.primary.blue[500]}33` : 'transparent',
+                      borderColor: item.active ? `${colors.primary.blue[500]}4D` : 'transparent',
+                      color: colors.text.muted
                     }}
                   >
-                    <item.icon size={18} />
+                    <item.icon size={18} style={{ color: item.active ? colors.primary.blue[400] : colors.text.muted }} />
                     <span className="text-sm font-medium">{item.label}</span>
                   </Link>
                 ))}
               </nav>
             </div>
 
+            {/* Action Buttons */}
             <div>
               <button
-                onClick={() => toggleSection('categories')}
-                className="flex items-center justify-between w-full text-sm font-semibold mb-3 hover:transition-colors"
-                style={{ 
-                  color: `${colors.text.secondary}CC`
-                }}
-                onMouseEnter={(e) => e.target.style.color = colors.text.primary}
-                onMouseLeave={(e) => e.target.style.color = `${colors.text.secondary}CC`}
+                onClick={() => toggleSection('actions')}
+                className="flex items-center justify-between w-full text-sm font-semibold mb-3"
+                style={{ color: colors.text.muted }}
               >
-                <span>Categories</span>
-                {expandedSections.categories ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                <span>Actions</span>
+                {expandedSections.actions ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
               </button>
 
-              {expandedSections.categories && (
-                <div className="space-y-1">
-                  {categories.map((category, idx) => (
-                    <button
+              {expandedSections.actions && (
+                <div className="space-y-2">
+                  {actionButtons.map((action, idx) => (
+                    <Link
                       key={idx}
-                      onClick={() => setActiveCategory(category.label)}
-                      className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg transition-all duration-200 ${
-                        activeCategory === category.label
-                          ? 'border'
-                          : ''
-                      }`}
-                      style={activeCategory === category.label ? {
-                        backgroundColor: `${colors.primary.purple[500]}33`,
-                        color: colors.primary.purple[400],
-                        borderColor: `${colors.primary.purple[500]}4D`
-                      } : {
-                        color: `${colors.text.secondary}B3`
-                      }}
-                      onMouseEnter={(e) => {
-                        if (activeCategory !== category.label) {
-                          e.target.style.backgroundColor = colors.background.glass;
-                          e.target.style.color = colors.text.primary;
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (activeCategory !== category.label) {
-                          e.target.style.backgroundColor = 'transparent';
-                          e.target.style.color = `${colors.text.secondary}B3`;
-                        }
+                      to={action.path}
+                      onClick={onClose}
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg border transition-all duration-200"
+                      style={{
+                        borderColor: `${action.color}33`,
+                        backgroundColor: `${action.color}1A`,
+                        color: colors.text.muted
                       }}
                     >
-                      <category.icon size={18} />
-                      <span className="text-sm font-medium">{category.label}</span>
-                    </button>
+                      <action.icon size={18} style={{ color: action.color }} />
+                      <span className="text-sm font-medium">{action.label}</span>
+                    </Link>
                   ))}
                 </div>
               )}
             </div>
 
+            {/* Project Status */}
             <div>
               <button
                 onClick={() => toggleSection('status')}
-                className="flex items-center justify-between w-full text-sm font-semibold mb-3 hover:transition-colors"
-                style={{ 
-                  color: `${colors.text.secondary}CC`
-                }}
-                onMouseEnter={(e) => e.target.style.color = colors.text.primary}
-                onMouseLeave={(e) => e.target.style.color = `${colors.text.secondary}CC`}
+                className="flex items-center justify-between w-full text-sm font-semibold mb-3"
+                style={{ color: colors.text.muted }}
               >
                 <span>Project Status</span>
                 {expandedSections.status ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
@@ -251,23 +196,13 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
                     <div
                       key={idx}
                       className="flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200"
-                      style={{ 
-                        color: `${colors.text.secondary}B3`
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.backgroundColor = colors.background.glass;
-                        e.target.style.color = colors.text.primary;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.backgroundColor = 'transparent';
-                        e.target.style.color = `${colors.text.secondary}B3`;
-                      }}
+                      style={{ color: colors.text.muted }}
                     >
                       <div className="flex items-center gap-3">
                         <status.icon size={18} style={{ color: status.color }} />
                         <span className="text-sm font-medium">{status.label}</span>
                       </div>
-                      <span 
+                      <span
                         className="text-xs px-2 py-1 rounded-full"
                         style={{
                           backgroundColor: `${status.color}33`,
@@ -282,23 +217,22 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
               )}
             </div>
 
-            {/* User Statistics Section */}
+            {/* User Statistics */}
             <div>
-              <h3 className="text-sm font-semibold mb-3" style={{ color: `${colors.text.secondary}CC` }}>Overview</h3>
+              <h3 className="text-sm font-semibold mb-3" style={{ color: colors.text.muted }}>Overview</h3>
               <div className="space-y-2">
-                <div 
-                  className="flex items-center justify-between px-3 py-2 rounded-lg border"
+                <div className="flex items-center justify-between px-3 py-2 rounded-lg border"
                   style={{
                     backgroundColor: `${colors.primary.purple[500]}1A`,
-                    borderColor: `${colors.primary.purple[500]}33`
+                    borderColor: `${colors.primary.purple[500]}33`,
+                    color: colors.text.muted
                   }}
                 >
                   <div className="flex items-center gap-3">
                     <Users size={18} style={{ color: colors.primary.purple[400] }} />
-                    <span className="text-sm font-medium" style={{ color: `${colors.text.secondary}CC` }}>Collaborators</span>
+                    <span className="text-sm font-medium">Collaborators</span>
                   </div>
-                  <span 
-                    className="text-xs px-2 py-1 rounded-full"
+                  <span className="text-xs px-2 py-1 rounded-full"
                     style={{
                       backgroundColor: `${colors.primary.purple[500]}33`,
                       color: colors.primary.purple[400]
@@ -308,19 +242,18 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
                   </span>
                 </div>
                 
-                <div 
-                  className="flex items-center justify-between px-3 py-2 rounded-lg border"
+                <div className="flex items-center justify-between px-3 py-2 rounded-lg border"
                   style={{
                     backgroundColor: `${colors.accent.green[500]}1A`,
-                    borderColor: `${colors.accent.green[500]}33`
+                    borderColor: `${colors.accent.green[500]}33`,
+                    color: colors.text.muted
                   }}
                 >
                   <div className="flex items-center gap-3">
                     <BookOpen size={18} style={{ color: colors.accent.green[400] }} />
-                    <span className="text-sm font-medium" style={{ color: `${colors.text.secondary}CC` }}>Publications</span>
+                    <span className="text-sm font-medium">Publications</span>
                   </div>
-                  <span 
-                    className="text-xs px-2 py-1 rounded-full"
+                  <span className="text-xs px-2 py-1 rounded-full"
                     style={{
                       backgroundColor: `${colors.accent.green[500]}33`,
                       color: colors.accent.green[400]
@@ -331,22 +264,22 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
                 </div>
                 
                 {userStats?.publications?.totalCitations > 0 && (
-                  <div 
-                    className="flex items-center justify-between px-3 py-2 rounded-lg border"
+                  <div className="flex items-center justify-between px-3 py-2 rounded-lg border"
                     style={{
                       backgroundColor: `${colors.accent.yellow[500]}1A`,
-                      borderColor: `${colors.accent.yellow[500]}33`
+                      borderColor: `${colors.accent.yellow[500]}33`,
+                      color: colors.text.muted
                     }}
                   >
                     <div className="flex items-center gap-3">
-                      <TrendingUp size={18} style={{ color: colors.accent.yellow[400] }} />
-                      <span className="text-sm font-medium" style={{ color: `${colors.text.secondary}CC` }}>Citations</span>
+                      {/* Changed icon color here */}
+                      <TrendingUp size={18} style={{ color: colors.text.primary }} />
+                      <span className="text-sm font-medium">Citations</span>
                     </div>
-                    <span 
-                      className="text-xs px-2 py-1 rounded-full"
+                    <span className="text-xs px-2 py-1 rounded-full"
                       style={{
                         backgroundColor: `${colors.accent.yellow[500]}33`,
-                        color: colors.accent.yellow[400]
+                        color: colors.accent.yellow[800]
                       }}
                     >
                       {userStats?.publications?.totalCitations}

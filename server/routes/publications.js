@@ -48,7 +48,6 @@ router.post('/', auth, async (req, res) => {
       return res.status(400).json({ msg: 'Title, authors, year, venue, and type are required' });
     }
 
-    // Optional: Validate enums for 'type' and 'quality' if you want here (or rely on Mongoose validation)
 
     const publication = new Publication({
       title,

@@ -4,14 +4,6 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/connectDB');
 
-// Import Routes
-const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/users');
-const projectRoutes = require('./routes/projects');
-const publicationRoutes = require('./routes/publications');
-const communityPostRoutes = require('./routes/communityPost');
-const protectedRoutes = require('./routes/protectedRoutes'); 
-
 // Load environment variables
 dotenv.config();
 
@@ -41,15 +33,31 @@ app.get('/api/test', (req, res) => {
   });
 });
 
-// API Routes
+// Import routes
+const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/users');
+const projectRoutes = require('./routes/projects');
+const publicationRoutes = require('./routes/publications');
+const communityPostRoutes = require('./routes/communityPost');
+const protectedRoutes = require('./routes/protectedRoutes');
+const blogRoutes = require('./routes/blogRoutes');
+const bookmarkRoutes = require('./routes/bookmark_api_routes');
+const forumRoutes = require('./routes/forum_api_routes');
+
+
+// Use routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/publications', publicationRoutes);
 app.use('/api/community-posts', communityPostRoutes);
-app.use('/api/protected', protectedRoutes); // <-- Here it is!
+app.use('/api/protected', protectedRoutes);
+app.use('/api/blogs', blogRoutes);
+app.use('/api/bookmarks', bookmarkRoutes);
+app.use('/api/forums', forumRoutes);
 
-// 404 handler for API routes
+
+// 404 for API routes
 app.use('/api/*', (req, res) => {
   res.status(404).json({ 
     success: false,
@@ -58,7 +66,7 @@ app.use('/api/*', (req, res) => {
   });
 });
 
-// Catch-all handler for non-API routes (prevents HTML responses)
+// 404 for other routes
 app.use('*', (req, res) => {
   res.status(404).json({ 
     success: false,
@@ -67,7 +75,7 @@ app.use('*', (req, res) => {
   });
 });
 
-// Error handling middleware
+// Global error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ 
@@ -77,6 +85,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
-const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+const PORT = process.env.PORT || 1085;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+});

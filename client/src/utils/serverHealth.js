@@ -12,7 +12,7 @@ export const testServerConnection = async () => {
     if (error.code === 'ERR_NETWORK' || !error.response) {
       return { 
         success: false, 
-        error: 'Cannot connect to server. Please ensure the backend server is running on http://localhost:5001' 
+        error: 'Cannot connect to server. Please ensure the backend server is running on http://localhost:1085' 
       };
     }
     

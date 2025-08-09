@@ -92,7 +92,7 @@ router.get('/stats/:userId', auth, async (req, res) => {
   }
 });
 
-// Get all users with search functionality
+
 router.get('/', async (req, res) => {
   try {
     const search = req.query.search || '';
