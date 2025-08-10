@@ -80,57 +80,95 @@ export default function Publications() {
     setSelectedTags([]);
   };
 
-  const getQualityColor = (quality) => {
-    switch (quality) {
-      case 'Q1': return 'text-green-600 bg-green-100';
-      case 'Q2': return 'text-blue-600 bg-blue-100';
-      case 'Q3': return 'text-yellow-600 bg-yellow-100';
-      case 'Q4': return 'text-orange-600 bg-orange-100';
-      default: return 'text-gray-600 bg-gray-100';
-    }
-  };
-
-  const getTypeColor = (type) => {
-    switch (type) {
-      case 'Journal': return 'text-purple-600 bg-purple-100';
-      case 'Conference': return 'text-blue-600 bg-blue-100';
-      case 'Workshop': return 'text-green-600 bg-green-100';
-      case 'Book Chapter': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
-    }
-  };
-
   // Tag toggle, clearFilters, getQualityColor, getTypeColor remain same (no change needed)
 
-  if (loading) return <div className="text-center p-8 text-white">Loading publications...</div>;
-  if (error) return <div className="text-center p-8 text-red-500">Error: {error}</div>;
+  if (loading) return (
+    <div 
+      className="text-center p-8 min-h-screen flex items-center justify-center"
+      style={{ 
+        background: `linear-gradient(135deg, ${colors.gradients.background.main}, ${colors.gradients.background.hero})`,
+        color: colors.text.primary 
+      }}
+    >
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: colors.primary?.blue?.[400] || '#38bdf8' }}></div>
+      <span className="ml-3">Loading publications...</span>
+    </div>
+  );
+  
+  if (error) return (
+    <div 
+      className="text-center p-8 min-h-screen flex items-center justify-center"
+      style={{ 
+        background: `linear-gradient(135deg, ${colors.gradients.background.main}, ${colors.gradients.background.hero})`
+      }}
+    >
+      <div 
+        className="backdrop-blur-lg rounded-xl p-8 border"
+        style={{
+          backgroundColor: colors.background.glass,
+          borderColor: colors.border.secondary,
+          color: colors.accent.red[400]
+        }}
+      >
+        Error: {error}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen from-slate-80 via-blue-90 to-purple-50">
+    <div 
+      className="min-h-screen"
+      style={{ 
+        background: `linear-gradient(135deg, ${colors.gradients.background.main}, ${colors.gradients.background.hero})` 
+      }}
+    >
       {/* Header */}
-      <div className="backdrop-blur-sm border-b border-slate-200/60 shadow-sm">
+      <div 
+        className="backdrop-blur-sm border-b shadow-sm"
+        style={{ 
+          borderColor: `${colors.border.secondary}80`,
+          background: `${colors.background.glass}4D`
+        }}
+      >
         <div className="container mx-auto px-4 py-12">
           <div className="text-center mb-8">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+              <span 
+                className="bg-gradient-to-r bg-clip-text text-transparent"
+                style={{
+                  backgroundImage: `linear-gradient(to right, ${colors.primary?.blue?.[400] || '#38bdf8'}, ${colors.primary?.purple?.[500] || '#d946ef'}, ${colors.accent?.pink?.[500] || '#ec4899'})`
+                }}
+              >
                 Publications
               </span>
             </h1>
-            <p className="text-white text-lg max-w-2xl mx-auto">
+            <p className="text-lg max-w-2xl mx-auto" style={{ color: colors.text.primary }}>
               Discover cutting-edge research and academic publications from our community
             </p>
           </div>
 
           {/* Search and Filters */}
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-slate-200/60 shadow-lg">
+          <div 
+            className="backdrop-blur-sm rounded-2xl p-6 border shadow-lg"
+            style={{
+              backgroundColor: colors.background.glass,
+              borderColor: colors.border.secondary
+            }}
+          >
             <div className="flex flex-col lg:flex-row gap-4 items-center justify-between mb-4">
               {/* Search */}
               <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: colors.text.secondary }} />
                 <input
                   type="text"
                   placeholder="Search publications..."
-                  className="w-full pl-10 pr-4 py-3 bg-white/80 border border-slate-300 rounded-lg text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 shadow-sm"
+                  className="w-full pl-10 pr-4 py-3 border rounded-lg transition-all duration-200 shadow-sm focus:outline-none focus:ring-2"
+                  style={{
+                    backgroundColor: `${colors.background.glass}CC`,
+                    borderColor: colors.border.secondary,
+                    color: colors.text.primary,
+                    '--placeholder-color': colors.text.secondary
+                  }}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -161,15 +199,23 @@ export default function Publications() {
 
             {/* Filter Panel */}
             {showFilters && (
-              <div className="border-t border-slate-200/60 pt-4 animate-in slide-in-from-top-2 duration-200">
+              <div 
+                className="pt-4 animate-in slide-in-from-top-2 duration-200"
+                style={{ borderTop: `1px solid ${colors.border.secondary}` }}
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {/* Type Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-2">Type</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>Type</label>
                     <select
                       value={selectedType}
                       onChange={(e) => setSelectedType(e.target.value)}
-                      className="w-full px-3 py-2 bg-white/80 border border-slate-300 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent shadow-sm"
+                      className="w-full px-3 py-2 border rounded-lg transition-all duration-200 shadow-sm focus:outline-none focus:ring-2"
+                      style={{
+                        backgroundColor: `${colors.background.glass}CC`,
+                        borderColor: colors.border.secondary,
+                        color: colors.text.primary
+                      }}
                     >
                       {types.map(type => (
                         <option key={type} value={type}>{type}</option>
@@ -179,11 +225,16 @@ export default function Publications() {
 
                   {/* Genre Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-2">Genre</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>Genre</label>
                     <select
                       value={selectedGenre}
                       onChange={(e) => setSelectedGenre(e.target.value)}
-                      className="w-full px-3 py-2 bg-white/80 border border-slate-300 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent shadow-sm"
+                      className="w-full px-3 py-2 border rounded-lg transition-all duration-200 shadow-sm focus:outline-none focus:ring-2"
+                      style={{
+                        backgroundColor: `${colors.background.glass}CC`,
+                        borderColor: colors.border.secondary,
+                        color: colors.text.primary
+                      }}
                     >
                       {genres.map(genre => (
                         <option key={genre} value={genre}>{genre}</option>
@@ -193,11 +244,16 @@ export default function Publications() {
 
                   {/* Quality Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-2">Quality</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>Quality</label>
                     <select
                       value={selectedQuality}
                       onChange={(e) => setSelectedQuality(e.target.value)}
-                      className="w-full px-3 py-2 bg-white/80 border border-slate-300 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent shadow-sm"
+                      className="w-full px-3 py-2 border rounded-lg transition-all duration-200 shadow-sm focus:outline-none focus:ring-2"
+                      style={{
+                        backgroundColor: `${colors.background.glass}CC`,
+                        borderColor: colors.border.secondary,
+                        color: colors.text.primary
+                      }}
                     >
                       {qualities.map(quality => (
                         <option key={quality} value={quality}>{quality}</option>
@@ -207,11 +263,16 @@ export default function Publications() {
 
                   {/* Year Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-2">Year</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>Year</label>
                     <select
                       value={selectedYear}
                       onChange={(e) => setSelectedYear(e.target.value)}
-                      className="w-full px-3 py-2 bg-white/80 border border-slate-300 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent shadow-sm"
+                      className="w-full px-3 py-2 border rounded-lg transition-all duration-200 shadow-sm focus:outline-none focus:ring-2"
+                      style={{
+                        backgroundColor: `${colors.background.glass}CC`,
+                        borderColor: colors.border.secondary,
+                        color: colors.text.primary
+                      }}
                     >
                       {years.map(year => (
                         <option key={year} value={year}>{year}</option>
@@ -223,25 +284,25 @@ export default function Publications() {
                 {/* Tags Filter */}
                 {allTags.length > 0 && (
                   <div className="mt-6">
-                    <label className="block text-sm font-medium text-slate-600 mb-2">Tags</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>Tags</label>
                     <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto">
                       {allTags.map(tag => (
                         <button
                           key={tag}
                           onClick={() => toggleTag(tag)}
-                          className="px-3 py-1 rounded-full text-xs border transition-all duration-200 shadow-sm"
+                          className="px-3 py-1 rounded-full text-sm border transition-all duration-200 shadow-sm"
                           style={
                             selectedTags.includes(tag)
                               ? {
-                                  backgroundColor: colors.primary.blue[500],
+                                  backgroundColor: colors.primary?.blue?.[500] || '#0ea5e9',
                                   color: colors.text.primary,
-                                  borderColor: colors.primary.blue[400]
+                                  borderColor: colors.primary?.blue?.[400] || '#38bdf8'
                                 }
                               : getButtonStyles('outline')
                           }
                           onMouseEnter={(e) => {
                             if (!selectedTags.includes(tag)) {
-                              e.target.style.backgroundColor = colors.button.outline.backgroundHover;
+                              e.target.style.backgroundColor = colors.button?.outline?.backgroundHover || 'rgba(217, 70, 239, 0.03)';
                             }
                           }}
                           onMouseLeave={(e) => {
@@ -283,8 +344,8 @@ export default function Publications() {
             )}
 
             {/* Result Summary */}
-            <div className="mt-4 pt-4 border-t border-slate-200/60">
-              <p className="text-slate-500 text-sm">
+            <div className="mt-4 pt-4" style={{ borderTop: `1px solid ${colors.border.secondary}` }}>
+              <p className="text-sm" style={{ color: colors.text.secondary }}>
                 Showing {filteredPublications.length} of {publications.length} publications
               </p>
             </div>
@@ -299,10 +360,20 @@ export default function Publications() {
           <div className="text-center py-12 text-red-500">{error}</div>
         ) : filteredPublications.length === 0 ? (
           <div className="text-center py-12">
-            <div className="bg-white/70 rounded-xl p-8 max-w-md mx-auto shadow-lg border border-slate-200/60">
-              <Search className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-slate-600 mb-2">No publications found</h3>
-              <p className="text-slate-500">Try adjusting your search or filters</p>
+            <div 
+              className="backdrop-blur-lg rounded-xl p-8 max-w-md mx-auto shadow-lg border"
+              style={{
+                backgroundColor: colors.background.glass,
+                borderColor: colors.border.secondary
+              }}
+            >
+              <Search className="w-12 h-12 mx-auto mb-4" style={{ color: colors.text.secondary }} />
+              <h3 className="text-xl font-semibold mb-2" style={{ color: colors.text.primary }}>
+                No publications found
+              </h3>
+              <p style={{ color: colors.text.secondary }}>
+                Try adjusting your search or filters
+              </p>
             </div>
           </div>
         ) : (
@@ -310,113 +381,169 @@ export default function Publications() {
             {filteredPublications.map((pub) => (
               <article
                 key={pub._id || pub.id}
-                className="group bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-slate-200/60 hover:border-slate-300/80 hover:shadow-lg hover:shadow-slate-200/30 transition-all duration-300 shadow-sm"
+                className="relative group"
               >
-                <div className="flex flex-col lg:flex-row lg:items-start gap-6">
-                  {/* Main Content */}
-                  <div className="flex-1">
-                    {/* Header */}
-                    <div className="flex flex-wrap items-start gap-3 mb-4">
-                      <h3 className="text-xl lg:text-2xl font-bold text-slate-800 group-hover:text-blue-600 transition-colors leading-tight flex-1">
-                        {pub.title}
-                      </h3>
-                      
-                      {/* Type Badge */}
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getTypeColor(pub.type)}`}>
-                        {pub.type}
-                      </span>
-                      
-                      {/* Quality Badge */}
-                      {pub.quality && pub.quality !== 'N/A' && (
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getQualityColor(pub.quality)}`}>
-                          {pub.quality}
+                {/* Gradient Background Effect */}
+                <div 
+                  className="absolute inset-0 rounded-xl blur-sm group-hover:blur-none transition-all duration-300"
+                  style={{
+                    background: `linear-gradient(to right, ${colors.primary?.purple?.[600] || '#c026d3'}1A, ${colors.primary?.blue?.[600] || '#0284c7'}1A)`
+                  }}
+                ></div>
+                
+                {/* Main Card */}
+                <div 
+                  className="relative backdrop-blur-lg rounded-xl p-6 border hover:scale-[1.01] transition-all duration-300"
+                  style={{
+                    backgroundColor: colors.background.glass,
+                    borderColor: colors.border.secondary
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.background.glass}CC`}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = colors.background.glass}
+                >
+                  <div className="flex flex-col lg:flex-row lg:items-start gap-6">
+                    {/* Main Content */}
+                    <div className="flex-1">
+                      {/* Header */}
+                      <div className="flex flex-wrap items-start gap-3 mb-4">
+                        <h3 
+                          className="text-xl lg:text-2xl font-bold group-hover:text-blue-400 transition-colors leading-tight flex-1"
+                          style={{ color: colors.text.primary }}
+                        >
+                          {pub.title}
+                        </h3>
+                        
+                        {/* Type Badge */}
+                        <span 
+                          className="px-3 py-1 rounded-full text-sm font-semibold border"
+                          style={{
+                            backgroundColor: `${colors.primary?.purple?.[500] || '#d946ef'}33`,
+                            color: colors.text.primary,
+                            borderColor: `${colors.primary?.purple?.[500] || '#d946ef'}4D`
+                          }}
+                        >
+                          {pub.type}
                         </span>
-                      )}
-                    </div>
-
-                    {/* Authors */}
-                    <div className="flex items-center gap-2 mb-3">
-                      <Users className="w-4 h-4 text-slate-500" />
-                      <p className="text-slate-600 text-sm">
-                        {pub.authors?.join(', ') || 'Unknown authors'}
-                      </p>
-                    </div>
-
-                    {/* Venue and Year */}
-                    <div className="flex flex-wrap items-center gap-4 mb-4">
-                      <div className="flex items-center gap-2">
-                        <BookOpen className="w-4 h-4 text-slate-500" />
-                        <span className="text-slate-600 text-sm font-medium">{pub.venue}</span>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-slate-500" />
-                        <span className="text-slate-600 text-sm">{pub.year}</span>
-                      </div>
-
-                      {pub.location && (
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-slate-500" />
-                          <span className="text-slate-600 text-sm">{pub.location}</span>
-                        </div>
-                      )}
-
-                      {pub.citations > 0 && (
-                        <div className="flex items-center gap-2">
-                          <Award className="w-4 h-4 text-slate-500" />
-                          <span className="text-slate-600 text-sm">{pub.citations} citations</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Abstract */}
-                    {pub.abstract && (
-                      <div className="mb-4">
-                        <p className="text-slate-700 text-sm leading-relaxed line-clamp-3">
-                          {pub.abstract}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Tags */}
-                    {pub.tags && pub.tags.length > 0 && (
-                      <div className="flex items-center gap-2 mb-4">
-                        <Tag className="w-4 h-4 text-slate-500" />
-                        <div className="flex flex-wrap gap-1">
-                          {pub.tags.map((tag, index) => (
-                            <span
-                              key={index}
-                              className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-md hover:bg-slate-200 transition-colors"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Footer */}
-                    <div className="flex items-center justify-between pt-4 border-t border-slate-200/60">
-                      <div className="flex items-center gap-3">
-                        {pub.creator && (
-                          <span className="text-xs text-slate-500">
-                            Added by {pub.creator.name || 'Unknown'}
+                        
+                        {/* Quality Badge */}
+                        {pub.quality && pub.quality !== 'N/A' && (
+                          <span 
+                            className="px-3 py-1 rounded-full text-sm font-semibold border"
+                            style={{
+                              backgroundColor: `${colors.accent?.green?.[500] || '#38a169'}33`,
+                              color: colors.text.primary,
+                              borderColor: `${colors.accent?.green?.[500] || '#38a169'}4D`
+                            }}
+                          >
+                            {pub.quality}
                           </span>
                         )}
                       </div>
-                      
-                      <div className="flex items-center gap-3">
-                        {pub.doi && (
-                          <a
-                            href={`https://doi.org/${pub.doi}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                            DOI
-                          </a>
+
+                      {/* Authors */}
+                      <div className="flex items-center gap-2 mb-3">
+                        <Users className="w-4 h-4" style={{ color: colors.text.secondary }} />
+                        <p className="text-sm" style={{ color: `${colors.text.secondary}B3` }}>
+                          {pub.authors?.join(', ') || 'Unknown authors'}
+                        </p>
+                      </div>
+
+                      {/* Venue and Year */}
+                      <div className="flex flex-wrap items-center gap-4 mb-4">
+                        <div className="flex items-center gap-2">
+                          <BookOpen className="w-4 h-4" style={{ color: colors.text.secondary }} />
+                          <span className="text-sm font-medium" style={{ color: colors.text.secondary }}>
+                            {pub.venue}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4" style={{ color: colors.text.secondary }} />
+                          <span className="text-sm" style={{ color: colors.text.secondary }}>
+                            {pub.year}
+                          </span>
+                        </div>
+
+                        {pub.location && (
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4" style={{ color: colors.text.secondary }} />
+                            <span className="text-sm" style={{ color: colors.text.secondary }}>
+                              {pub.location}
+                            </span>
+                          </div>
                         )}
+
+                        {pub.citations > 0 && (
+                          <div className="flex items-center gap-2">
+                            <Award className="w-4 h-4" style={{ color: colors.text.secondary }} />
+                            <span className="text-sm" style={{ color: colors.text.secondary }}>
+                              {pub.citations} citations
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Abstract */}
+                      {pub.abstract && (
+                        <div className="mb-4">
+                          <p className="text-sm leading-relaxed line-clamp-3" style={{ color: `${colors.text.secondary}B3` }}>
+                            {pub.abstract}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Tags */}
+                      {pub.tags && pub.tags.length > 0 && (
+                        <div className="flex items-center gap-2 mb-4">
+                          <Tag className="w-4 h-4" style={{ color: colors.text.secondary }} />
+                          <div className="flex flex-wrap gap-2">
+                            {pub.tags.map((tag, index) => (
+                              <span
+                                key={index}
+                                className="px-2 py-1 rounded-md text-xs font-medium border transition-colors"
+                                style={{
+                                  backgroundColor: `${colors.primary?.blue?.[500] || '#0ea5e9'}33`,
+                                  color: colors.text.primary,
+                                  borderColor: `${colors.primary?.blue?.[500] || '#0ea5e9'}4D`
+                                }}
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Footer */}
+                      <div className="flex items-center justify-between pt-4" style={{ borderTop: `1px solid ${colors.border.secondary}` }}>
+                        <div className="flex items-center gap-3">
+                          {pub.creator && (
+                            <span className="text-xs" style={{ color: `${colors.text.secondary}80` }}>
+                              Added by {pub.creator.name || 'Unknown'}
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center gap-3">
+                          {pub.doi && (
+                            <a
+                              href={`https://doi.org/${pub.doi}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 px-3 py-1 border rounded-lg transition-all duration-200 text-sm font-medium"
+                              style={{
+                                backgroundColor: `${colors.primary?.blue?.[500] || '#0ea5e9'}33`,
+                                color: colors.text.primary,
+                                borderColor: `${colors.primary?.blue?.[500] || '#0ea5e9'}4D`
+                              }}
+                              onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.primary?.blue?.[500] || '#0ea5e9'}4D`}
+                              onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.primary?.blue?.[500] || '#0ea5e9'}33`}
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              DOI
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
