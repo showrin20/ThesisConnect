@@ -53,7 +53,7 @@ const auth = async (req, res, next) => {
     
     // Attach user to request with validated role
     req.user = {
-      id: user._id,
+      id: user._id.toString(),
       email: user.email,
       name: user.name,
       role: validatedRole,
@@ -147,7 +147,7 @@ const verifyToken = async (req, res, next) => {
     }
 
     req.user = {
-      id: user._id,
+      id: user._id.toString(),
       role: validateRole(user.role),
       email: user.email,
       name: user.name

@@ -66,32 +66,67 @@ const fetchMyBlogs = async () => {
   setLoading(true);
   setError(null);
   try {
-    const res = await axios.get('/blogs/my-blogs');
-    console.log('API Response:', res.data); // Log the response
-    setBlogs(res.data.data || []);
+    console.log('🔍 Fetching user blogs...');
     
-    // Update blog stats
+    // Make authenticated request
+    const res = await axios.get('/blogs/my-blogs', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}` || `Bearer ${user?.token}`,
+        'x-auth-token': localStorage.getItem('token') || user?.token
+      }
+    });
+    
+    console.log('📥 Blogs API Response:', res.data);
+    
+    // Handle new response structure
+    const blogsData = res.data?.data || res.data?.blogs || [];
+    setBlogs(blogsData);
+    
+    // Update blog stats with proper counts
     const blogStats = {
-      total: res.data.data?.length || 0,
-      published: res.data.data?.filter(b => b.status === 'published').length || 0,
-      draft: res.data.data?.filter(b => b.status === 'draft').length || 0,
-      archived: res.data.data?.filter(b => b.status === 'archived').length || 0
+      total: blogsData.length || 0,
+      published: blogsData.filter(b => b.status === 'published').length || 0,
+      draft: blogsData.filter(b => b.status === 'draft').length || 0,
+      archived: blogsData.filter(b => b.status === 'archived').length || 0
     };
     
     setUserStats(prev => ({ ...prev, blogs: blogStats }));
-  } catch (err) {
-    console.error('Fetch blogs error:', err);
-    const errorMessage = err.response?.data?.msg || err.response?.data?.message || 'Failed to load your blogs';
-    setError(errorMessage);
     
-    // Show alert for fetch errors
-    if (err.response?.status === 401) {
-      showAlert('error', 'Authentication Error', 'Please log in again to view your blogs');
-    } else if (err.response?.status >= 500) {
-      showAlert('error', 'Server Error', 'Server is temporarily unavailable. Please try again later.');
-    } else {
-      showAlert('error', 'Loading Failed', errorMessage);
+    console.log(`✅ Loaded ${blogsData.length} blogs for user`);
+    
+    if (blogsData.length === 0) {
+      showAlert('info', 'No Blogs Found', 'You haven\'t created any blogs yet. Create your first blog post!');
     }
+    
+  } catch (err) {
+    console.error('❌ Fetch blogs error:', err);
+    
+    let errorMessage = 'Failed to load your blogs';
+    let alertTitle = 'Loading Failed';
+    
+    if (err.response?.status === 401) {
+      errorMessage = 'Please log in again to view your blogs';
+      alertTitle = 'Authentication Required';
+      // Redirect to login after showing error
+      setTimeout(() => {
+        logout();
+        navigate('/login');
+      }, 3000);
+    } else if (err.response?.status === 403) {
+      errorMessage = 'Access denied. Please check your permissions.';
+      alertTitle = 'Access Denied';
+    } else if (err.response?.status >= 500) {
+      errorMessage = 'Server is temporarily unavailable. Please try again later.';
+      alertTitle = 'Server Error';
+    } else if (err.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err.code === 'ERR_NETWORK') {
+      errorMessage = 'Network error. Please check your internet connection.';
+      alertTitle = 'Network Error';
+    }
+    
+    setError(errorMessage);
+    showAlert('error', alertTitle, errorMessage);
   } finally {
     setLoading(false);
   }
@@ -214,6 +249,8 @@ const handleSubmit = async (e) => {
     const res = await axios.post('/blogs', formDataToSend, {
       headers: {
         'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${localStorage.getItem('token')}` || `Bearer ${user?.token}`,
+        'x-auth-token': localStorage.getItem('token') || user?.token
       },
       timeout: 30000, // 30 second timeout
       onUploadProgress: (progressEvent) => {
@@ -223,10 +260,16 @@ const handleSubmit = async (e) => {
     });
 
     console.log('✅ Blog Created Successfully:', res.data);
-    showAlert('success', 'Success!', 'Blog post created successfully');
-    setShowBlogForm(false);
-    resetForm();
-    await fetchMyBlogs();
+    
+    // Handle different response structures
+    if (res.data?.success === true) {
+      showAlert('success', 'Success!', res.data.message || 'Blog post created successfully');
+      setShowBlogForm(false);
+      resetForm();
+      await fetchMyBlogs();
+    } else {
+      showAlert('error', 'Unexpected Response', 'Blog creation response was unexpected');
+    }
     
   } catch (err) {
     console.error('❌ Submit Error Details:', {
@@ -295,13 +338,25 @@ const handleSubmit = async (e) => {
         tags: parseCSV(formData.tags),
       };
 
-      const res = await axios.put(`/blogs/${editingBlog._id}`, payload);
-      console.log('Updated:', res.data);
-
-      showAlert('success', 'Success!', 'Blog post updated successfully');
-      setEditingBlog(null);
-      resetForm();
-      fetchMyBlogs();
+      const res = await axios.put(`/blogs/${editingBlog._id}`, payload, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}` || `Bearer ${user?.token}`,
+          'x-auth-token': localStorage.getItem('token') || user?.token,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('✅ Blog Updated Successfully:', res.data);
+      
+      // Handle response
+      if (res.data?.success === true) {
+        showAlert('success', 'Success!', res.data.message || 'Blog updated successfully');
+        setEditingBlog(null);
+        resetForm();
+        await fetchMyBlogs();
+      } else {
+        showAlert('error', 'Update Failed', 'Failed to update blog');
+      }
     } catch (err) {
       console.error('Update Error:', err);
       const errorMessage = err.response?.data?.msg || err.response?.data?.message || 'Failed to update blog post';
@@ -315,13 +370,39 @@ const handleSubmit = async (e) => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`/blogs/${id}`);
-      showAlert('success', 'Deleted!', 'Blog post deleted successfully');
-      setDeletingBlog(null);
-      fetchMyBlogs();
+      console.log(`🗑️ Deleting blog ${id}...`);
+      
+      const res = await axios.delete(`/blogs/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}` || `Bearer ${user?.token}`,
+          'x-auth-token': localStorage.getItem('token') || user?.token
+        }
+      });
+      
+      console.log('✅ Blog Deleted Successfully:', res.data);
+      
+      if (res.data?.success === true) {
+        showAlert('success', 'Deleted!', res.data.message || 'Blog post deleted successfully');
+        setDeletingBlog(null);
+        await fetchMyBlogs();
+      } else {
+        showAlert('error', 'Delete Failed', 'Failed to delete blog post');
+      }
     } catch (err) {
-      console.error('Delete Error:', err);
-      const errorMessage = err.response?.data?.msg || err.response?.data?.message || 'Failed to delete blog post';
+      console.error('❌ Delete Error:', err);
+      
+      let errorMessage = 'Failed to delete blog post';
+      
+      if (err.response?.status === 401) {
+        errorMessage = 'Authentication required. Please log in again.';
+      } else if (err.response?.status === 403) {
+        errorMessage = 'Access denied. You can only delete your own blogs.';
+      } else if (err.response?.status === 404) {
+        errorMessage = 'Blog not found or already deleted.';
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      }
+      
       showAlert('error', 'Delete Failed', errorMessage);
     }
   };
@@ -747,7 +828,7 @@ const handleSubmit = async (e) => {
                   <div className="relative w-full max-w-md rounded-xl p-6 shadow-2xl" style={getCardStyles('glass')}>
                     <div className="text-center">
                       <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4" style={{ backgroundColor: colors.status.error.background }}>
-                        <Trash2 size={24} style={{ color: colors.status.error.text }} />
+                        <Trash2 size={24} style={{ color: colors.text.primary }} />
                       </div>
                       
                       <h3 className="text-lg font-medium mb-2" style={{ color: colors.text.primary }}>
@@ -824,8 +905,8 @@ const handleSubmit = async (e) => {
                           onClick={() => startEditing(blog)} 
                           title="Edit" 
                           className="p-2 rounded-lg transition-colors"
-                          style={{ backgroundColor: `${colors.status.warning.background}`, color: colors.status.warning.text }}
-                          onMouseEnter={(e) => e.target.style.backgroundColor = colors.primary.blue[600]}
+                          style={{ backgroundColor: `${colors.status.warning.background}`, color: colors.text.primary  }}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = colors.status.warning.backgroundHover[300]}
                           onMouseLeave={(e) => e.target.style.backgroundColor = colors.status.warning.background}
                         >
                           <Edit size={16} />
@@ -834,8 +915,8 @@ const handleSubmit = async (e) => {
                           onClick={() => confirmDelete(blog)} 
                           title="Delete" 
                           className="p-2 rounded-lg transition-colors"
-                          style={{ backgroundColor: `${colors.status.error.background}`, color: colors.status.error.text }}
-                          onMouseEnter={(e) => e.target.style.backgroundColor = colors.button.danger.background}
+                          style={{ backgroundColor: `${colors.status.error.background}`, color: colors.text.primary  }}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = colors.button.danger.backgroundHover[700]}
                           onMouseLeave={(e) => e.target.style.backgroundColor = colors.status.error.background}
                         >
                           <Trash2 size={16} />

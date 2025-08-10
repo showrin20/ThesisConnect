@@ -394,8 +394,8 @@ export default function MyPublications() {
                           onClick={() => startEditing(pub)} 
                           title="Edit" 
                           className="p-2 rounded-lg transition-colors"
-                          style={{ backgroundColor: `${colors.status.warning.background}`, color: colors.status.warning.text }}
-                          onMouseEnter={(e) => e.target.style.backgroundColor = colors.primary.blue[600]}
+                          style={{ backgroundColor: `${colors.status.warning.background}`, color: colors.text.primary  }}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = colors.status.warning.backgroundHover[300]}
                           onMouseLeave={(e) => e.target.style.backgroundColor = colors.status.warning.background}
                         >
                           <Edit size={16} />
@@ -404,8 +404,8 @@ export default function MyPublications() {
                           onClick={() => confirmDelete(pub)} 
                           title="Delete" 
                           className="p-2 rounded-lg transition-colors"
-                          style={{ backgroundColor: `${colors.status.error.background}`, color: colors.status.error.text }}
-                          onMouseEnter={(e) => e.target.style.backgroundColor = colors.button.danger.background}
+                          style={{ backgroundColor: `${colors.status.error.background}`, color: colors.text.primary }}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = colors.status.error.backgroundHover[300]}
                           onMouseLeave={(e) => e.target.style.backgroundColor = colors.status.error.background}
                         >
                           <Trash2 size={16} />

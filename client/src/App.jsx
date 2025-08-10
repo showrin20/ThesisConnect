@@ -22,7 +22,7 @@ import MyBlogs from './pages/MyBlogs';
 import PublicationSearch from './components/PublicationSearch';
 import BlogPage from './pages/BlogPage';
 import { colors } from './styles/colors';
-
+import BlogDetails from './components/BlogDetails';
 
 // Component to conditionally render navbar
 function AppContent() {
@@ -73,6 +73,7 @@ function AppContent() {
           <Route path="/explore" element={<Explore />} />
           <Route path="/publications" element={<Publications />} />
           <Route path="/blogs" element={<BlogPage />} />
+          <Route path="/blog/:id" element={<BlogDetails />} />
           <Route path="/projects" element={
             <ProtectedRoute>
               <ProjectHub />

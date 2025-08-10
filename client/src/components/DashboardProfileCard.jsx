@@ -11,17 +11,17 @@ const ProfileCard = ({ userStats = null, loadingStats = false }) => {
       case 'admin':
         return {
           backgroundColor: `${colors.accent.red[400]}33`,
-          color: colors.accent.red[300],
+          color: colors.accent.red[800],
         };
       case 'mentor':
         return {
           backgroundColor: `${colors.primary.blue[500]}33`,
-          color: colors.primary.blue[300],
+          color: colors.primary.blue[800],
         };
       case 'student':
         return {
           backgroundColor: `${colors.accent.green[400]}33`,
-          color: colors.accent.green[300],
+          color: colors.accent.green[800],
         };
       default:
         return {
