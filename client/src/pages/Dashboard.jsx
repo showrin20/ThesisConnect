@@ -633,19 +633,19 @@ export default function Dashboard() {
                   <FileText size={16} />
                   Create Blog Post
                 </button>
-                {/* <button 
+                <button 
                   className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200"
                   style={{
                     backgroundColor: `${colors.accent.orange[500]}33`,
-                    color: colors.accent.orange[400],
+                    color: colors.text.primary,
                     borderColor: `${colors.accent.orange[500]}4D`
                   }}
                   onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.accent.orange[500]}4D`}
                   onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.accent.orange[500]}33`}
                 >
                   <Users size={16} />
-                  Find Collaborators
-                </button> */}
+                  Bookmarks
+                </button>
 
 
                 
