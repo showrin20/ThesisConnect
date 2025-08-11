@@ -387,6 +387,43 @@ router.patch('/:id/view', async (req, res) => {
 });
 
 // =========================
+// Get blogs by specific userId (Public)
+// =========================
+router.get('/user/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ success: false, message: 'Invalid user ID format' });
+    }
+
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * limit;
+
+    const blogs = await Blog.find({ author: userId, isDeleted: { $ne: true } })
+      .populate('author', 'name email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Blog.countDocuments({ author: userId, isDeleted: { $ne: true } });
+
+    res.json({
+      success: true,
+      data: blogs,
+      total,
+      page: parseInt(page),
+      pages: Math.ceil(total / limit),
+      userId
+    });
+  } catch (err) {
+    console.error('Error fetching blogs for user:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+
+// =========================
 // Blog statistics (Requires authentication)
 // =========================
 router.get('/stats', auth, async (req, res) => {

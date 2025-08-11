@@ -270,6 +270,27 @@ router.put('/:id', auth, async (req, res) => {
 });
 
 
+router.get('/user/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Validate user ID
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ msg: 'Invalid user ID format' });
+    }
+
+    const projects = await Project.find({ creator: userId })
+      .populate('creator', 'name email university')
+      .sort({ createdAt: -1 })
+      .limit(10); // Limit to recent 10 projects
+
+    res.json({ success: true, count: projects.length, data: projects });
+  } catch (error) {
+    console.error('Get user projects error:', error);
+    res.status(500).json({ msg: 'Server error while fetching user projects', error: error.message });
+  }
+});
+
 router.delete('/:id', auth, async (req, res) => {
   const projectId = req.params.id;
 

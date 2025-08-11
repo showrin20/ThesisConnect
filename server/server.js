@@ -65,6 +65,7 @@ const protectedRoutes = require('./routes/protectedRoutes');
 const blogRoutes = require('./routes/blogRoutes');
 const bookmarkRoutes = require('./routes/bookmark_api_routes');
 const forumRoutes = require('./routes/forum_api_routes');
+const collaborationRoutes = require('./routes/collaborationRoutes');
 
 
 // Use routes
@@ -77,7 +78,7 @@ app.use('/api/protected', protectedRoutes);
 app.use('/api/blogs', blogRoutes);
 app.use('/api/bookmarks', bookmarkRoutes);
 app.use('/api/forums', forumRoutes);
-
+app.use('/api/collaborations', collaborationRoutes);
 
 // 404 for API routes
 app.use('/api/*', (req, res) => {

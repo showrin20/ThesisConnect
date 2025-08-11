@@ -27,6 +27,128 @@ const auth = (req, res, next) => {
   }
 };
 
+// Get users with filtering options
+router.get('/', async (req, res) => {
+  try {
+    const { role, search, department, university, limit } = req.query;
+    
+    // Build query object
+    let query = {};
+    
+    // Filter by role if specified
+    if (role) {
+      query.role = role; // This will filter for students when role=student
+    }
+    
+    // Add search functionality
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { university: { $regex: search, $options: 'i' } },
+        { department: { $regex: search, $options: 'i' } },
+        { domain: { $regex: search, $options: 'i' } },
+        { keywords: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    // Additional filters
+    if (department) {
+      query.department = { $regex: department, $options: 'i' };
+    }
+    
+    if (university) {
+      query.university = { $regex: university, $options: 'i' };
+    }
+    
+    // Execute query
+    let userQuery = User.find(query).select('-password');
+    
+    // Apply limit if specified
+    if (limit) {
+      userQuery = userQuery.limit(parseInt(limit));
+    }
+    
+    // Sort by creation date (newest first)
+    userQuery = userQuery.sort({ createdAt: -1 });
+    
+    const users = await userQuery;
+    
+    res.json({ 
+      success: true, 
+      count: users.length, 
+      data: users 
+    });
+  } catch (err) {
+    console.error('Get users error:', err);
+    res.status(500).json({ 
+      success: false, 
+      msg: 'Server error', 
+      error: err.message 
+    });
+  }
+});
+
+// Get all students specifically (alternative endpoint)
+router.get('/students', async (req, res) => {
+  try {
+    const { search, department, university, limit, skills } = req.query;
+    
+    // Base query for students
+    let query = { role: 'student' };
+    
+    // Add search functionality
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { university: { $regex: search, $options: 'i' } },
+        { department: { $regex: search, $options: 'i' } },
+        { bio: { $regex: search, $options: 'i' } },
+        { skills: { $in: [new RegExp(search, 'i')] } }
+      ];
+    }
+    
+    // Additional filters
+    if (department) {
+      query.department = { $regex: department, $options: 'i' };
+    }
+    
+    if (university) {
+      query.university = { $regex: university, $options: 'i' };
+    }
+    
+    if (skills) {
+      const skillsArray = skills.split(',').map(skill => skill.trim());
+      query.skills = { $in: skillsArray.map(skill => new RegExp(skill, 'i')) };
+    }
+    
+    // Execute query
+    let studentQuery = User.find(query).select('-password');
+    
+    // Apply limit if specified
+    if (limit) {
+      studentQuery = studentQuery.limit(parseInt(limit));
+    }
+    
+    // Sort by creation date (newest first)
+    studentQuery = studentQuery.sort({ createdAt: -1 });
+    
+    const students = await studentQuery;
+    
+    res.json({ 
+      success: true, 
+      count: students.length, 
+      data: students 
+    });
+  } catch (err) {
+    console.error('Get students error:', err);
+    res.status(500).json({ 
+      success: false, 
+      msg: 'Server error', 
+      error: err.message 
+    });
+  }
+});
+
 // Get user statistics
 router.get('/stats/:userId', auth, async (req, res) => {
   try {
@@ -92,36 +214,26 @@ router.get('/stats/:userId', auth, async (req, res) => {
   }
 });
 
-
-router.get('/', async (req, res) => {
-  try {
-    const search = req.query.search || '';
-    const users = await User.find({
-      $or: [
-        { domain: { $regex: search, $options: 'i' } },
-        { keywords: { $regex: search, $options: 'i' } },
-        { name: { $regex: search, $options: 'i' } },
-        { university: { $regex: search, $options: 'i' } },
-      ],
-    }).select('-password');
-    res.json(users);
-  } catch (err) {
-    console.error('Get users error:', err);
-    res.status(500).json({ msg: 'Server error' });
-  }
-});
-
 // Get user by ID
 router.get('/:id', async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
     if (!user) {
-      return res.status(404).json({ msg: 'User not found' });
+      return res.status(404).json({ 
+        success: false, 
+        msg: 'User not found' 
+      });
     }
-    res.json(user);
+    res.json({ 
+      success: true, 
+      data: user 
+    });
   } catch (err) {
     console.error('Get user by ID error:', err);
-    res.status(500).json({ msg: 'Server error' });
+    res.status(500).json({ 
+      success: false, 
+      msg: 'Server error' 
+    });
   }
 });
 

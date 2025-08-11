@@ -418,66 +418,178 @@ const darkColors = {
   }
 };
 
-// Theme management - Initialize with system preference
-let isDarkMode = typeof window !== 'undefined' ? 
-  window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches :
-  false;
-let currentColors = isDarkMode ? darkColors : lightColors; // Cache current colors
+// // Theme management - Initialize with system preference
+// let isDarkMode = typeof window !== 'undefined' ? 
+//   window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches :
+//   false;
+// let currentColors = isDarkMode ? darkColors : lightColors; // Cache current colors
 
-// Function to get current colors based on theme
-export const getColors = () => {
-  currentColors = isDarkMode ? darkColors : lightColors;
-  return currentColors;
-};
+// // Function to get current colors based on theme
+// export const getColors = () => {
+//   currentColors = isDarkMode ? darkColors : lightColors;
+//   return currentColors;
+// };
 
-// Function to toggle theme
-export const toggleTheme = () => {
-  isDarkMode = !isDarkMode;
-  currentColors = getColors(); // Update cached colors
-  // Update the colors export
-  Object.assign(colors, currentColors);
-  // Trigger re-render by dispatching a custom event
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('themeChange', { detail: { isDarkMode } }));
+// // Function to toggle theme
+// export const toggleTheme = () => {
+//   isDarkMode = !isDarkMode;
+//   currentColors = getColors(); // Update cached colors
+//   // Update the colors export
+//   Object.assign(colors, currentColors);
+//   // Trigger re-render by dispatching a custom event
+//   if (typeof window !== 'undefined') {
+//     window.dispatchEvent(new CustomEvent('themeChange', { detail: { isDarkMode } }));
+//   }
+//   return isDarkMode;
+// };
+
+// // Function to set specific theme
+// export const setTheme = (darkMode) => {
+//   isDarkMode = darkMode;
+//   currentColors = getColors(); // Update cached colors
+//   // Update the colors export
+//   Object.assign(colors, currentColors);
+//   if (typeof window !== 'undefined') {
+//     window.dispatchEvent(new CustomEvent('themeChange', { detail: { isDarkMode } }));
+//   }
+//   return isDarkMode;
+// };
+
+// // Function to get current theme
+// export const getCurrentTheme = () => isDarkMode;
+
+// // Export colors for backward compatibility (will return current theme colors)
+// export const colors = { ...(isDarkMode ? darkColors : lightColors) }; // Start with system preference
+
+// // Utility function to get CSS custom properties
+// export const getCSSCustomProperties = () => {
+//   const flattenColors = (obj, prefix = '') => {
+//     let result = {};
+
+//     for (const [key, value] of Object.entries(obj)) {
+//       if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+//         result = { ...result, ...flattenColors(value, `${prefix}${key}-`) };
+//       } else {
+//         result[`--color-${prefix}${key}`] = value;
+//       }
+//     }
+
+//     return result;
+//   };
+
+//   return flattenColors(getColors());
+// };
+
+// export default colors;
+
+
+// ... keep all your lightColors and darkColors objects as they are ...
+
+// Keep all your existing color definitions (lightColors, darkColors)...
+
+const THEME_KEY = 'thesisconnect-theme';
+
+// Theme state management
+let currentTheme = null;
+
+// Initialize theme from localStorage or system preference
+const initializeTheme = () => {
+  if (typeof window === 'undefined') return false;
+  
+  const stored = localStorage.getItem(THEME_KEY);
+  if (stored !== null) {
+    currentTheme = JSON.parse(stored);
+    return currentTheme;
   }
-  return isDarkMode;
+  
+  currentTheme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  localStorage.setItem(THEME_KEY, JSON.stringify(currentTheme));
+  return currentTheme;
 };
 
-// Function to set specific theme
-export const setTheme = (darkMode) => {
-  isDarkMode = darkMode;
-  currentColors = getColors(); // Update cached colors
-  // Update the colors export
-  Object.assign(colors, currentColors);
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('themeChange', { detail: { isDarkMode } }));
-  }
-  return isDarkMode;
-};
-
-// Function to get current theme
-export const getCurrentTheme = () => isDarkMode;
-
-// Export colors for backward compatibility (will return current theme colors)
-export const colors = { ...(isDarkMode ? darkColors : lightColors) }; // Start with system preference
-
-// Utility function to get CSS custom properties
-export const getCSSCustomProperties = () => {
-  const flattenColors = (obj, prefix = '') => {
-    let result = {};
-
-    for (const [key, value] of Object.entries(obj)) {
+// Apply CSS variables for immediate visual updates
+const applyCSSVariables = (colors, isDark) => {
+  if (typeof window === 'undefined') return;
+  
+  const root = document.documentElement;
+  
+  // Apply theme class
+  root.classList.toggle('dark', isDark);
+  
+  // Flatten and apply all color variables
+  const flattenColors = (obj, prefix = 'color') => {
+    Object.entries(obj).forEach(([key, value]) => {
       if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-        result = { ...result, ...flattenColors(value, `${prefix}${key}-`) };
+        flattenColors(value, `${prefix}-${key}`);
       } else {
-        result[`--color-${prefix}${key}`] = value;
+        root.style.setProperty(`--${prefix}-${key}`, value);
       }
-    }
-
-    return result;
+    });
   };
-
-  return flattenColors(getColors());
+  
+  flattenColors(colors);
+  
+  // Force repaint
+  root.style.display = 'none';
+  root.offsetHeight; // Trigger reflow
+  root.style.display = '';
 };
+
+// Get current theme
+export const getCurrentTheme = () => {
+  if (currentTheme === null) {
+    currentTheme = initializeTheme();
+  }
+  return currentTheme;
+};
+
+// Get colors based on current theme
+export const getColors = () => {
+  const isDark = getCurrentTheme();
+  const colors = isDark ? darkColors : lightColors;
+  
+  // Apply CSS variables
+  applyCSSVariables(colors, isDark);
+  
+  return colors;
+};
+
+// Set theme
+export const setTheme = (isDark) => {
+  if (typeof window === 'undefined') return isDark;
+  
+  currentTheme = isDark;
+  localStorage.setItem(THEME_KEY, JSON.stringify(isDark));
+  
+  const colors = isDark ? darkColors : lightColors;
+  applyCSSVariables(colors, isDark);
+  
+  // Dispatch event for components
+  window.dispatchEvent(new CustomEvent('themeChange', { 
+    detail: { isDarkMode: isDark, colors } 
+  }));
+  
+  return isDark;
+};
+
+// Toggle theme
+export const toggleTheme = () => {
+  const current = getCurrentTheme();
+  return setTheme(!current);
+};
+
+// Export reactive colors
+export const colors = new Proxy({}, {
+  get(target, prop) {
+    const currentColors = getCurrentTheme() ? darkColors : lightColors;
+    return currentColors[prop];
+  }
+});
+
+// Initialize on load
+if (typeof window !== 'undefined') {
+  initializeTheme();
+  getColors();
+}
 
 export default colors;

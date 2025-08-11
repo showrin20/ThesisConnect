@@ -21,6 +21,11 @@ export default function MyProjects() {
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [projectsError, setProjectsError] = useState(null);
 
+
+    // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(6); // default for desktop
+
 useEffect(() => {
   const fetchProjects = async () => {
     setLoadingProjects(true);
@@ -40,6 +45,22 @@ useEffect(() => {
   };
   fetchProjects();
 }, []);
+
+// Adjust items per page based on screen size
+  useEffect(() => {
+    const updateItemsPerPage = () => {
+      if (window.innerWidth < 768) {
+        setItemsPerPage(2); // 1 col × 2 rows
+      } else if (window.innerWidth < 1024) {
+        setItemsPerPage(4); // 2 cols × 2 rows
+      } else {
+        setItemsPerPage(6); // 3 cols × 2 rows
+      }
+    };
+    updateItemsPerPage();
+    window.addEventListener('resize', updateItemsPerPage);
+    return () => window.removeEventListener('resize', updateItemsPerPage);
+  }, []);
 
 
   const statuses = ['All', 'Personal']; // No actual status in response, use static filter or infer if needed
@@ -71,13 +92,23 @@ useEffect(() => {
     });
   }, [projects, searchTerm, selectedStatus, selectedKeywords]);
 
+// Calculate pagination
+  const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
+  const paginatedProjects = filteredProjects.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   const handleKeywordToggle = (keyword) => {
     setSelectedKeywords((prev) =>
       prev.includes(keyword)
         ? prev.filter((k) => k !== keyword)
         : [...prev, keyword]
     );
+    setCurrentPage(1); // reset page when filter changes
   };
+
+
 
   const clearFilters = () => {
     setSearchTerm('');

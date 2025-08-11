@@ -12,49 +12,52 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(getCurrentTheme());
-  const [colors, setColors] = useState(getColors());
+  const [isDarkMode, setIsDarkMode] = useState(() => getCurrentTheme());
+  const [colors, setColors] = useState(() => getColors());
 
+  // Apply theme immediately
+  useEffect(() => {
+    const newColors = getColors();
+    setColors(newColors);
+    
+    // Force immediate re-render
+    document.documentElement.style.setProperty('--theme-transition', 'none');
+    setTimeout(() => {
+      document.documentElement.style.removeProperty('--theme-transition');
+    }, 0);
+  }, [isDarkMode]);
+
+  // Listen for theme changes from other sources
   useEffect(() => {
     const handleThemeChange = (event) => {
-      const newIsDarkMode = event.detail.isDarkMode;
-      setIsDarkMode(newIsDarkMode);
-      setColors(getColors());
+      setIsDarkMode(event.detail.isDarkMode);
+      setColors(event.detail.colors);
     };
 
     window.addEventListener('themeChange', handleThemeChange);
-    
-    return () => {
-      window.removeEventListener('themeChange', handleThemeChange);
-    };
+    return () => window.removeEventListener('themeChange', handleThemeChange);
   }, []);
 
   const toggle = () => {
     const newTheme = toggleTheme();
     setIsDarkMode(newTheme);
-    setColors(getColors());
     return newTheme;
   };
 
   const setThemeMode = (darkMode) => {
     const newTheme = setTheme(darkMode);
     setIsDarkMode(newTheme);
-    setColors(getColors());
     return newTheme;
   };
 
-  const value = {
-    isDarkMode,
-    colors,
-    toggleTheme: toggle,
-    setTheme: setThemeMode
-  };
-
   return (
-    <ThemeContext.Provider value={value}>
+    <ThemeContext.Provider value={{ 
+      isDarkMode, 
+      colors, 
+      toggleTheme: toggle, 
+      setTheme: setThemeMode 
+    }}>
       {children}
     </ThemeContext.Provider>
   );
 };
-
-export default ThemeContext;

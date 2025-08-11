@@ -48,7 +48,6 @@ router.post('/', auth, async (req, res) => {
       return res.status(400).json({ msg: 'Title, authors, year, venue, and type are required' });
     }
 
-
     const publication = new Publication({
       title,
       authors,
@@ -74,6 +73,7 @@ router.post('/', auth, async (req, res) => {
     res.status(500).json({ msg: 'Server error while creating publication', error: error.message });
   }
 });
+
 router.get('/test', (req, res) => {
   res.json({ msg: 'Publications route is connected!' });
 });
@@ -144,6 +144,28 @@ router.put('/:id', auth, async (req, res) => {
   } catch (error) {
     console.error('Update publication error:', error);
     res.status(500).json({ msg: 'Server error while updating publication', error: error.message });
+  }
+});
+
+// 📌 GET USER PUBLICATIONS
+router.get('/user/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Validate user ID
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ msg: 'Invalid user ID format' });
+    }
+
+    const publications = await Publication.find({ creator: userId })
+      .populate('creator', 'name email university')
+      .sort({ createdAt: -1 })
+      .limit(10); // Limit to recent 10 publications
+
+    res.json({ success: true, count: publications.length, data: publications });
+  } catch (error) {
+    console.error('Get user publications error:', error);
+    res.status(500).json({ msg: 'Server error while fetching user publications', error: error.message });
   }
 });
 

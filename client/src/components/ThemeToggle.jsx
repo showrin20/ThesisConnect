@@ -1,39 +1,30 @@
 import React from 'react';
-import { Sun, Moon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { Sun, Moon } from 'lucide-react';
 
-const ThemeToggle = ({ className = '' }) => {
+const ThemeToggle = ({ className = '', size = 20 }) => {
   const { isDarkMode, toggleTheme, colors } = useTheme();
+
+  const handleToggle = () => {
+    toggleTheme();
+  };
 
   return (
     <button
-      onClick={toggleTheme}
-      className={`p-2 rounded-lg transition-all duration-300 hover:scale-110 ${className}`}
+      onClick={handleToggle}
+      className={`p-2 rounded-lg transition-all duration-200 hover:scale-105 ${className}`}
       style={{
-        backgroundColor: colors.surface.secondary,
-        border: `1px solid ${colors.border.primary}`,
-        color: colors.text.primary
-      }}
-      onMouseEnter={(e) => {
-        e.target.style.backgroundColor = colors.surface.muted;
-        e.target.style.borderColor = colors.border.blue;
-      }}
-      onMouseLeave={(e) => {
-        e.target.style.backgroundColor = colors.surface.secondary;
-        e.target.style.borderColor = colors.border.primary;
+        backgroundColor: `${colors.primary?.blue?.[500] || '#3b82f6'}20`,
+        color: colors.primary?.blue?.[500] || '#3b82f6',
+        border: `1px solid ${colors.primary?.blue?.[400] || '#60a5fa'}40`
       }}
       title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+      aria-label={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
     >
       {isDarkMode ? (
-        <Sun 
-          className="w-5 h-5 transition-transform duration-300 rotate-0 hover:rotate-12" 
-          style={{ color: colors.accent.yellow[400] }}
-        />
+        <Sun size={size} />
       ) : (
-        <Moon 
-          className="w-5 h-5 transition-transform duration-300 rotate-0 hover:-rotate-12" 
-          style={{ color: colors.primary.purple[500] }}
-        />
+        <Moon size={size} />
       )}
     </button>
   );
