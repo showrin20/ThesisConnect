@@ -80,7 +80,7 @@ router.post(
     } catch (err) {
       console.error('Error creating blog:', err);
       if (err.name === 'ValidationError') {
-        const errors = Object.values(err.errors).map(e => e.message);
+        const errors = Object.values(err.eårrors).map(e => e.message);
         return res.status(400).json({ success: false, message: 'Validation failed', errors });
       }
       res.status(500).json({ success: false, message: err.message });

@@ -73,7 +73,7 @@ const Navbar = () => {
                   }}
                 ></div>
                 <img
-                  src="1.png"
+                  src="/1.png"
                   alt="ThesisConnect Logo"
                   className="w-full h-full object-contain relative z-10 transition-transform duration-500 group-hover:scale-105"
                 />

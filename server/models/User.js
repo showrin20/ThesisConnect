@@ -22,6 +22,27 @@ const UserSchema = new mongoose.Schema({
     enum: ['student', 'mentor', 'admin'],
     default: 'student',
   },
+  lastLogin: {
+    type: Date,
+    default: Date.now
+  },
+  avatar: String,
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  mentorApplication: {
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+    },
+    submittedAt: Date,
+    reviewedAt: Date,
+    reviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  }
 }, {
   timestamps: true
 });

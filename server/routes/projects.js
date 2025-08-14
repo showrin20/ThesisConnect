@@ -11,39 +11,28 @@ const router = express.Router();
 //////////////////////////
 // 📁 FILE UPLOAD SETUP
 //////////////////////////
-// Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Multer configuration for file uploads
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
+  destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
-    // Generate unique filename: timestamp-userId-originalname
     const uniqueName = `${Date.now()}-${req.user.id}-${file.originalname}`;
     cb(null, uniqueName);
-  }
+  },
 });
 
 const fileFilter = (req, file, cb) => {
-  // Only allow PDF files
-  if (file.mimetype === 'application/pdf') {
-    cb(null, true);
-  } else {
-    cb(new Error('Only PDF files are allowed'), false);
-  }
+  if (file.mimetype === 'application/pdf') cb(null, true);
+  else cb(new Error('Only PDF files are allowed'), false);
 };
 
 const upload = multer({
-  storage: storage,
-  fileFilter: fileFilter,
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
-  }
+  storage,
+  fileFilter,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
 });
 
 //////////////////////////
@@ -51,19 +40,14 @@ const upload = multer({
 //////////////////////////
 const auth = (req, res, next) => {
   let token = req.header('x-auth-token') || '';
-
   const authHeader = req.header('Authorization');
-  if (!token && authHeader?.startsWith('Bearer ')) {
-    token = authHeader.substring(7);
-  }
-
+  if (!token && authHeader?.startsWith('Bearer ')) token = authHeader.substring(7);
   if (!token) return res.status(401).json({ msg: 'No token, authorization denied' });
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
     next();
-  } catch (err) {
+  } catch {
     res.status(401).json({ msg: 'Token is not valid' });
   }
 };
@@ -72,12 +56,7 @@ const auth = (req, res, next) => {
 // 🔗 URL VALIDATION UTIL
 //////////////////////////
 const isValidURL = (url) => {
-  try {
-    new URL(url);
-    return true;
-  } catch {
-    return false;
-  }
+  try { new URL(url); return true; } catch { return false; }
 };
 
 //////////////////////////
@@ -87,66 +66,45 @@ router.post('/', auth, upload.single('thesisPdf'), async (req, res) => {
   try {
     const { title, description, link, tags, status, collaborators, thesisDraft } = req.body;
 
-    if (!title || !description) {
-      return res.status(400).json({ msg: 'Title and description are required' });
-    }
+    if (!title || !description) return res.status(400).json({ msg: 'Title and description are required' });
 
-    // Parse thesisDraft if it's a string (from FormData)
     let parsedThesisDraft = {};
     if (thesisDraft) {
-      try {
-        parsedThesisDraft = typeof thesisDraft === 'string' ? JSON.parse(thesisDraft) : thesisDraft;
-      } catch (error) {
-        console.error('Failed to parse thesisDraft:', error);
-      }
+      try { parsedThesisDraft = typeof thesisDraft === 'string' ? JSON.parse(thesisDraft) : thesisDraft; }
+      catch (error) { console.error('Failed to parse thesisDraft:', error); }
     }
 
-    // Validate that either link OR thesis draft is provided
-    const hasLink = link && link.trim();
-    const hasThesisDraft = req.file || (parsedThesisDraft.externalLink && parsedThesisDraft.externalLink.trim());
-    
-    if (!hasLink && !hasThesisDraft) {
-      return res.status(400).json({ msg: 'Either project link or thesis draft is required' });
-    }
+    const hasLink = link?.trim();
+    const hasThesisDraft = req.file || parsedThesisDraft?.externalLink?.trim();
+    if (!hasLink && !hasThesisDraft) return res.status(400).json({ msg: 'Either project link or thesis draft is required' });
 
-    // Validate URLs if provided
-    if (hasLink && !isValidURL(link)) {
-      return res.status(400).json({ msg: 'Invalid project link URL' });
-    }
-
-    if (parsedThesisDraft.externalLink && !isValidURL(parsedThesisDraft.externalLink)) {
+    if (hasLink && !isValidURL(link)) return res.status(400).json({ msg: 'Invalid project link URL' });
+    if (parsedThesisDraft?.externalLink && !isValidURL(parsedThesisDraft.externalLink))
       return res.status(400).json({ msg: 'Invalid thesis draft external link URL' });
-    }
 
-    // Prepare thesis draft data
     let thesisDraftData = {};
-    if (req.file) {
-      // File was uploaded
-      thesisDraftData = {
-        pdfUrl: `/uploads/${req.file.filename}`,
-        pdfFileName: req.file.originalname,
-        pdfSize: req.file.size,
-        description: parsedThesisDraft.description || '',
-        uploadedAt: new Date()
-      };
-    } else if (parsedThesisDraft.externalLink) {
-      // External link provided
-      thesisDraftData = {
-        externalLink: parsedThesisDraft.externalLink,
-        description: parsedThesisDraft.description || '',
-        uploadedAt: new Date()
-      };
-    }
+    if (req.file) thesisDraftData = {
+      pdfUrl: `/uploads/${req.file.filename}`,
+      pdfFileName: req.file.originalname,
+      pdfSize: req.file.size,
+      description: parsedThesisDraft.description || '',
+      uploadedAt: new Date(),
+    };
+    else if (parsedThesisDraft?.externalLink) thesisDraftData = {
+      externalLink: parsedThesisDraft.externalLink,
+      description: parsedThesisDraft.description || '',
+      uploadedAt: new Date(),
+    };
 
     const project = new Project({
       title,
       description,
       link: link || '',
-      tags: Array.isArray(tags) ? tags : (tags ? tags.split(',').map(tag => tag.trim()) : []),
+      tags: Array.isArray(tags) ? tags : (tags ? tags.split(',').map(t => t.trim()) : []),
       status: status || 'Planned',
       collaborators: Array.isArray(collaborators) ? collaborators : [],
       creator: req.user.id,
-      thesisDraft: Object.keys(thesisDraftData).length > 0 ? thesisDraftData : undefined
+      thesisDraft: Object.keys(thesisDraftData).length ? thesisDraftData : undefined,
     });
 
     await project.save();
@@ -155,20 +113,10 @@ router.post('/', auth, upload.single('thesisPdf'), async (req, res) => {
     res.status(201).json({ success: true, data: project });
   } catch (error) {
     console.error('Create project error:', error);
-    
-    // Clean up uploaded file if project creation failed
     if (req.file) {
-      try {
-        fs.unlinkSync(req.file.path);
-      } catch (unlinkError) {
-        console.error('Failed to clean up uploaded file:', unlinkError);
-      }
+      try { fs.unlinkSync(req.file.path); } catch (unlinkError) { console.error('Failed to cleanup uploaded file:', unlinkError); }
     }
-    
-    if (error.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ msg: 'File size too large. Maximum size is 10MB.' });
-    }
-    
+    if (error.code === 'LIMIT_FILE_SIZE') return res.status(400).json({ msg: 'File size too large. Max 10MB.' });
     res.status(500).json({ msg: 'Server error while creating project', error: error.message });
   }
 });
@@ -177,31 +125,19 @@ router.post('/', auth, upload.single('thesisPdf'), async (req, res) => {
 // � SERVE UPLOADED FILES
 //////////////////////////
 router.get('/uploads/:filename', auth, (req, res) => {
-  const filename = req.params.filename;
-  const filePath = path.join(__dirname, '../uploads', filename);
-  
-  // Check if file exists
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).json({ msg: 'File not found' });
-  }
-  
-  // Set headers for PDF download
+  const filePath = path.join(__dirname, '../uploads', req.params.filename);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ msg: 'File not found' });
   res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-  
-  // Send file
+  res.setHeader('Content-Disposition', `inline; filename="${req.params.filename}"`);
   res.sendFile(filePath);
 });
 
 //////////////////////////
-// �📌 GET ALL PROJECTS
+// 📌 GET ALL PROJECTS
 //////////////////////////
 router.get('/', async (_req, res) => {
   try {
-    const projects = await Project.find()
-      .populate('creator', 'name email university')
-      .sort({ createdAt: -1 });
-
+    const projects = await Project.find().populate('creator', 'name email university').sort({ createdAt: -1 });
     res.json({ success: true, count: projects.length, data: projects });
   } catch (error) {
     console.error('Get projects error:', error);
@@ -214,10 +150,7 @@ router.get('/', async (_req, res) => {
 //////////////////////////
 router.get('/my-projects', auth, async (req, res) => {
   try {
-    const projects = await Project.find({ creator: req.user.id })
-      .populate('creator', 'name email university')
-      .sort({ createdAt: -1 });
-
+    const projects = await Project.find({ creator: req.user.id }).populate('creator', 'name email university').sort({ createdAt: -1 });
     res.json({ success: true, count: projects.length, data: projects });
   } catch (error) {
     console.error('Get my projects error:', error);
@@ -225,43 +158,34 @@ router.get('/my-projects', auth, async (req, res) => {
   }
 });
 
-
+//////////////////////////
+// 📌 UPDATE PROJECT
+//////////////////////////
 router.put('/:id', auth, async (req, res) => {
   const projectId = req.params.id;
-
   try {
-    console.log('Update request for project ID:', projectId);
-
-    if (!mongoose.Types.ObjectId.isValid(projectId)) {
-      return res.status(400).json({ msg: 'Invalid project ID format' });
-    }
+    if (!mongoose.Types.ObjectId.isValid(projectId)) return res.status(400).json({ msg: 'Invalid project ID format' });
 
     const project = await Project.findById(projectId);
     if (!project) return res.status(404).json({ msg: 'Project not found' });
 
-    if (project.creator.toString() !== req.user.id) {
+    if (project.creator.toString() !== req.user.id && req.user.role !== "admin")
       return res.status(403).json({ msg: 'Unauthorized to update this project' });
-    }
 
     const { title, description, link, tags, status, collaborators } = req.body;
 
     if (title !== undefined) project.title = title;
     if (description !== undefined) project.description = description;
-
     if (link !== undefined) {
-      if (!isValidURL(link)) {
-        return res.status(400).json({ msg: 'Invalid project link URL' });
-      }
+      if (!isValidURL(link)) return res.status(400).json({ msg: 'Invalid project link URL' });
       project.link = link;
     }
-
     if (tags !== undefined) project.tags = Array.isArray(tags) ? tags : [];
     if (status !== undefined) project.status = status;
     if (collaborators !== undefined) project.collaborators = Array.isArray(collaborators) ? collaborators : [];
 
     await project.save();
     await project.populate('creator', 'name email university');
-
     res.json({ success: true, msg: 'Project updated', data: project });
   } catch (error) {
     console.error('Update project error:', error);
@@ -269,21 +193,15 @@ router.put('/:id', auth, async (req, res) => {
   }
 });
 
-
+//////////////////////////
+// 📌 GET USER PROJECTS
+//////////////////////////
 router.get('/user/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(userId)) return res.status(400).json({ msg: 'Invalid user ID format' });
 
-    // Validate user ID
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ msg: 'Invalid user ID format' });
-    }
-
-    const projects = await Project.find({ creator: userId })
-      .populate('creator', 'name email university')
-      .sort({ createdAt: -1 })
-      .limit(10); // Limit to recent 10 projects
-
+    const projects = await Project.find({ creator: userId }).populate('creator', 'name email university').sort({ createdAt: -1 }).limit(10);
     res.json({ success: true, count: projects.length, data: projects });
   } catch (error) {
     console.error('Get user projects error:', error);
@@ -291,30 +209,23 @@ router.get('/user/:userId', async (req, res) => {
   }
 });
 
+//////////////////////////
+// 📌 DELETE PROJECT
+//////////////////////////
 router.delete('/:id', auth, async (req, res) => {
   const projectId = req.params.id;
-
   try {
-    console.log('Delete request for project ID:', projectId);
-    console.log('User ID:', req.user.id);
-
-    if (!mongoose.Types.ObjectId.isValid(projectId)) {
-      return res.status(400).json({ msg: 'Invalid project ID format' });
-    }
+    if (!mongoose.Types.ObjectId.isValid(projectId)) return res.status(400).json({ msg: 'Invalid project ID format' });
 
     const project = await Project.findById(projectId);
     if (!project) return res.status(404).json({ msg: 'Project not found' });
 
-    if (project.creator.toString() !== req.user.id) {
+    if (project.creator.toString() !== req.user.id && req.user.role !== "admin")
       return res.status(403).json({ msg: 'Unauthorized to delete this project' });
-    }
 
     const deleteResult = await Project.deleteOne({ _id: projectId });
-    if (deleteResult.deletedCount === 0) {
-      return res.status(500).json({ msg: 'Failed to delete project' });
-    }
+    if (deleteResult.deletedCount === 0) return res.status(500).json({ msg: 'Failed to delete project' });
 
-    console.log('Project deleted successfully');
     res.json({ success: true, msg: 'Project deleted successfully' });
   } catch (error) {
     console.error('Delete project error:', error);

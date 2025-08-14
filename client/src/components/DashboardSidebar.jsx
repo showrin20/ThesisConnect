@@ -1,32 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Home, 
-  FolderOpen, 
-  BookOpen, 
-  Settings, 
-  Activity, 
-  Clock, 
-  CheckCircle, 
-  Search,
-  ChevronDown,
-  ChevronRight,
-  Users,
-  TrendingUp,
-  MessageSquare,
-  FileText,
-  UserPlus,
-  MessageCircle,
-  UserCheck,
-  Star
+  Home, FolderOpen, BookOpen, Settings, Activity, Clock, CheckCircle, 
+  Search, ChevronDown, ChevronRight, Users, TrendingUp, MessageSquare, 
+  FileText, UserPlus, MessageCircle, UserCheck, Star, Shield, 
+  ClipboardList, Server, BarChart2, Award, Globe
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { colors } from '../styles/colors';
+import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
-  const [expandedSections, setExpandedSections] = useState({
-    actions: true,
-    status: true,
-  });
+  const { user } = useAuth();
+  const { colors } = useTheme();
+  const location = useLocation();
+  const [expandedSections, setExpandedSections] = useState({ actions: true, status: true });
+
+  // Get user role dynamically
+  const userRole = user?.role || 'student';
 
   const plannedCount = userStats?.projects?.planned ?? projects.filter(p => p.status === 'Planned').length;
   const inProgressCount = userStats?.projects?.inProgress ?? projects.filter(p => p.status === 'In Progress').length;
@@ -35,43 +25,263 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
   const totalProjects = userStats?.projects?.total ?? projects.length;
 
   const toggleSection = (section) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section],
-    }));
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
-  const quickNavItems = [
-    { icon: Home, label: 'My Dashboard', active: true, path: '/dashboard' },
-    { icon: FolderOpen, label: 'My Projects', path: '/my-projects' },
-    { icon: BookOpen, label: 'My Publications', path: '/my-publications' },
-    { icon: FileText, label: 'My Blogs', path: '/my-blogs' },
-    { icon: MessageSquare, label: 'My Community Posts', path: '/my-community-posts' },
-    { icon: Settings, label: 'Settings', path: '/settings' },
-  ];
+  // Check if current path is active
+  const isActivePath = (path) => {
+    return location.pathname === path;
+  };
 
-  const actionButtons = [
-    { icon: UserPlus, label: 'Find Mentors', path: '/find-mentors', color: colors.primary.blue[400] },
-    { icon: Users, label: 'Find Collaborators', path: '/find-collaborators', color: colors.primary.purple[400] },
-    { icon: MessageCircle, label: 'Messages', path: '/messages', color: colors.accent.green[400] },
-    { icon: UserCheck, label: 'Collaboration Requests', path: '/collaboration-requests', color: colors.accent.yellow[400] },
-    { icon: Star, label: 'Project Reviews', path: '/project-reviews', color: colors.accent.red[400] },
-  ];
+  // ================= ROLE-BASED MENUS =================
+  const quickNavConfig = {
+    student: [
+      { icon: Home, label: 'My Dashboard', path: '/dashboard' },
+      { icon: FolderOpen, label: 'My Projects', path: '/my-projects' },
+      { icon: BookOpen, label: 'My Publications', path: '/my-publications' },
+      { icon: FileText, label: 'My Blogs', path: '/my-blogs' },
+      { icon: MessageSquare, label: 'Community Posts', path: '/community' },
+      { icon: Users, label: 'Find People', path: '/people' },
+      { icon: Settings, label: 'Settings', path: '/settings' },
+    ],
+    mentor: [
+      { icon: Home, label: 'Mentor Dashboard', path: '/dashboard' },
+      { icon: FolderOpen, label: 'My Projects', path: '/my-projects' },
+      { icon: Users, label: 'My Mentees', path: '/my-mentees' },
+      { icon: BookOpen, label: 'My Publications', path: '/my-publications' },
+      { icon: FileText, label: 'My Blogs', path: '/my-blogs' },
+      { icon: MessageSquare, label: 'Community', path: '/community' },
+      { icon: Settings, label: 'Settings', path: '/settings' },
+    ],
+    admin: [
+      { icon: Home, label: 'Admin Dashboard', path: '/dashboard' },
+      { icon: Shield, label: 'User Management', path: '/user-management' },
+      { icon: ClipboardList, label: 'Project Management', path: '/project-management' },
+      { icon: BookOpen, label: 'Publication Management', path: '/publication-management' },
+      { icon: FileText, label: 'Blog Management', path: '/blog-management' },
+      { icon: MessageSquare, label: 'Community Management', path: '/admin/community' },
+      { icon: Server, label: 'System Health', path: '/admin/system' },
+      { icon: BarChart2, label: 'Analytics', path: '/admin/analytics' },
+      { icon: Settings, label: 'Admin Settings', path: '/admin/settings' },
+    ]
+  };
+
+  const actionConfig = {
+    student: [
+      { 
+        icon: UserPlus, 
+        label: 'Find Mentors', 
+        path: '/find-mentors', 
+        color: colors.primary?.blue?.[500] || '#3b82f6',
+        description: 'Connect with experienced mentors'
+      },
+      { 
+        icon: Users, 
+        label: 'Find Collaborators', 
+        path: '/find-collaborators', 
+        color: colors.primary?.purple?.[500] || '#9333ea',
+        description: 'Find research partners'
+      },
+      { 
+        icon: MessageCircle, 
+        label: 'Messages', 
+        path: '/messages', 
+        color: colors.accent?.green?.[500] || '#22c55e',
+        description: 'Chat with connections'
+      },
+      { 
+        icon: UserCheck, 
+        label: 'Requests', 
+        path: '/collaboration-requests', 
+        color: colors.accent?.yellow?.[500] || '#f59e0b',
+        description: 'Collaboration requests'
+      },
+    ],
+    mentor: [
+      { 
+        icon: Users, 
+        label: 'Find Students', 
+        path: '/find-students', 
+        color: colors.primary?.blue?.[500] || '#3b82f6',
+        description: 'Mentor new students'
+      },
+      { 
+        icon: MessageCircle, 
+        label: 'Messages', 
+        path: '/messages', 
+        color: colors.accent?.green?.[500] || '#22c55e',
+        description: 'Student communications'
+      },
+      { 
+        icon: UserCheck, 
+        label: 'Mentorship Requests', 
+        path: '/mentorship-requests', 
+        color: colors.accent?.yellow?.[500] || '#f59e0b',
+        description: 'Review applications'
+      },
+      { 
+        icon: Star, 
+        label: 'Project Reviews', 
+        path: '/project-reviews', 
+        color: colors.accent?.red?.[500] || '#ef4444',
+        description: 'Review student work'
+      },
+    ],
+    admin: [
+      { 
+        icon: FolderOpen, 
+        label: 'My Projects', 
+        path: '/my-projects', 
+        color: colors.primary?.blue?.[500] || '#3b82f6',
+        description: 'Manage your projects'
+      },
+      { 
+        icon: BookOpen, 
+        label: 'My Publications', 
+        path: '/my-publications', 
+        color: colors.accent?.green?.[500] || '#22c55e',
+        description: 'Manage your publications'
+      },
+      { 
+        icon: Globe, 
+        label: 'My Blogs', 
+        path: '/my-blogs', 
+        color: colors.accent?.red?.[500] || '#ef4444',
+        description: 'Manage your blogs'
+      },
+    ]
+  };
 
   const projectStatus = [
-    { icon: Activity, label: 'Total Projects', count: totalProjects, color: colors.gradients.accent.blue },
-    { icon: Activity, label: 'Active Projects', count: totalActiveCount, color: colors.primary.blue[400] },
-    { icon: Clock, label: 'Planned', count: plannedCount, color: colors.accent.yellow[400] },
-    { icon: Clock, label: 'In Progress', count: inProgressCount, color: colors.primary.purple[400] },
-    { icon: CheckCircle, label: 'Completed', count: completedCount, color: colors.accent.green[400] },
+    { 
+      icon: Activity, 
+      label: 'Total Projects', 
+      count: totalProjects, 
+      color: colors.primary?.blue?.[500] || '#3b82f6' 
+    },
+    { 
+      icon: Activity, 
+      label: 'Active Projects', 
+      count: totalActiveCount, 
+      color: colors.primary?.blue?.[400] || '#60a5fa' 
+    },
+    { 
+      icon: Clock, 
+      label: 'Planned', 
+      count: plannedCount, 
+      color: colors.accent?.yellow?.[500] || '#f59e0b' 
+    },
+    { 
+      icon: Clock, 
+      label: 'In Progress', 
+      count: inProgressCount, 
+      color: colors.primary?.purple?.[500] || '#9333ea' 
+    },
+    { 
+      icon: CheckCircle, 
+      label: 'Completed', 
+      count: completedCount, 
+      color: colors.accent?.green?.[500] || '#22c55e' 
+    },
   ];
+
+  // Different overview stats based on role
+  const getOverviewStats = () => {
+    switch (userRole) {
+      case 'admin':
+        return [
+          {
+            icon: Users,
+            label: 'Total Users',
+            count: userStats?.totalUsers || 0,
+            color: colors.primary?.blue?.[500] || '#3b82f6'
+          },
+          {
+            icon: FolderOpen,
+            label: 'Total Projects',
+            count: userStats?.activeProjects || 0,
+            color: colors.primary?.purple?.[500] || '#9333ea'
+          },
+          {
+            icon: BookOpen,
+            label: 'Total Publications',
+            count: userStats?.totalPublications || 0,
+            color: colors.accent?.green?.[500] || '#22c55e'
+          },
+          {
+            icon: Activity,
+            label: 'Active Users',
+            count: userStats?.dailyActiveUsers || 0,
+            color: colors.accent?.yellow?.[500] || '#f59e0b'
+          }
+        ];
+      
+      case 'mentor':
+        return [
+          {
+            icon: Users,
+            label: 'Mentees',
+            count: userStats?.mentees || 0,
+            color: colors.primary?.blue?.[500] || '#3b82f6'
+          },
+          {
+            icon: Users,
+            label: 'Collaborators',
+            count: userStats?.collaborators || 0,
+            color: colors.primary?.purple?.[500] || '#9333ea'
+          },
+          {
+            icon: BookOpen,
+            label: 'Publications',
+            count: userStats?.publications || 0,
+            color: colors.accent?.green?.[500] || '#22c55e'
+          },
+          {
+            icon: Award,
+            label: 'Active Projects',
+            count: userStats?.activeProjects || 0,
+            color: colors.accent?.yellow?.[500] || '#f59e0b'
+          }
+        ];
+      
+      default: // student
+        return [
+          {
+            icon: Users,
+            label: 'Collaborators',
+            count: userStats?.collaborators || 0,
+            color: colors.primary?.purple?.[500] || '#9333ea'
+          },
+          {
+            icon: BookOpen,
+            label: 'Publications',
+            count: userStats?.publications || 0,
+            color: colors.accent?.green?.[500] || '#22c55e'
+          },
+          {
+            icon: FolderOpen,
+            label: 'Active Projects',
+            count: userStats?.activeProjects || 0,
+            color: colors.accent?.yellow?.[500] || '#f59e0b'
+          },
+          {
+            icon: Users,
+            label: 'Mentors',
+            count: userStats?.mentors || 0,
+            color: colors.primary?.blue?.[500] || '#3b82f6'
+          }
+        ];
+    }
+  };
+
+  const overviewStats = getOverviewStats();
 
   return (
     <>
       {isOpen && (
         <div 
           className="fixed inset-0 backdrop-blur-sm z-40 lg:hidden"
-          style={{ backgroundColor: colors.background.overlay }}
+          style={{ backgroundColor: `${colors.background?.primary || '#000000'}80` }}
           onClick={onClose}
         />
       )}
@@ -84,38 +294,57 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
           lg:translate-x-0 lg:static lg:z-auto
         `}
         style={{
-          backgroundColor: colors.background.glass,
-          borderColor: colors.border.secondary 
+          backgroundColor: colors.background?.card || '#ffffff',
+          borderColor: colors.border?.secondary || '#e2e8f0'
         }}
       >
         <div className="flex flex-col h-full">
-
+          
           {/* Logo + Search */}
-          <div className="p-6 border-b" style={{ borderColor: colors.border.secondary }}>
+          <div 
+            className="p-6 border-b" 
+            style={{ borderColor: colors.border?.secondary || '#e2e8f0' }}
+          >
             <Link to="/dashboard" className="flex items-center space-x-3 group mb-4">
               <div className="relative w-12 h-12">
-                <img src="1.png" alt="Logo" className="w-full h-full object-contain relative z-10" />
+                <img 
+                  src="/1.png" 
+                  alt="Logo" 
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
               </div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                ThesisConnect
-              </h1>
+              <div>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                  ThesisConnect
+                </h1>
+                <p className="text-xs font-medium" style={{ color: colors.text?.secondary || '#64748b' }}>
+                  {userRole.charAt(0).toUpperCase() + userRole.slice(1)} Portal
+                </p>
+              </div>
             </Link>
 
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2" size={18} style={{ color: `${colors.text.muted}90` }} />
-              <input
-                type="text"
-                placeholder="Search projects, people..."
-                className="w-full border rounded-lg pl-10 pr-4 py-2 placeholder-opacity-50 focus:outline-none focus:ring-2 transition-all"
-                style={{
-                  backgroundColor: colors.background.glass,
-                  borderColor: colors.border.light,
-                  color: colors.text.primary,
-                  '--placeholder-color': `${colors.text}80`,
-                  '--tw-ring-color': `${colors.primary.blue[400]}80`
-                }}
-              />
-            </div>
+            {userRole !== 'admin' && (
+              <div className="relative">
+                <Search 
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2" 
+                  size={18} 
+                  style={{ color: colors.text?.secondary || '#64748b' }} 
+                />
+                <input
+                  type="text"
+                  placeholder="Search projects, people..."
+                  className="w-full border rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 transition-all"
+                  style={{
+                    backgroundColor: colors.background?.secondary || '#f8fafc',
+                    borderColor: colors.border?.secondary || '#e2e8f0',
+                    color: colors.text?.primary || '#1e293b'
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           {/* Sidebar Content */}
@@ -123,169 +352,208 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
             
             {/* Quick Navigation */}
             <div>
-              <h3 className="text-sm font-semibold mb-3" style={{ color: colors.text.muted }}>Quick Navigation</h3>
+              <h3 
+                className="text-sm font-semibold mb-3" 
+                style={{ color: colors.text?.secondary || '#64748b' }}
+              >
+                Navigation
+              </h3>
               <nav className="space-y-1">
-                {quickNavItems.map((item, idx) => (
-                  <Link
-                    key={idx}
-                    to={item.path}
-                    onClick={onClose}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
-                      item.active ? 'border' : ''
-                    }`}
-                    style={{
-                      backgroundColor: item.active ? `${colors.primary.blue[500]}33` : 'transparent',
-                      borderColor: item.active ? `${colors.primary.blue[500]}4D` : 'transparent',
-                      color: colors.text.muted
-                    }}
-                  >
-                    <item.icon size={18} style={{ color: item.active ? colors.primary.blue[400] : colors.text.muted }} />
-                    <span className="text-sm font-medium">{item.label}</span>
-                  </Link>
-                ))}
+                {quickNavConfig[userRole].map((item, idx) => {
+                  const isActive = isActivePath(item.path);
+                  return (
+                    <Link
+                      key={idx}
+                      to={item.path}
+                      onClick={onClose}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
+                        isActive ? 'border' : ''
+                      }`}
+                      style={{
+                        backgroundColor: isActive 
+                          ? `${colors.primary?.blue?.[500] || '#3b82f6'}15` 
+                          : 'transparent',
+                        borderColor: isActive 
+                          ? `${colors.primary?.blue?.[500] || '#3b82f6'}40` 
+                          : 'transparent',
+                        color: colors.text?.primary || '#1e293b'
+                      }}
+                    >
+                      <item.icon 
+                        size={18} 
+                        style={{ 
+                          color: isActive 
+                            ? colors.primary?.blue?.[500] || '#3b82f6' 
+                            : colors.text?.secondary || '#64748b' 
+                        }} 
+                      />
+                      <span className="text-sm font-medium">{item.label}</span>
+                    </Link>
+                  );
+                })}
               </nav>
             </div>
 
             {/* Action Buttons */}
-            <div>
-              <button
-                onClick={() => toggleSection('actions')}
-                className="flex items-center justify-between w-full text-sm font-semibold mb-3"
-                style={{ color: colors.text.muted }}
-              >
-                <span>Actions</span>
-                {expandedSections.actions ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-              </button>
+            {actionConfig[userRole] && actionConfig[userRole].length > 0 && (
+              <div>
+                <button
+                  onClick={() => toggleSection('actions')}
+                  className="flex items-center justify-between w-full text-sm font-semibold mb-3"
+                  style={{ color: colors.text?.secondary || '#64748b' }}
+                >
+                  <span>Quick Actions</span>
+                  {expandedSections.actions ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                </button>
 
-              {expandedSections.actions && (
-                <div className="space-y-2">
-                  {actionButtons.map((action, idx) => (
-                    <Link
-                      key={idx}
-                      to={action.path}
-                      onClick={onClose}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg border transition-all duration-200"
-                      style={{
-                        borderColor: `${action.color}33`,
-                        backgroundColor: `${action.color}1A`,
-                        color: colors.text.muted
-                      }}
-                    >
-                      <action.icon size={18} style={{ color: action.color }} />
-                      <span className="text-sm font-medium">{action.label}</span>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Project Status */}
-            <div>
-              <button
-                onClick={() => toggleSection('status')}
-                className="flex items-center justify-between w-full text-sm font-semibold mb-3"
-                style={{ color: colors.text.muted }}
-              >
-                <span>Project Status</span>
-                {expandedSections.status ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-              </button>
-
-              {expandedSections.status && (
-                <div className="space-y-1">
-                  {projectStatus.map((status, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200"
-                      style={{ color: colors.text.muted }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <status.icon size={18} style={{ color: status.color }} />
-                        <span className="text-sm font-medium">{status.label}</span>
-                      </div>
-                      <span
-                        className="text-xs px-2 py-1 rounded-full"
+                {expandedSections.actions && (
+                  <div className="space-y-2">
+                    {actionConfig[userRole].map((action, idx) => (
+                      <Link
+                        key={idx}
+                        to={action.path}
+                        onClick={onClose}
+                        className="flex items-center gap-3 px-3 py-2 rounded-lg border transition-all duration-200 hover:scale-[1.02]"
                         style={{
-                          backgroundColor: `${status.color}33`,
-                          color: status.color
+                          borderColor: `${action.color}30`,
+                          backgroundColor: `${action.color}10`,
+                          color: colors.text?.primary || '#1e293b'
                         }}
                       >
-                        {status.count}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                        <action.icon size={18} style={{ color: action.color }} />
+                        <div className="flex-1">
+                          <div className="text-sm font-medium">{action.label}</div>
+                          <div 
+                            className="text-xs" 
+                            style={{ color: colors.text?.secondary || '#64748b' }}
+                          >
+                            {action.description}
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
-            {/* User Statistics */}
+            {/* Project Status (Hidden for Admin) */}
+            {userRole !== 'admin' && (
+              <div>
+                <button
+                  onClick={() => toggleSection('status')}
+                  className="flex items-center justify-between w-full text-sm font-semibold mb-3"
+                  style={{ color: colors.text?.secondary || '#64748b' }}
+                >
+                  <span>Project Status</span>
+                  {expandedSections.status ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                </button>
+
+                {expandedSections.status && (
+                  <div className="space-y-1">
+                    {projectStatus.map((status, idx) => (
+                      <div 
+                        key={idx} 
+                        className="flex items-center justify-between px-3 py-2 rounded-lg"
+                        style={{ color: colors.text?.primary || '#1e293b' }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <status.icon size={18} style={{ color: status.color }} />
+                          <span className="text-sm font-medium">{status.label}</span>
+                        </div>
+                        <span 
+                          className="text-xs px-2 py-1 rounded-full font-semibold"
+                          style={{
+                            backgroundColor: `${status.color}20`,
+                            color: status.color
+                          }}
+                        >
+                          {status.count}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Overview Stats */}
             <div>
-              <h3 className="text-sm font-semibold mb-3" style={{ color: colors.text.muted }}>Overview</h3>
+              <h3 
+                className="text-sm font-semibold mb-3" 
+                style={{ color: colors.text?.secondary || '#64748b' }}
+              >
+                Overview
+              </h3>
               <div className="space-y-2">
-                <div className="flex items-center justify-between px-3 py-2 rounded-lg border"
-                  style={{
-                    backgroundColor: `${colors.primary.purple[500]}1A`,
-                    borderColor: `${colors.primary.purple[500]}33`,
-                    color: colors.text.muted
-                  }}
-                >
-                  <div className="flex items-center gap-3">
-                    <Users size={18} style={{ color: colors.primary.purple[400] }} />
-                    <span className="text-sm font-medium">Collaborators</span>
-                  </div>
-                  <span className="text-xs px-2 py-1 rounded-full"
+                {overviewStats.map((stat, idx) => (
+                  <div 
+                    key={idx} 
+                    className="flex items-center justify-between px-3 py-2 rounded-lg border"
                     style={{
-                      backgroundColor: `${colors.primary.purple[500]}33`,
-                      color: colors.primary.purple[400]
-                    }}
-                  >
-                    {userStats?.collaborators?.total || 0}
-                  </span>
-                </div>
-                
-                <div className="flex items-center justify-between px-3 py-2 rounded-lg border"
-                  style={{
-                    backgroundColor: `${colors.accent.green[500]}1A`,
-                    borderColor: `${colors.accent.green[500]}33`,
-                    color: colors.text.muted
-                  }}
-                >
-                  <div className="flex items-center gap-3">
-                    <BookOpen size={18} style={{ color: colors.accent.green[400] }} />
-                    <span className="text-sm font-medium">Publications</span>
-                  </div>
-                  <span className="text-xs px-2 py-1 rounded-full"
-                    style={{
-                      backgroundColor: `${colors.accent.green[500]}33`,
-                      color: colors.accent.green[400]
-                    }}
-                  >
-                    {userStats?.publications?.total || 0}
-                  </span>
-                </div>
-                
-                {userStats?.publications?.totalCitations > 0 && (
-                  <div className="flex items-center justify-between px-3 py-2 rounded-lg border"
-                    style={{
-                      backgroundColor: `${colors.accent.yellow[500]}1A`,
-                      borderColor: `${colors.accent.yellow[500]}33`,
-                      color: colors.text.muted
+                      backgroundColor: `${stat.color}10`,
+                      borderColor: `${stat.color}20`,
+                      color: colors.text?.primary || '#1e293b'
                     }}
                   >
                     <div className="flex items-center gap-3">
-                      {/* Changed icon color here */}
-                      <TrendingUp size={18} style={{ color: colors.text.primary }} />
-                      <span className="text-sm font-medium">Citations</span>
+                      <stat.icon size={18} style={{ color: stat.color }} />
+                      <span className="text-sm font-medium">{stat.label}</span>
                     </div>
-                    <span className="text-xs px-2 py-1 rounded-full"
+                    <span 
+                      className="text-xs px-2 py-1 rounded-full font-bold"
                       style={{
-                        backgroundColor: `${colors.accent.yellow[500]}33`,
-                        color: colors.accent.yellow[800]
+                        backgroundColor: `${stat.color}20`,
+                        color: stat.color
                       }}
                     >
-                      {userStats?.publications?.totalCitations}
+                      {stat.count}
                     </span>
                   </div>
-                )}
+                ))}
+              </div>
+            </div>
+
+            {/* User Info Card */}
+            <div 
+              className="p-4 rounded-lg border"
+              style={{
+                backgroundColor: colors.background?.secondary || '#f8fafc',
+                borderColor: colors.border?.secondary || '#e2e8f0'
+              }}
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div 
+                  className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold"
+                >
+                  {user?.name?.charAt(0) || 'U'}
+                </div>
+                <div className="flex-1">
+                  <p 
+                    className="text-sm font-semibold" 
+                    style={{ color: colors.text?.primary || '#1e293b' }}
+                  >
+                    {user?.name || 'User'}
+                  </p>
+                  <p 
+                    className="text-xs" 
+                    style={{ color: colors.text?.secondary || '#64748b' }}
+                  >
+                    {user?.email || 'user@example.com'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span 
+                  className="text-xs px-2 py-1 rounded-full font-medium"
+                  style={{
+                    backgroundColor: `${colors.primary?.blue?.[500] || '#3b82f6'}20`,
+                    color: colors.primary?.blue?.[500] || '#3b82f6'
+                  }}
+                >
+                  {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+                </span>
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
               </div>
             </div>
           </div>

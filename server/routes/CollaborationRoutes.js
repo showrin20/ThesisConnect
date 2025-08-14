@@ -267,7 +267,7 @@ router.put('/respond/:collaborationId', auth, async (req, res) => {
   }
 });
 
-// Cancel collaboration request (requester only)
+// Cancel collaboration request (requester or recipient)
 router.delete('/cancel/:collaborationId', auth, async (req, res) => {
   try {
     const { collaborationId } = req.params;
@@ -281,19 +281,22 @@ router.delete('/cancel/:collaborationId', auth, async (req, res) => {
       });
     }
 
-    // Check if current user is the requester
-    if (collaboration.requester.toString() !== req.user.id) {
+    // Check if current user is either requester or recipient
+    const isRequester = collaboration.requester.toString() === req.user.id;
+    const isRecipient = collaboration.recipient.toString() === req.user.id;
+
+    if (!isRequester && !isRecipient) {
       return res.status(403).json({ 
         success: false, 
-        message: 'Unauthorized to cancel this request' 
+        message: 'Unauthorized to delete this request' 
       });
     }
 
-    // Only allow cancellation of pending requests
+    // Only allow deletion of pending requests
     if (collaboration.status !== 'pending') {
       return res.status(400).json({ 
         success: false, 
-        message: 'Can only cancel pending requests' 
+        message: 'Can only delete pending requests' 
       });
     }
 
@@ -301,15 +304,16 @@ router.delete('/cancel/:collaborationId', auth, async (req, res) => {
 
     res.json({ 
       success: true, 
-      message: 'Collaboration request cancelled successfully' 
+      message: 'Collaboration request deleted successfully' 
     });
   } catch (error) {
-    console.error('Cancel collaboration error:', error);
+    console.error('Delete collaboration error:', error);
     res.status(500).json({ 
       success: false, 
-      message: 'Server error while cancelling collaboration request' 
+      message: 'Server error while deleting collaboration request' 
     });
   }
 });
+
 
 module.exports = router;

@@ -181,7 +181,7 @@ router.delete('/:id', auth, async (req, res) => {
     const publication = await Publication.findById(pubId);
     if (!publication) return res.status(404).json({ msg: 'Publication not found' });
 
-    if (publication.creator.toString() !== req.user.id) {
+    if (publication.creator.toString() !== req.user.id && req.user.role !== "admin") {
       return res.status(403).json({ msg: 'Unauthorized to delete this publication' });
     }
 

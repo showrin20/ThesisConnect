@@ -6,9 +6,12 @@ const Publication = require('../models/publicationSchema');
 
 const router = express.Router();
 
+// =====================
+// AUTH MIDDLEWARE
+// =====================
 const auth = (req, res, next) => {
   let token = req.header('x-auth-token');
-  
+
   if (!token) {
     const authHeader = req.header('Authorization');
     if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -27,20 +30,19 @@ const auth = (req, res, next) => {
   }
 };
 
-// Get users with filtering options
+// =====================
+// GET USERS WITH FILTERING OPTIONS
+// =====================
 router.get('/', async (req, res) => {
   try {
     const { role, search, department, university, limit } = req.query;
-    
-    // Build query object
+
     let query = {};
-    
-    // Filter by role if specified
+
     if (role) {
-      query.role = role; // This will filter for students when role=student
+      query.role = role;
     }
-    
-    // Add search functionality
+
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
@@ -50,53 +52,49 @@ router.get('/', async (req, res) => {
         { keywords: { $regex: search, $options: 'i' } }
       ];
     }
-    
-    // Additional filters
+
     if (department) {
       query.department = { $regex: department, $options: 'i' };
     }
-    
+
     if (university) {
       query.university = { $regex: university, $options: 'i' };
     }
-    
-    // Execute query
+
     let userQuery = User.find(query).select('-password');
-    
-    // Apply limit if specified
+
     if (limit) {
       userQuery = userQuery.limit(parseInt(limit));
     }
-    
-    // Sort by creation date (newest first)
+
     userQuery = userQuery.sort({ createdAt: -1 });
-    
+
     const users = await userQuery;
-    
-    res.json({ 
-      success: true, 
-      count: users.length, 
-      data: users 
+
+    res.json({
+      success: true,
+      count: users.length,
+      data: users
     });
   } catch (err) {
     console.error('Get users error:', err);
-    res.status(500).json({ 
-      success: false, 
-      msg: 'Server error', 
-      error: err.message 
+    res.status(500).json({
+      success: false,
+      msg: 'Server error',
+      error: err.message
     });
   }
 });
 
-// Get all students specifically (alternative endpoint)
+// =====================
+// GET ALL STUDENTS SPECIFICALLY
+// =====================
 router.get('/students', async (req, res) => {
   try {
     const { search, department, university, limit, skills } = req.query;
-    
-    // Base query for students
+
     let query = { role: 'student' };
-    
-    // Add search functionality
+
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
@@ -106,68 +104,61 @@ router.get('/students', async (req, res) => {
         { skills: { $in: [new RegExp(search, 'i')] } }
       ];
     }
-    
-    // Additional filters
+
     if (department) {
       query.department = { $regex: department, $options: 'i' };
     }
-    
+
     if (university) {
       query.university = { $regex: university, $options: 'i' };
     }
-    
+
     if (skills) {
       const skillsArray = skills.split(',').map(skill => skill.trim());
       query.skills = { $in: skillsArray.map(skill => new RegExp(skill, 'i')) };
     }
-    
-    // Execute query
+
     let studentQuery = User.find(query).select('-password');
-    
-    // Apply limit if specified
+
     if (limit) {
       studentQuery = studentQuery.limit(parseInt(limit));
     }
-    
-    // Sort by creation date (newest first)
+
     studentQuery = studentQuery.sort({ createdAt: -1 });
-    
+
     const students = await studentQuery;
-    
-    res.json({ 
-      success: true, 
-      count: students.length, 
-      data: students 
+
+    res.json({
+      success: true,
+      count: students.length,
+      data: students
     });
   } catch (err) {
     console.error('Get students error:', err);
-    res.status(500).json({ 
-      success: false, 
-      msg: 'Server error', 
-      error: err.message 
+    res.status(500).json({
+      success: false,
+      msg: 'Server error',
+      error: err.message
     });
   }
 });
 
-// Get user statistics
+// =====================
+// GET USER STATISTICS
+// =====================
 router.get('/stats/:userId', auth, async (req, res) => {
   try {
     const userId = req.params.userId;
-    
-    // Get user's projects
+
     const projects = await Project.find({ creator: userId });
-    
-    // Get user's publications
     const publications = await Publication.find({ creator: userId });
-    
-    // Count projects by status
+
     const projectStats = projects.reduce((acc, project) => {
       const status = project.status || 'Planned';
       acc[status] = (acc[status] || 0) + 1;
       return acc;
     }, {});
-    
-    // Count total collaborators from all projects
+
     const allCollaborators = new Set();
     projects.forEach(project => {
       if (project.collaborators && Array.isArray(project.collaborators)) {
@@ -178,14 +169,13 @@ router.get('/stats/:userId', auth, async (req, res) => {
         });
       }
     });
-    
-    // Count publications by type
+
     const publicationStats = publications.reduce((acc, pub) => {
       const type = pub.type || 'Other';
       acc[type] = (acc[type] || 0) + 1;
       return acc;
     }, {});
-    
+
     const stats = {
       projects: {
         total: projects.length,
@@ -206,7 +196,7 @@ router.get('/stats/:userId', auth, async (req, res) => {
         recentPublications: publications.slice(-5).reverse()
       }
     };
-    
+
     res.json(stats);
   } catch (err) {
     console.error('Get user stats error:', err);
@@ -214,25 +204,56 @@ router.get('/stats/:userId', auth, async (req, res) => {
   }
 });
 
-// Get user by ID
+// =====================
+// GET USER BY ID
+// =====================
 router.get('/:id', async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
     if (!user) {
-      return res.status(404).json({ 
-        success: false, 
-        msg: 'User not found' 
+      return res.status(404).json({
+        success: false,
+        msg: 'User not found'
       });
     }
-    res.json({ 
-      success: true, 
-      data: user 
+    res.json({
+      success: true,
+      data: user
     });
   } catch (err) {
     console.error('Get user by ID error:', err);
-    res.status(500).json({ 
-      success: false, 
-      msg: 'Server error' 
+    res.status(500).json({
+      success: false,
+      msg: 'Server error'
+    });
+  }
+});
+
+// =====================
+// DELETE USER BY ID
+// =====================
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const deletedUser = await User.findByIdAndDelete(req.params.id);
+
+    if (!deletedUser) {
+      return res.status(404).json({
+        success: false,
+        msg: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      msg: 'User deleted successfully',
+      data: deletedUser
+    });
+  } catch (err) {
+    console.error('Delete user error:', err);
+    res.status(500).json({
+      success: false,
+      msg: 'Server error',
+      error: err.message
     });
   }
 });

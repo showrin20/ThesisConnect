@@ -25,7 +25,10 @@ import BlogDetails from './components/BlogDetails';
 import FindCollaborators from './pages/FindCollaborators'; 
 import UserProfile from './pages/UserProfile';
 import CollaborationRequestsPage from './pages/CollaborationRequestsPage';
-
+import UserManagement from './pages/UserManagement';
+import ProjectManagement from './pages/ProjectManagement';
+import PublicationManagement from './pages/PublicationManagement';
+import BlogManagement from './pages/BlogManagement';
 // Component to conditionally render navbar
 function AppContent() {
   const location = useLocation();
@@ -43,7 +46,11 @@ function AppContent() {
     '/my-blogs',
     '/find-collaborators',
     '/profile/:userId',
-    '/collaboration-requests'
+    '/collaboration-requests',
+    '/user-management',
+    '/project-management',
+    '/publication-management',
+    '/blog-management'
 
   ].includes(location.pathname) || location.pathname.startsWith('/profile/'); // ✅ Added dynamic profile routes
 
@@ -123,6 +130,41 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+            <Route
+            path="/user-management"
+            element={
+              <ProtectedRoute>
+                <UserManagement />
+              </ProtectedRoute>
+            }
+          />
+               <Route
+            path="/project-management"
+            element={
+              <ProtectedRoute>
+                <ProjectManagement />
+              </ProtectedRoute>
+            }
+          />
+            <Route
+            path="/blog-management"
+            element={
+              <ProtectedRoute>
+                <BlogManagement/>
+              </ProtectedRoute>
+            }
+          />
+          
+      <Route
+            path="/publication-management"
+            element={
+              <ProtectedRoute>
+                <PublicationManagement />
+              </ProtectedRoute>
+            }
+          />
+
+
           <Route
             path="/my-community-posts"
             element={

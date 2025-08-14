@@ -157,11 +157,12 @@ exports.login = async (req, res) => {
     // Validate role before creating token
     const validatedRole = validateRole(user.role);
     
-    // Update user role if it was invalid
-    if (user.role !== validatedRole) {
-      await User.findByIdAndUpdate(user._id, { role: validatedRole });
-      user.role = validatedRole;
-    }
+    // Update user role if it was invalid and update last login
+    await User.findByIdAndUpdate(user._id, { 
+      role: validatedRole,
+      lastLogin: new Date()
+    });
+    user.role = validatedRole;
 
     // Create JWT with validated role
     const token = jwt.sign(
