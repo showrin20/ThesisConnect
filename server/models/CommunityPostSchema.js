@@ -1,18 +1,21 @@
 const mongoose = require('mongoose');
 
-// Community Post Schema WITHOUT replies
 const CommunityPostSchema = new mongoose.Schema({
   postId: { type: String, required: true, unique: true, index: true },
   type: { type: String, enum: ['collab', 'general'], required: true },
   authorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   projectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Project' },
 
-  title: { type: String, required: function () { return this.type === 'collab'; } },
+  title: { 
+    type: String, 
+    required: function () { return this.type === 'collab'; } 
+  },
   content: { type: String, required: true },
 
   skillsNeeded: {
     type: [String],
-    required: function () { return this.type === 'collab'; }
+    required: function () { return this.type === 'collab'; },
+    default: []
   },
 
   status: {
@@ -22,10 +25,15 @@ const CommunityPostSchema = new mongoose.Schema({
   },
 
   tags: { type: [String], default: [] },
-  likes: { type: Number, default: 0 },
 
-}, {
-  timestamps: true
-});
+  likes: { type: Number, default: 0 },
+  likedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+
+}, { timestamps: true });
+
+// Useful indexes for faster queries
+CommunityPostSchema.index({ type: 1 });
+CommunityPostSchema.index({ tags: 1 });
+CommunityPostSchema.index({ authorId: 1 });
 
 module.exports = mongoose.model('CommunityPost', CommunityPostSchema);

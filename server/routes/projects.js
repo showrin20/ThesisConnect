@@ -137,11 +137,26 @@ router.get('/uploads/:filename', auth, (req, res) => {
 //////////////////////////
 router.get('/', async (_req, res) => {
   try {
-    const projects = await Project.find().populate('creator', 'name email university').sort({ createdAt: -1 });
-    res.json({ success: true, count: projects.length, data: projects });
+    // Run both queries in parallel for better performance
+    const [projects, total] = await Promise.all([
+      Project.find()
+        .populate('creator', 'name email university')
+        .sort({ createdAt: -1 }),
+      Project.countDocuments()
+    ]);
+
+    res.json({
+      success: true,
+      total, // total number of projects in DB
+      count: projects.length, // number returned in this request
+      data: projects
+    });
   } catch (error) {
     console.error('Get projects error:', error);
-    res.status(500).json({ msg: 'Server error while fetching projects', error: error.message });
+    res.status(500).json({
+      msg: 'Server error while fetching projects',
+      error: error.message
+    });
   }
 });
 

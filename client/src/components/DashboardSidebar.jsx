@@ -15,14 +15,36 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
   const location = useLocation();
   const [expandedSections, setExpandedSections] = useState({ actions: true, status: true });
 
-  // Get user role dynamically
+  // Get user role dynamically (default to 'student' if undefined)
   const userRole = user?.role || 'student';
 
-  const plannedCount = userStats?.projects?.planned ?? projects.filter(p => p.status === 'Planned').length;
-  const inProgressCount = userStats?.projects?.inProgress ?? projects.filter(p => p.status === 'In Progress').length;
-  const completedCount = userStats?.projects?.completed ?? projects.filter(p => p.status === 'Completed').length;
-  const totalActiveCount = plannedCount + inProgressCount;
-  const totalProjects = userStats?.projects?.total ?? projects.length;
+
+
+  
+  // Helper: safely unwrap counts that might be nested objects like { total: 5 } or { count: 3 }
+  const unwrapCount = (value) => {
+    if (value == null) return 0;
+    if (typeof value === 'number' || typeof value === 'string') return value;
+    if (typeof value === 'object') {
+      // common nested shapes
+      if ('total' in value && (typeof value.total === 'number' || typeof value.total === 'string')) return value.total;
+      if ('count' in value && (typeof value.count === 'number' || typeof value.count === 'string')) return value.count;
+      if ('length' in value && typeof value.length === 'number') return value.length;
+      // attempt numeric cast
+      const maybeNumber = Number(value);
+      if (!Number.isNaN(maybeNumber)) return maybeNumber;
+      // fallback to a stringified representation (so React renders a string, not an object)
+      try { return JSON.stringify(value); } catch (e) { return String(value); }
+    }
+    return String(value);
+  };
+
+  // Compute project counts safely (unwrap any nested shapes)
+  const plannedCount = unwrapCount(userStats?.projects?.planned ?? projects.filter(p => p.status === 'Planned').length);
+  const inProgressCount = unwrapCount(userStats?.projects?.inProgress ?? projects.filter(p => p.status === 'In Progress').length);
+  const completedCount = unwrapCount(userStats?.projects?.completed ?? projects.filter(p => p.status === 'Completed').length);
+  const totalActiveCount = Number(plannedCount) + Number(inProgressCount);
+  const totalProjects = unwrapCount(userStats?.projects?.total ?? projects.length);
 
   const toggleSection = (section) => {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -40,7 +62,7 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
       { icon: FolderOpen, label: 'My Projects', path: '/my-projects' },
       { icon: BookOpen, label: 'My Publications', path: '/my-publications' },
       { icon: FileText, label: 'My Blogs', path: '/my-blogs' },
-      { icon: MessageSquare, label: 'Community Posts', path: '/community' },
+      { icon: MessageSquare, label: 'My Community Posts', path: '/my-community-posts' },
       { icon: Users, label: 'Find People', path: '/people' },
       { icon: Settings, label: 'Settings', path: '/settings' },
     ],
@@ -50,7 +72,7 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
       { icon: Users, label: 'My Mentees', path: '/my-mentees' },
       { icon: BookOpen, label: 'My Publications', path: '/my-publications' },
       { icon: FileText, label: 'My Blogs', path: '/my-blogs' },
-      { icon: MessageSquare, label: 'Community', path: '/community' },
+      { icon: MessageSquare, label: 'My Community Posts', path: '/my-community-posts' },
       { icon: Settings, label: 'Settings', path: '/settings' },
     ],
     admin: [
@@ -60,9 +82,6 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
       { icon: BookOpen, label: 'Publication Management', path: '/publication-management' },
       { icon: FileText, label: 'Blog Management', path: '/blog-management' },
       { icon: MessageSquare, label: 'Community Management', path: '/admin/community' },
-      { icon: Server, label: 'System Health', path: '/admin/system' },
-      { icon: BarChart2, label: 'Analytics', path: '/admin/analytics' },
-      { icon: Settings, label: 'Admin Settings', path: '/admin/settings' },
     ]
   };
 
@@ -106,9 +125,9 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
         description: 'Mentor new students'
       },
       { 
-        icon: MessageCircle, 
-        label: 'Messages', 
-        path: '/messages', 
+        icon: TrendingUp, 
+        label: 'Community Feed', 
+        path: '/community', 
         color: colors.accent?.green?.[500] || '#22c55e',
         description: 'Student communications'
       },
@@ -156,125 +175,129 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
     { 
       icon: Activity, 
       label: 'Total Projects', 
-      count: totalProjects, 
+      count: unwrapCount(totalProjects), 
       color: colors.primary?.blue?.[500] || '#3b82f6' 
     },
     { 
       icon: Activity, 
       label: 'Active Projects', 
-      count: totalActiveCount, 
+      count: unwrapCount(totalActiveCount), 
       color: colors.primary?.blue?.[400] || '#60a5fa' 
     },
     { 
       icon: Clock, 
       label: 'Planned', 
-      count: plannedCount, 
+      count: unwrapCount(plannedCount), 
       color: colors.accent?.yellow?.[500] || '#f59e0b' 
     },
     { 
       icon: Clock, 
       label: 'In Progress', 
-      count: inProgressCount, 
+      count: unwrapCount(inProgressCount), 
       color: colors.primary?.purple?.[500] || '#9333ea' 
     },
     { 
       icon: CheckCircle, 
       label: 'Completed', 
-      count: completedCount, 
+      count: unwrapCount(completedCount), 
       color: colors.accent?.green?.[500] || '#22c55e' 
     },
   ];
 
-  // Different overview stats based on role
-  const getOverviewStats = () => {
-    switch (userRole) {
-      case 'admin':
-        return [
-          {
-            icon: Users,
-            label: 'Total Users',
-            count: userStats?.totalUsers || 0,
-            color: colors.primary?.blue?.[500] || '#3b82f6'
-          },
-          {
-            icon: FolderOpen,
-            label: 'Total Projects',
-            count: userStats?.activeProjects || 0,
-            color: colors.primary?.purple?.[500] || '#9333ea'
-          },
-          {
-            icon: BookOpen,
-            label: 'Total Publications',
-            count: userStats?.totalPublications || 0,
-            color: colors.accent?.green?.[500] || '#22c55e'
-          },
-          {
-            icon: Activity,
-            label: 'Active Users',
-            count: userStats?.dailyActiveUsers || 0,
-            color: colors.accent?.yellow?.[500] || '#f59e0b'
-          }
-        ];
+  // // Different overview stats based on role - ensure unwrapCount used
+  // const getOverviewStats = () => {
+  //   switch (userRole) {
+  //     case 'admin':
+  //       return [
+  //         {
+  //           icon: Users,
+  //           label: 'Total Users',
+  //           count: unwrapCount(userStats?.totalUsers ?? 0),
+  //           color: colors.primary?.blue?.[500] || '#3b82f6'
+  //         },
+  //         {
+  //           icon: FolderOpen,
+  //           label: 'Total Projects',
+  //           count: unwrapCount(userStats?.activeProjects ?? 0),
+  //           color: colors.primary?.purple?.[500] || '#9333ea'
+  //         },
+  //         {
+  //           icon: BookOpen,
+  //           label: 'Total Publications',
+  //           count: unwrapCount(userStats?.totalPublications ?? 0),
+  //           color: colors.accent?.green?.[500] || '#22c55e'
+  //         },
+  //         {
+  //           icon: Activity,
+  //           label: 'Active Users',
+  //           count: unwrapCount(userStats?.dailyActiveUsers ?? 0),
+  //           color: colors.accent?.yellow?.[500] || '#f59e0b'
+  //         }
+  //       ];
       
-      case 'mentor':
-        return [
-          {
-            icon: Users,
-            label: 'Mentees',
-            count: userStats?.mentees || 0,
-            color: colors.primary?.blue?.[500] || '#3b82f6'
-          },
-          {
-            icon: Users,
-            label: 'Collaborators',
-            count: userStats?.collaborators || 0,
-            color: colors.primary?.purple?.[500] || '#9333ea'
-          },
-          {
-            icon: BookOpen,
-            label: 'Publications',
-            count: userStats?.publications || 0,
-            color: colors.accent?.green?.[500] || '#22c55e'
-          },
-          {
-            icon: Award,
-            label: 'Active Projects',
-            count: userStats?.activeProjects || 0,
-            color: colors.accent?.yellow?.[500] || '#f59e0b'
-          }
-        ];
+  //     case 'mentor':
+  //       return [
+  //         {
+  //           icon: Users,
+  //           label: 'Mentees',
+  //           count: unwrapCount(userStats?.mentees ?? 0),
+  //           color: colors.primary?.blue?.[500] || '#3b82f6'
+  //         },
+  //         {
+  //           icon: Users,
+  //           label: 'Collaborators',
+  //           count: unwrapCount(userStats?.collaborators ?? 0),
+  //           color: colors.primary?.purple?.[500] || '#9333ea'
+  //         },
+  //         {
+  //           icon: BookOpen,
+  //           label: 'Publications',
+  //           count: unwrapCount(userStats?.publications ?? 0),
+  //           color: colors.accent?.green?.[500] || '#22c55e'
+  //         },
+  //         {
+  //           icon: Award,
+  //           label: 'Active Projects',
+  //           count: unwrapCount(userStats?.activeProjects ?? 0),
+  //           color: colors.accent?.yellow?.[500] || '#f59e0b'
+  //         }
+  //       ];
       
-      default: // student
-        return [
-          {
-            icon: Users,
-            label: 'Collaborators',
-            count: userStats?.collaborators || 0,
-            color: colors.primary?.purple?.[500] || '#9333ea'
-          },
-          {
-            icon: BookOpen,
-            label: 'Publications',
-            count: userStats?.publications || 0,
-            color: colors.accent?.green?.[500] || '#22c55e'
-          },
-          {
-            icon: FolderOpen,
-            label: 'Active Projects',
-            count: userStats?.activeProjects || 0,
-            color: colors.accent?.yellow?.[500] || '#f59e0b'
-          },
-          {
-            icon: Users,
-            label: 'Mentors',
-            count: userStats?.mentors || 0,
-            color: colors.primary?.blue?.[500] || '#3b82f6'
-          }
-        ];
-    }
-  };
+  //     default: // student
+  //       return [
+  //         {
+  //           icon: Users,
+  //           label: 'Collaborators',
+  //           count: unwrapCount(userStats?.collaborators ?? 0),
+  //           color: colors.primary?.purple?.[500] || '#9333ea'
+  //         },
+  //         {
+  //           icon: BookOpen,
+  //           label: 'Publications',
+  //           count: unwrapCount(userStats?.publications ?? 0),
+  //           color: colors.accent?.green?.[500] || '#22c55e'
+  //         },
+  //         {
+  //           icon: FolderOpen,
+  //           label: 'Active Projects',
+  //           count: unwrapCount(userStats?.activeProjects ?? 0),
+  //           color: colors.accent?.yellow?.[500] || '#f59e0b'
+  //         },
+  //         {
+  //           icon: Users,
+  //           label: 'Mentors',
+  //           count: unwrapCount(userStats?.mentors ?? 0),
+  //           color: colors.primary?.blue?.[500] || '#3b82f6'
+  //         }
+  //       ];
+  //   }
+  // };
 
-  const overviewStats = getOverviewStats();
+  // const overviewStats = getOverviewStats();
+
+  // defensive defaults if configs missing
+  const navItems = quickNavConfig[userRole] ?? quickNavConfig.student;
+  const actions = actionConfig[userRole] ?? actionConfig.student;
 
   return (
     <>
@@ -312,6 +335,7 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
                   alt="Logo" 
                   className="w-full h-full object-contain"
                   onError={(e) => {
+                    // fallback: hide broken image and leave initials
                     e.target.style.display = 'none';
                   }}
                 />
@@ -359,11 +383,11 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
                 Navigation
               </h3>
               <nav className="space-y-1">
-                {quickNavConfig[userRole].map((item, idx) => {
+                {navItems.map((item, idx) => {
                   const isActive = isActivePath(item.path);
                   return (
                     <Link
-                      key={idx}
+                      key={`${item.path}-${idx}`}
                       to={item.path}
                       onClick={onClose}
                       className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
@@ -395,7 +419,7 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
             </div>
 
             {/* Action Buttons */}
-            {actionConfig[userRole] && actionConfig[userRole].length > 0 && (
+            {actions && actions.length > 0 && (
               <div>
                 <button
                   onClick={() => toggleSection('actions')}
@@ -408,9 +432,9 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
 
                 {expandedSections.actions && (
                   <div className="space-y-2">
-                    {actionConfig[userRole].map((action, idx) => (
+                    {actions.map((action, idx) => (
                       <Link
-                        key={idx}
+                        key={`${action.path}-${idx}`}
                         to={action.path}
                         onClick={onClose}
                         className="flex items-center gap-3 px-3 py-2 rounded-lg border transition-all duration-200 hover:scale-[1.02]"
@@ -453,7 +477,7 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
                   <div className="space-y-1">
                     {projectStatus.map((status, idx) => (
                       <div 
-                        key={idx} 
+                        key={`${status.label}-${idx}`} 
                         className="flex items-center justify-between px-3 py-2 rounded-lg"
                         style={{ color: colors.text?.primary || '#1e293b' }}
                       >
@@ -468,7 +492,7 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
                             color: status.color
                           }}
                         >
-                          {status.count}
+                          {String(status.count)}
                         </span>
                       </div>
                     ))}
@@ -478,7 +502,7 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
             )}
 
             {/* Overview Stats */}
-            <div>
+            {/* <div>
               <h3 
                 className="text-sm font-semibold mb-3" 
                 style={{ color: colors.text?.secondary || '#64748b' }}
@@ -488,7 +512,7 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
               <div className="space-y-2">
                 {overviewStats.map((stat, idx) => (
                   <div 
-                    key={idx} 
+                    key={`${stat.label}-${idx}`} 
                     className="flex items-center justify-between px-3 py-2 rounded-lg border"
                     style={{
                       backgroundColor: `${stat.color}10`,
@@ -507,12 +531,12 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
                         color: stat.color
                       }}
                     >
-                      {stat.count}
+                      {String(stat.count)}
                     </span>
                   </div>
                 ))}
               </div>
-            </div>
+            </div> */}
 
             {/* User Info Card */}
             <div 

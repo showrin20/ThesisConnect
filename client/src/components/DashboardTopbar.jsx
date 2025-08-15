@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
-import { Menu, X, Bell, User, LogOut, Settings } from 'lucide-react';
+import { Menu, Bell, User, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { colors } from '../styles/colors';
 import ThemeToggle from './ThemeToggle';
 
 const Topbar = ({ onMenuToggle, user, onLogout, isLoggingOut }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-
-
 
   const handleLogoutClick = () => {
     setIsProfileOpen(false);
@@ -58,14 +56,11 @@ const Topbar = ({ onMenuToggle, user, onLogout, isLoggingOut }) => {
             </div>
           </div>
 
-          {/* Center - Navigation (Desktop) */}
-     
-
           {/* Right Side */}
           <div className="flex items-center gap-3">
             {/* Theme Toggle */}
             <ThemeToggle />
-            
+
             {/* Notifications */}
             <button 
               className="relative p-2 rounded-lg transition-all duration-200"
@@ -93,7 +88,26 @@ const Topbar = ({ onMenuToggle, user, onLogout, isLoggingOut }) => {
               </span>
             </button>
 
-            {/* Profile Dropdown */}
+            {/* View Profile Icon in Topbar */}
+            <Link
+              to="/profile"
+              className="p-2 rounded-lg transition-all duration-200"
+              style={{ 
+                color: `${colors.text.secondary}B3`
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.color = colors.text.primary;
+                e.target.style.backgroundColor = colors.background.glass;
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.color = `${colors.text.secondary}B3`;
+                e.target.style.backgroundColor = 'transparent';
+              }}
+            >
+              <User size={20} />
+            </Link>
+
+            {/* Profile Dropdown for Logout Only */}
             <div className="relative">
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
@@ -119,12 +133,9 @@ const Topbar = ({ onMenuToggle, user, onLogout, isLoggingOut }) => {
                 >
                   {user?.name ? user.name.charAt(0).toUpperCase() : <User size={16} />}
                 </div>
-                <span className="hidden sm:block text-sm font-medium">
-                  {user?.name || 'Profile'}
-                </span>
               </button>
 
-              {/* Dropdown Menu */}
+              {/* Dropdown Menu - Only Logout */}
               {isProfileOpen && (
                 <div 
                   className="absolute right-0 mt-2 w-48 rounded-xl border shadow-xl z-50"
@@ -134,45 +145,6 @@ const Topbar = ({ onMenuToggle, user, onLogout, isLoggingOut }) => {
                   }}
                 >
                   <div className="p-2">
-                    <Link 
-                      to="/profile" 
-                      onClick={() => setIsProfileOpen(false)}
-                      className="block px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-all"
-                      style={{ 
-                        color: `${colors.text.secondary}CC`
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.color = colors.text.primary;
-                        e.target.style.backgroundColor = colors.background.glass;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.color = `${colors.text.secondary}CC`;
-                        e.target.style.backgroundColor = 'transparent';
-                      }}
-                    >
-                      <User size={14} />
-                      View Profile
-                    </Link>
-                    <Link 
-                      to="/settings" 
-                      onClick={() => setIsProfileOpen(false)}
-                      className="block px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-all"
-                      style={{ 
-                        color: `${colors.text.secondary}CC`
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.color = colors.text.primary;
-                        e.target.style.backgroundColor = colors.background.glass;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.color = `${colors.text.secondary}CC`;
-                        e.target.style.backgroundColor = 'transparent';
-                      }}
-                    >
-                      <Settings size={14} />
-                      Settings
-                    </Link>
-                    <hr className="my-2" style={{ borderColor: colors.border.secondary }} />
                     <button
                       onClick={handleLogoutClick}
                       disabled={isLoggingOut}

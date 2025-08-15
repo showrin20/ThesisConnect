@@ -1,7 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
-const Publication = require('../models/publicationSchema'); 
+const Publication = require('../models/publicationSchema');
 
 const router = express.Router();
 
@@ -43,7 +43,6 @@ router.post('/', auth, async (req, res) => {
       location,
     } = req.body;
 
-    // Validate required fields
     if (!title || !authors || !Array.isArray(authors) || authors.length === 0 || !year || !venue || !type) {
       return res.status(400).json({ msg: 'Title, authors, year, venue, and type are required' });
     }
@@ -81,11 +80,19 @@ router.get('/test', (req, res) => {
 // 📌 GET ALL PUBLICATIONS
 router.get('/', async (_req, res) => {
   try {
-    const publications = await Publication.find()
-      .populate('creator', 'name email university')
-      .sort({ createdAt: -1 });
+    const [publications, total] = await Promise.all([
+      Publication.find()
+        .populate('creator', 'name email university')
+        .sort({ createdAt: -1 }),
+      Publication.countDocuments()
+    ]);
 
-    res.json({ success: true, count: publications.length, data: publications });
+    res.json({
+      success: true,
+      total, // total publications in DB
+      count: publications.length,
+      data: publications
+    });
   } catch (error) {
     console.error('Get publications error:', error);
     res.status(500).json({ msg: 'Server error while fetching publications', error: error.message });
@@ -95,11 +102,19 @@ router.get('/', async (_req, res) => {
 // 📌 GET MY PUBLICATIONS
 router.get('/my-publications', auth, async (req, res) => {
   try {
-    const publications = await Publication.find({ creator: req.user.id })
-      .populate('creator', 'name email university')
-      .sort({ createdAt: -1 });
+    const [publications, total] = await Promise.all([
+      Publication.find({ creator: req.user.id })
+        .populate('creator', 'name email university')
+        .sort({ createdAt: -1 }),
+      Publication.countDocuments({ creator: req.user.id })
+    ]);
 
-    res.json({ success: true, count: publications.length, data: publications });
+    res.json({
+      success: true,
+      total, // total my publications in DB
+      count: publications.length,
+      data: publications
+    });
   } catch (error) {
     console.error('Get my publications error:', error);
     res.status(500).json({ msg: 'Server error while fetching your publications', error: error.message });
@@ -152,17 +167,24 @@ router.get('/user/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
 
-    // Validate user ID
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ msg: 'Invalid user ID format' });
     }
 
-    const publications = await Publication.find({ creator: userId })
-      .populate('creator', 'name email university')
-      .sort({ createdAt: -1 })
-      .limit(10); // Limit to recent 10 publications
+    const [publications, total] = await Promise.all([
+      Publication.find({ creator: userId })
+        .populate('creator', 'name email university')
+        .sort({ createdAt: -1 })
+        .limit(10),
+      Publication.countDocuments({ creator: userId })
+    ]);
 
-    res.json({ success: true, count: publications.length, data: publications });
+    res.json({
+      success: true,
+      total, // total publications of this user
+      count: publications.length,
+      data: publications
+    });
   } catch (error) {
     console.error('Get user publications error:', error);
     res.status(500).json({ msg: 'Server error while fetching user publications', error: error.message });
