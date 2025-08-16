@@ -25,7 +25,7 @@ import BlogForm from '../components/BlogForm';
 import ProfileCard from '../components/DashboardProfileCard';
 import ProjectForm from '../components/ProjectForm';
 import PublicationForm from '../components/PublicationForm';
-import PublicationCard from '../components/ PublicationCard';
+import PublicationCard from '../components/PublicationCard';
 import PublicationSearch from '../components/PublicationSearch';
 import CommunityPostCard from '../components/CommunityPostCard';
 import CommunityPostForm from '../components/CommunityPostForm';
