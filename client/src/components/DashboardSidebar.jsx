@@ -3,7 +3,8 @@ import {
   Home, FolderOpen, BookOpen, Settings, Activity, Clock, CheckCircle, 
   Search, ChevronDown, ChevronRight, Users, TrendingUp, MessageSquare, 
   FileText, UserPlus, MessageCircle, UserCheck, Star, Shield, 
-  ClipboardList, Server, BarChart2, Award, Globe
+  ClipboardList, Server, BarChart2, Award, Globe,
+  Bookmark
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -115,6 +116,14 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
         color: colors.accent?.yellow?.[500] || '#f59e0b',
         description: 'Collaboration requests'
       },
+         { 
+        icon: Bookmark, 
+        label: 'Bookmarks', 
+        path: '/bookmarks', 
+        color: colors.accent?.red?.[500] || '#ef4444',
+        description: 'Manage your bookmarks'
+      }
+      
     ],
     mentor: [
       { 
@@ -171,129 +180,6 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
     ]
   };
 
-  const projectStatus = [
-    { 
-      icon: Activity, 
-      label: 'Total Projects', 
-      count: unwrapCount(totalProjects), 
-      color: colors.primary?.blue?.[500] || '#3b82f6' 
-    },
-    { 
-      icon: Activity, 
-      label: 'Active Projects', 
-      count: unwrapCount(totalActiveCount), 
-      color: colors.primary?.blue?.[400] || '#60a5fa' 
-    },
-    { 
-      icon: Clock, 
-      label: 'Planned', 
-      count: unwrapCount(plannedCount), 
-      color: colors.accent?.yellow?.[500] || '#f59e0b' 
-    },
-    { 
-      icon: Clock, 
-      label: 'In Progress', 
-      count: unwrapCount(inProgressCount), 
-      color: colors.primary?.purple?.[500] || '#9333ea' 
-    },
-    { 
-      icon: CheckCircle, 
-      label: 'Completed', 
-      count: unwrapCount(completedCount), 
-      color: colors.accent?.green?.[500] || '#22c55e' 
-    },
-  ];
-
-  // // Different overview stats based on role - ensure unwrapCount used
-  // const getOverviewStats = () => {
-  //   switch (userRole) {
-  //     case 'admin':
-  //       return [
-  //         {
-  //           icon: Users,
-  //           label: 'Total Users',
-  //           count: unwrapCount(userStats?.totalUsers ?? 0),
-  //           color: colors.primary?.blue?.[500] || '#3b82f6'
-  //         },
-  //         {
-  //           icon: FolderOpen,
-  //           label: 'Total Projects',
-  //           count: unwrapCount(userStats?.activeProjects ?? 0),
-  //           color: colors.primary?.purple?.[500] || '#9333ea'
-  //         },
-  //         {
-  //           icon: BookOpen,
-  //           label: 'Total Publications',
-  //           count: unwrapCount(userStats?.totalPublications ?? 0),
-  //           color: colors.accent?.green?.[500] || '#22c55e'
-  //         },
-  //         {
-  //           icon: Activity,
-  //           label: 'Active Users',
-  //           count: unwrapCount(userStats?.dailyActiveUsers ?? 0),
-  //           color: colors.accent?.yellow?.[500] || '#f59e0b'
-  //         }
-  //       ];
-      
-  //     case 'mentor':
-  //       return [
-  //         {
-  //           icon: Users,
-  //           label: 'Mentees',
-  //           count: unwrapCount(userStats?.mentees ?? 0),
-  //           color: colors.primary?.blue?.[500] || '#3b82f6'
-  //         },
-  //         {
-  //           icon: Users,
-  //           label: 'Collaborators',
-  //           count: unwrapCount(userStats?.collaborators ?? 0),
-  //           color: colors.primary?.purple?.[500] || '#9333ea'
-  //         },
-  //         {
-  //           icon: BookOpen,
-  //           label: 'Publications',
-  //           count: unwrapCount(userStats?.publications ?? 0),
-  //           color: colors.accent?.green?.[500] || '#22c55e'
-  //         },
-  //         {
-  //           icon: Award,
-  //           label: 'Active Projects',
-  //           count: unwrapCount(userStats?.activeProjects ?? 0),
-  //           color: colors.accent?.yellow?.[500] || '#f59e0b'
-  //         }
-  //       ];
-      
-  //     default: // student
-  //       return [
-  //         {
-  //           icon: Users,
-  //           label: 'Collaborators',
-  //           count: unwrapCount(userStats?.collaborators ?? 0),
-  //           color: colors.primary?.purple?.[500] || '#9333ea'
-  //         },
-  //         {
-  //           icon: BookOpen,
-  //           label: 'Publications',
-  //           count: unwrapCount(userStats?.publications ?? 0),
-  //           color: colors.accent?.green?.[500] || '#22c55e'
-  //         },
-  //         {
-  //           icon: FolderOpen,
-  //           label: 'Active Projects',
-  //           count: unwrapCount(userStats?.activeProjects ?? 0),
-  //           color: colors.accent?.yellow?.[500] || '#f59e0b'
-  //         },
-  //         {
-  //           icon: Users,
-  //           label: 'Mentors',
-  //           count: unwrapCount(userStats?.mentors ?? 0),
-  //           color: colors.primary?.blue?.[500] || '#3b82f6'
-  //         }
-  //       ];
-  //   }
-  // };
-
-  // const overviewStats = getOverviewStats();
 
   // defensive defaults if configs missing
   const navItems = quickNavConfig[userRole] ?? quickNavConfig.student;
@@ -461,7 +347,10 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
               </div>
             )}
 
-            {/* Project Status (Hidden for Admin) */}
+
+
+
+            {/* Project Status (Hidden for Admin)
             {userRole !== 'admin' && (
               <div>
                 <button
@@ -499,7 +388,7 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
                   </div>
                 )}
               </div>
-            )}
+            )} */}
 
             {/* Overview Stats */}
             {/* <div>
@@ -538,7 +427,11 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
               </div>
             </div> */}
 
-            {/* User Info Card */}
+          
+
+
+
+
             <div 
               className="p-4 rounded-lg border"
               style={{

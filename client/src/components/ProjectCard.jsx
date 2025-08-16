@@ -88,6 +88,7 @@ const ProjectCard = ({ title, description, link, tags, status, category }) => {
             >
               {tag}
             </span>
+            
           ))}
         </div>
         

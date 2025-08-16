@@ -16,6 +16,8 @@ export default function Publications() {
   const [selectedTags, setSelectedTags] = useState([]);
   const [selectedYear, setSelectedYear] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1); // State for current page
+  const itemsPerPage = 3; // Changed to 3 publications per page
 
   // Fetch real publications from backend API
   useEffect(() => {
@@ -43,7 +45,7 @@ export default function Publications() {
   const years = ['All', ...new Set(publications.map(p => p.year))].sort().reverse();
   const allTags = [...new Set(publications.flatMap(p => p.tags || []))].sort();
 
-  // Filtering logic (same as before)
+  // Filtering logic
   const filteredPublications = useMemo(() => {
     return publications.filter(pub => {
       const matchesSearch = pub.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -62,6 +64,14 @@ export default function Publications() {
     });
   }, [publications, searchTerm, selectedType, selectedGenre, selectedQuality, selectedYear, selectedTags]);
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredPublications.length / itemsPerPage);
+  const paginatedPublications = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredPublications.slice(startIndex, endIndex);
+  }, [filteredPublications, currentPage, itemsPerPage]);
+
   // Helper functions
   const toggleTag = (tag) => {
     setSelectedTags(prev => 
@@ -69,6 +79,7 @@ export default function Publications() {
         ? prev.filter(t => t !== tag)
         : [...prev, tag]
     );
+    setCurrentPage(1); // Reset to first page on filter change
   };
 
   const clearFilters = () => {
@@ -78,9 +89,13 @@ export default function Publications() {
     setSelectedQuality('All');
     setSelectedYear('All');
     setSelectedTags([]);
+    setCurrentPage(1); // Reset to first page on filter clear
   };
 
-  // Tag toggle, clearFilters, getQualityColor, getTypeColor remain same (no change needed)
+  // Pagination navigation
+  const goToPage = (page) => {
+    setCurrentPage(Math.min(Math.max(page, 1), totalPages));
+  };
 
   if (loading) return (
     <div 
@@ -170,7 +185,7 @@ export default function Publications() {
                     '--placeholder-color': colors.text.secondary
                   }}
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                 />
               </div>
 
@@ -209,7 +224,7 @@ export default function Publications() {
                     <label className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>Type</label>
                     <select
                       value={selectedType}
-                      onChange={(e) => setSelectedType(e.target.value)}
+                      onChange={(e) => { setSelectedType(e.target.value); setCurrentPage(1); }}
                       className="w-full px-3 py-2 border rounded-lg transition-all duration-200 shadow-sm focus:outline-none focus:ring-2"
                       style={{
                         backgroundColor: `${colors.background.glass}CC`,
@@ -228,7 +243,7 @@ export default function Publications() {
                     <label className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>Genre</label>
                     <select
                       value={selectedGenre}
-                      onChange={(e) => setSelectedGenre(e.target.value)}
+                      onChange={(e) => { setSelectedGenre(e.target.value); setCurrentPage(1); }}
                       className="w-full px-3 py-2 border rounded-lg transition-all duration-200 shadow-sm focus:outline-none focus:ring-2"
                       style={{
                         backgroundColor: `${colors.background.glass}CC`,
@@ -247,7 +262,7 @@ export default function Publications() {
                     <label className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>Quality</label>
                     <select
                       value={selectedQuality}
-                      onChange={(e) => setSelectedQuality(e.target.value)}
+                      onChange={(e) => { setSelectedQuality(e.target.value); setCurrentPage(1); }}
                       className="w-full px-3 py-2 border rounded-lg transition-all duration-200 shadow-sm focus:outline-none focus:ring-2"
                       style={{
                         backgroundColor: `${colors.background.glass}CC`,
@@ -266,7 +281,7 @@ export default function Publications() {
                     <label className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>Year</label>
                     <select
                       value={selectedYear}
-                      onChange={(e) => setSelectedYear(e.target.value)}
+                      onChange={(e) => { setSelectedYear(e.target.value); setCurrentPage(1); }}
                       className="w-full px-3 py-2 border rounded-lg transition-all duration-200 shadow-sm focus:outline-none focus:ring-2"
                       style={{
                         backgroundColor: `${colors.background.glass}CC`,
@@ -347,6 +362,7 @@ export default function Publications() {
             <div className="mt-4 pt-4" style={{ borderTop: `1px solid ${colors.border.secondary}` }}>
               <p className="text-sm" style={{ color: colors.text.secondary }}>
                 Showing {filteredPublications.length} of {publications.length} publications
+                {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
               </p>
             </div>
           </div>
@@ -378,7 +394,7 @@ export default function Publications() {
           </div>
         ) : (
           <div className="space-y-6">
-            {filteredPublications.map((pub) => (
+            {paginatedPublications.map((pub) => (
               <article
                 key={pub._id || pub.id}
                 className="relative group"
@@ -550,6 +566,102 @@ export default function Publications() {
                 </div>
               </article>
             ))}
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2 mt-8">
+            <button
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-2 rounded-lg transition-all duration-200"
+              style={{
+                ...getButtonStyles('outline'),
+                backgroundColor: currentPage === 1 ? `${colors.background.glass}80` : colors.background.glass,
+                borderColor: colors.border.secondary,
+                color: currentPage === 1 ? colors.text.muted : colors.text.primary,
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
+              }}
+              onMouseEnter={(e) => {
+                if (currentPage !== 1) {
+                  e.target.style.backgroundColor = colors.button.outline.backgroundHover;
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (currentPage !== 1) {
+                  e.target.style.backgroundColor = colors.background.glass;
+                }
+              }}
+            >
+              Previous
+            </button>
+
+            {/* Page Numbers */}
+            {[...Array(totalPages)].map((_, index) => {
+              const page = index + 1;
+              // Show first, last, current, and two pages before/after current page
+              const shouldShowPage = page === 1 || page === totalPages || 
+                                    (page >= currentPage - 2 && page <= currentPage + 2);
+              if (!shouldShowPage) {
+                // Show ellipsis for omitted pages
+                if ((page === currentPage - 3 && currentPage > 4) || 
+                    (page === currentPage + 3 && currentPage < totalPages - 3)) {
+                  return <span key={page} className="px-3 py-2" style={{ color: colors.text.secondary }}>...</span>;
+                }
+                return null;
+              }
+              return (
+                <button
+                  key={page}
+                  onClick={() => goToPage(page)}
+                  className="px-3 py-2 rounded-lg transition-all duration-200"
+                  style={{
+                    backgroundColor: currentPage === page ? colors.primary?.blue?.[500] || '#0ea5e9' : colors.background.glass,
+                    borderColor: colors.border.secondary,
+                    color: currentPage === page ? colors.text.primary : colors.text.secondary,
+                    borderWidth: '1px'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (currentPage !== page) {
+                      e.target.style.backgroundColor = colors.button.outline.backgroundHover;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (currentPage !== page) {
+                      e.target.style.backgroundColor = colors.background.glass;
+                    }
+                  }}
+                >
+                  {page}
+                </button>
+              );
+            })}
+
+            <button
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-2 rounded-lg transition-all duration-200"
+              style={{
+                ...getButtonStyles('outline'),
+                backgroundColor: currentPage === totalPages ? `${colors.background.glass}80` : colors.background.glass,
+                borderColor: colors.border.secondary,
+                color: currentPage === totalPages ? colors.text.muted : colors.text.primary,
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer'
+              }}
+              onMouseEnter={(e) => {
+                if (currentPage !== totalPages) {
+                  e.target.style.backgroundColor = colors.button.outline.backgroundHover;
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (currentPage !== totalPages) {
+                  e.target.style.backgroundColor = colors.background.glass;
+                }
+              }}
+            >
+              Next
+            </button>
           </div>
         )}
       </div>

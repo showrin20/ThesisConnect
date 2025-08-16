@@ -4,14 +4,13 @@ import { useAlert } from '../context/AlertContext';
 import { colors } from '../styles/colors';
 import { useNavigate } from 'react-router-dom';
 
-
-
-
 const BlogPage = () => {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1); // Add state for current page
+  const itemsPerPage = 9; // Set to 9 blogs per page
   const { showSuccess, showError } = useAlert();
   const navigate = useNavigate();
 
@@ -82,8 +81,18 @@ const BlogPage = () => {
     });
   };
 
+  // Pagination logic
+  const totalPages = Math.ceil(blogs.length / itemsPerPage);
+  const paginatedBlogs = blogs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  // Pagination navigation
+  const goToPage = (page) => {
+    setCurrentPage(Math.min(Math.max(page, 1), totalPages));
+  };
+
   useEffect(() => {
     fetchBlogs();
+    setCurrentPage(1); // Reset to first page when category filter changes
   }, [categoryFilter]);
 
   if (loading) {
@@ -176,125 +185,222 @@ const BlogPage = () => {
           </p>
         </div>
       ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '24px'
-          }}
-        >
-          {blogs.map(blog => (
-            <div
-              key={blog._id}
-              style={{
-                background: colors.background.glass,
-                border: `1px solid ${colors.border.secondary}`,
-                borderRadius: '12px',
-                overflow: 'hidden',
-                display: 'flex',
-                flexDirection: 'column',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
-                transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                cursor: 'pointer'
-              }}
-              onClick={() => {
-                handleView(blog._id);
-                navigate(`/blog/${blog._id}`);
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-5px)';
-                e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.15)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.1)';
-              }}
-            >
-              {blog.featuredImage && (
-                <div style={{ position: 'relative' }}>
-                  <img
-                    src={blog.featuredImage}
-                    alt={blog.title}
-                    style={{
-                      width: '100%',
-                      height: '200px',
-                      objectFit: 'cover'
-                    }}
-                  />
-                  <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    background: 'linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0))'
-                  }} />
-                </div>
-              )}
-
-              <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                <h2 style={{ color: colors.text.primary, margin: '0 0 8px 0', fontSize: '18px', fontWeight: 600 }}>
-                  {blog.title}
-                </h2>
-                <p style={{
-                  color: colors.text.muted,
-                  flex: 1,
-                  fontSize: '14px',
-                  marginBottom: '12px',
-                  lineHeight: '1.5'
-                }}>
-                  {blog.excerpt || (blog.content ? blog.content.replace(/<[^>]*>/g, '').slice(0, 140) + '...' : '')}
-                </p>
-                <small style={{ color: colors.text.secondary, marginBottom: '12px' }}>
-                  {blog.category} • {formatDate(blog.createdAt)}
-                </small>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
-                  <div style={{ display: 'flex', gap: '10px', fontSize: '12px', color: colors.text.secondary }}>
-                    👀 {blog.views || 0} | 💖 {blog.likes || 0}
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button
+        <>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '24px'
+            }}
+          >
+            {paginatedBlogs.map(blog => (
+              <div
+                key={blog._id}
+                style={{
+                  background: colors.background.glass,
+                  border: `1px solid ${colors.border.secondary}`,
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
+                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                  cursor: 'pointer'
+                }}
+                onClick={() => {
+                  handleView(blog._id);
+                  navigate(`/blog/${blog._id}`);
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-5px)';
+                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.1)';
+                }}
+              >
+                {blog.featuredImage && (
+                  <div style={{ position: 'relative' }}>
+                    <img
+                      src={blog.featuredImage}
+                      alt={blog.title}
                       style={{
-                        background: colors.accent.red[300],
-                        color: colors.text.primary,
-                        border: 'none',
-                        padding: '6px 10px',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontSize: '12px'
+                        width: '100%',
+                        height: '200px',
+                        objectFit: 'cover'
                       }}
-                      onClick={(e) => { e.stopPropagation(); handleLike(blog._id); }}
-                    >
-                      ❤️ Like
-                    </button>
-<button
-  style={{
-    background: colors.primary.blue[300],
-    color: colors.text.primary[600],
-    border: 'none',
-    padding: '6px 10px',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '12px'
-  }}
-  onClick={(e) => {
-    e.stopPropagation();
-    navigate(`/blog/${blog._id}`);
-  }}
->
-  📖 View Full Blog
-</button>
+                    />
+                    <div style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      background: 'linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0))'
+                    }} />
+                  </div>
+                )}
 
+                <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  <h2 style={{ color: colors.text.primary, margin: '0 0 8px 0', fontSize: '18px', fontWeight: 600 }}>
+                    {blog.title}
+                  </h2>
+                  <p style={{
+                    color: colors.text.muted,
+                    flex: 1,
+                    fontSize: '14px',
+                    marginBottom: '12px',
+                    lineHeight: '1.5'
+                  }}>
+                    {blog.excerpt || (blog.content ? blog.content.replace(/<[^>]*>/g, '').slice(0, 140) + '...' : '')}
+                  </p>
+                  <small style={{ color: colors.text.secondary, marginBottom: '12px' }}>
+                    {blog.category} • {formatDate(blog.createdAt)}
+                  </small>
 
-
-
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+                    <div style={{ display: 'flex', gap: '10px', fontSize: '12px', color: colors.text.secondary }}>
+                      👀 {blog.views || 0} | 💖 {blog.likes || 0}
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        style={{
+                          background: colors.accent.red[500],
+                          color: colors.text.primary,
+                          border: 'none',
+                          padding: '6px 10px',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontSize: '12px'
+                        }}
+                        onClick={(e) => { e.stopPropagation(); handleLike(blog._id); }}
+                      >
+                        ❤️ Upvote
+                      </button>
+                      <button
+                        style={{
+                          background: colors.primary.blue[700],
+                          color: colors.text.primary,
+                          border: 'none',
+                          padding: '6px 10px',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontSize: '12px'
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/blog/${blog._id}`);
+                        }}
+                      >
+                        📖 View Full Blog
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
+            ))}
+          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '32px' }}>
+              <button
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                style={{
+                  background: currentPage === 1 ? `${colors.background.glass}80` : colors.background.glass,
+                  border: `1px solid ${colors.border.secondary}`,
+                  color: currentPage === 1 ? colors.text.muted : colors.text.primary,
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                  transition: 'background 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  if (currentPage !== 1) {
+                    e.target.style.background = colors.primary.blue[100];
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (currentPage !== 1) {
+                    e.target.style.background = colors.background.glass;
+                  }
+                }}
+              >
+                Previous
+              </button>
+
+              {[...Array(totalPages)].map((_, index) => {
+                const page = index + 1;
+                // Show first, last, current, and two pages before/after current page
+                const shouldShowPage = page === 1 || page === totalPages || 
+                                      (page >= currentPage - 2 && page <= currentPage + 2);
+                if (!shouldShowPage) {
+                  // Show ellipsis for omitted pages
+                  if ((page === currentPage - 3 && currentPage > 4) || 
+                      (page === currentPage + 3 && currentPage < totalPages - 3)) {
+                    return <span key={page} style={{ color: colors.text.secondary, padding: '8px' }}>...</span>;
+                  }
+                  return null;
+                }
+                return (
+                  <button
+                    key={page}
+                    onClick={() => goToPage(page)}
+                    style={{
+                      background: currentPage === page ? colors.primary.blue[500] : colors.background.glass,
+                      border: `1px solid ${colors.border.secondary}`,
+                      color: currentPage === page ? colors.text.primary : colors.text.secondary,
+                      padding: '8px 16px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      transition: 'background 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (currentPage !== page) {
+                        e.target.style.background = colors.primary.blue[100];
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (currentPage !== page) {
+                        e.target.style.background = colors.background.glass;
+                      }
+                    }}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
+
+              <button
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                style={{
+                  background: currentPage === totalPages ? `${colors.background.glass}80` : colors.background.glass,
+                  border: `1px solid ${colors.border.secondary}`,
+                  color: currentPage === totalPages ? colors.text.muted : colors.text.primary,
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                  transition: 'background 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  if (currentPage !== totalPages) {
+                    e.target.style.background = colors.primary.blue[100];
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (currentPage !== totalPages) {
+                    e.target.style.background = colors.background.glass;
+                  }
+                }}
+              >
+                Next
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );

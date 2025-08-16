@@ -60,7 +60,12 @@ const isValidURL = url => {
 //////////////////////////
 router.post('/', auth, upload.single('thesisPdf'), async (req, res) => {
   try {
-    const { title, description, link, tags, status, collaborators, thesisDraft } = req.body;
+    let { title, description, link, tags, status, collaborators, thesisDraft } = req.body;
+
+    // Parse collaborators if sent as JSON string (from form-data)
+    if (typeof collaborators === 'string') {
+      try { collaborators = JSON.parse(collaborators); } catch { collaborators = []; }
+    }
 
     if (!title || !description)
       return res.status(400).json({ msg: 'Title and description are required' });
@@ -133,12 +138,13 @@ router.post('/', auth, upload.single('thesisPdf'), async (req, res) => {
 router.get('/search-collaborators', auth, async (req, res) => {
   try {
     const { q } = req.query;
-    if (!q || !q.trim()) return res.json({ success: true, data: [] });
+    if (!q?.trim()) return res.json({ success: true, data: [] });
 
     const regex = new RegExp(q.trim(), 'i');
     const users = await User.find({
-      $or: [{ name: regex }, { email: regex }]
-    }).limit(10).select('_id name email');
+      $or: [{ name: regex }, { email: regex }],
+      role: { $in: ['mentor', 'student'] }, // Only mentors or students
+    }).limit(10).select('_id name email role');
 
     res.json({ success: true, data: users });
   } catch (error) {
@@ -193,7 +199,12 @@ router.put('/:id', auth, async (req, res) => {
     if (project.creator.toString() !== req.user.id && req.user.role !== "admin")
       return res.status(403).json({ msg: 'Unauthorized to update this project' });
 
-    const { title, description, link, tags, status, collaborators } = req.body;
+    let { title, description, link, tags, status, collaborators } = req.body;
+
+    // Parse collaborators if sent as JSON string (from form-data)
+    if (typeof collaborators === 'string') {
+      try { collaborators = JSON.parse(collaborators); } catch { collaborators = []; }
+    }
 
     if (title !== undefined) project.title = title;
     if (description !== undefined) project.description = description;

@@ -633,7 +633,7 @@ export default function Dashboard() {
                   <FileText size={16} />
                   Create Blog Post
                 </button>
-                <button 
+                {/* <button 
                   className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200"
                   style={{
                     backgroundColor: `${colors.accent.orange[500]}33`,
@@ -645,7 +645,7 @@ export default function Dashboard() {
                 >
                   <Users size={16} />
                   Bookmarks
-                </button>
+                </button> */}
 
 
                 

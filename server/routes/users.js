@@ -163,8 +163,12 @@ router.get('/stats/:userId', auth, async (req, res) => {
     projects.forEach(project => {
       if (project.collaborators && Array.isArray(project.collaborators)) {
         project.collaborators.forEach(collaborator => {
-          if (collaborator && collaborator.trim()) {
-            allCollaborators.add(collaborator.trim());
+          // Ensure collaborator is a string before trimming
+          const collaboratorStr = typeof collaborator === 'string'
+            ? collaborator
+            : collaborator?.toString?.() || '';
+          if (collaboratorStr && collaboratorStr.trim()) {
+            allCollaborators.add(collaboratorStr.trim());
           }
         });
       }

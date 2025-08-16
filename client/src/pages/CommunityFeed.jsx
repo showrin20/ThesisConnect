@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "../axios";
 import { motion } from "framer-motion";
 import colors from "../styles/colors";
-import { ThumbsUp, MessageSquare, UserPlus, Calendar, UserCircle2, Heart } from "lucide-react";
+import { TrashIcon, ThumbsUp, MessageSquare, UserPlus, Calendar, Heart } from "lucide-react";
 import Sidebar from '../components/DashboardSidebar';
 import Topbar from '../components/DashboardTopbar';
 import CollaborationRequestModal from '../components/CollaborationRequestModal';
@@ -129,7 +129,6 @@ export default function CommunityFeed() {
           setSentRequests(sentRequestIds);
         }
       } catch (err) {
-        // If endpoint doesn't exist yet, just continue silently
         console.log('Collaboration requests endpoint not available yet');
       }
     };
@@ -236,7 +235,7 @@ export default function CommunityFeed() {
       }
     } catch (error) {
       console.error("Error adding comment:", error);
-      // You could show an error message to the user here
+      showError('Failed to add comment. Please try again.');
     }
   };
 
@@ -265,7 +264,47 @@ export default function CommunityFeed() {
       }
     } catch (error) {
       console.error("Error toggling comment like:", error);
-      // You could show an error message to the user here
+      showError('Failed to like comment. Please try again.');
+    }
+  };
+
+  const handleDeleteComment = async (postId, commentId) => {
+    if (!user?.id) return;
+    try {
+      const response = await axios.delete(`/community-posts/${postId}/comments/${commentId}`, {
+        headers: {
+          Authorization: `Bearer ${user.token}`
+        }
+      });
+      if (response.data.success && response.data.data.comments) {
+        // Update comments state with fresh backend data
+        const updatedComments = response.data.data.comments.map(comment => ({
+          id: comment.commentId,
+          text: comment.text,
+          author: comment.authorName,
+          authorId: comment.authorId,
+          timestamp: comment.createdAt,
+          likes: comment.likes || 0,
+          likedBy: comment.likedBy || []
+        }));
+        
+        setComments(prev => ({
+          ...prev,
+          [postId]: updatedComments
+        }));
+
+        // Update the post's comment count
+        setPosts(prev => prev.map(post => 
+          post.postId === postId
+            ? { ...post, commentsCount: updatedComments.length }
+            : post
+        ));
+
+        showSuccess('Comment deleted successfully!');
+      }
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      showError('Failed to delete comment. Please try again.');
     }
   };
 
@@ -283,13 +322,11 @@ export default function CommunityFeed() {
   };
 
   const handleCollabRequest = (post) => {
-    // Don't allow collaboration request with yourself
     if (post.authorId?._id === user?.id) {
       showWarning("You can't send a collaboration request to yourself!");
       return;
     }
     
-    // Check if request already sent
     if (sentRequests.has(post.authorId?._id)) {
       showWarning("You've already sent a collaboration request to this user!");
       return;
@@ -309,9 +346,7 @@ export default function CommunityFeed() {
       });
 
       if (response.data.success) {
-        // Add to sent requests set
         setSentRequests(prev => new Set([...prev, selectedAuthor._id]));
-        
         setShowCollabModal(false);
         setSelectedAuthor(null);
         showSuccess('Collaboration request sent successfully!');
@@ -331,7 +366,6 @@ export default function CommunityFeed() {
     }
   };
 
-  // Helper functions
   const getStatusColor = (status) => {
     switch (status) {
       case 'open': return colors.primary?.blue?.[500] || '#0ea5e9';
@@ -611,7 +645,6 @@ export default function CommunityFeed() {
                               <span>{formatDate(post.createdAt)}</span>
                             </div>
                             
-                            {/* Status moved under the date */}
                             {post.status && (
                               <motion.span 
                                 whileHover={{ scale: 1.05 }}
@@ -620,7 +653,7 @@ export default function CommunityFeed() {
                                   backgroundColor: `${getStatusColor(post.status)}20`,
                                   color: getStatusColor(post.status),
                                   border: `1px solid ${getStatusColor(post.status)}50`,
-                                  fontSize: '10px' // Making it even smaller
+                                  fontSize: '10px'
                                 }}
                               >
                                 ⚡ {post.status.toUpperCase()}
@@ -694,7 +727,7 @@ export default function CommunityFeed() {
                               ))}
                               {post.skillsNeeded.length > 3 && (
                                 <span 
-                                  className="px-2 py-1 rounded-full text-md "
+                                  className="px-2 py-1 rounded-full text-md"
                                   style={{ color: colors.text?.muted || '#6b7280' }}
                                 >
                                   +{post.skillsNeeded.length - 3} more
@@ -826,7 +859,7 @@ export default function CommunityFeed() {
                                   key={comment.id}
                                   initial={{ opacity: 0, y: 10 }}
                                   animate={{ opacity: 1, y: 0 }}
-                                  className="flex space-x-2 group"
+                                  className="flex space-x-2 group relative"
                                 >
                                   <div 
                                     className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
@@ -874,6 +907,20 @@ export default function CommunityFeed() {
                                       </motion.button>
                                     </div>
                                   </div>
+                                  {user?.id && comment.authorId === user.id && (
+                                    <motion.button
+                                      whileHover={{ scale: 1.1 }}
+                                      whileTap={{ scale: 0.9 }}
+                                      onClick={() => handleDeleteComment(post.postId, comment.id)}
+                                      className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                      style={{ 
+                                        color: colors.accent?.red?.[500] || '#ef4444'
+                                      }}
+                                      title="Delete comment"
+                                    >
+                                      <TrashIcon size={14} />
+                                    </motion.button>
+                                  )}
                                 </motion.div>
                               ))}
                               
@@ -1010,7 +1057,6 @@ export default function CommunityFeed() {
         </main>
       </div>
 
-      {/* Collaboration Request Modal */}
       <CollaborationRequestModal
         isOpen={showCollabModal}
         onClose={() => {
