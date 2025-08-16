@@ -153,18 +153,7 @@ const CommunityPostCard = ({ postId, type, content, title, skillsNeeded, status,
             {user.name && <div className="mt-1">By: {user.name}</div>}
           </div>
 
-          <a
-            href={`/community-posts/${postId}`}
-            className="flex items-center gap-1 px-3 py-1 border rounded-lg transition-all duration-200 text-xs font-medium hover:bg-blue-200"
-            style={{
-              backgroundColor: `${colors.primary.blue[500]}33`,
-              color: colors.text.primary,
-              borderColor: `${colors.primary.blue[500]}4D`,
-            }}
-          >
-            <span>View Post</span>
-            <ExternalLink size={12} />
-          </a>
+        
         </div>
       </div>
     </div>

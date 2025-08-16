@@ -2,39 +2,34 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import axios from "../axios";
-import { Trash2, PlusCircle } from "lucide-react";
+import { Trash2, PlusCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { colors } from "../styles/colors";
 import {
   getButtonStyles,
   getCardStyles,
   getGradientTextStyles,
-  getInputStyles,
 } from "../styles/styleUtils";
 import { useAlert } from "../context/AlertContext";
-
 import Sidebar from "../components/DashboardSidebar";
 import Topbar from "../components/DashboardTopbar";
+import ProjectForm from "../components/ProjectForm"; // Import the ProjectForm component
 
 export default function ProjectManagement() {
-  const { user, logout, token } = useAuth(); // assuming your AuthContext exposes token
+  const { user, logout, token } = useAuth();
   const { showAlert } = useAlert();
   const navigate = useNavigate();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
   const [deletingProject, setDeletingProject] = useState(null);
   const [creatingProject, setCreatingProject] = useState(false);
 
-  const [formData, setFormData] = useState({ title: "" });
-
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const projectsPerPage = 10;
+  const projectsPerPage = 8;
   const totalPages = Math.ceil(projects.length / projectsPerPage);
   const indexOfLastProject = currentPage * projectsPerPage;
   const indexOfFirstProject = indexOfLastProject - projectsPerPage;
@@ -75,30 +70,6 @@ export default function ProjectManagement() {
     fetchProjects();
   }, []);
 
-  const handleChange = (e) => {
-    setFormData({ title: e.target.value });
-  };
-
-  const handleCreate = async (e) => {
-    e.preventDefault();
-    try {
-      // Attach creator ID
-      const projectData = {
-        ...formData,
-        creator: user?._id,
-      };
-
-      await axios.post("/projects", projectData, { headers: authHeader });
-      showAlert("success", "Project created successfully");
-      setCreatingProject(false);
-      setFormData({ title: "" });
-      fetchProjects();
-    } catch (err) {
-      const msg = err.response?.data?.msg || "Failed to create project";
-      showAlert("error", msg);
-    }
-  };
-
   const confirmDelete = (project) => setDeletingProject(project);
   const cancelDelete = () => setDeletingProject(null);
 
@@ -114,10 +85,21 @@ export default function ProjectManagement() {
     }
   };
 
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const handleProjectCreated = () => {
+    setCreatingProject(false);
+    fetchProjects();
+  };
+
   return (
     <div className="min-h-screen" style={{ background: colors.background.radial }}>
       <div className="absolute inset-0" style={{ opacity: 0.3, pointerEvents: "none" }}>
-        <div className="h-full w-full" style={{ background: colors.gradients.background.radial, color: colors.text.primary }}></div>
+        <div className="h-full w-full" style={{ background: colors.gradients.background.radial }}></div>
       </div>
 
       <div className="relative flex h-screen">
@@ -148,122 +130,24 @@ export default function ProjectManagement() {
                 </button>
               </div>
 
-              {/* Create Project Form */}
+              {/* Project Form */}
               {creatingProject && (
-
-
-
-           <form
-  onSubmit={handleCreate}
-  className="max-w-2xl mx-auto rounded-xl p-8 mb-8 shadow-lg"
-  style={getCardStyles("glass")}
-  encType="multipart/form-data"
->
-  <div className="space-y-4">
-    {/* Project Title */}
-    <input
-      type="text"
-      name="title"
-      value={formData.title}
-      onChange={handleChange}
-      placeholder="Project Title"
-      required
-      className="w-full p-3 rounded-lg"
-      style={getInputStyles()}
-    />
-
-    {/* Project Description */}
-    <textarea
-      name="description"
-      value={formData.description || ""}
-      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-      placeholder="Project Description"
-      required
-      className="w-full p-3 rounded-lg resize-none"
-      style={getInputStyles()}
-      rows={4}
-    />
-
-    {/* Project Link */}
-    <input
-      type="url"
-      name="link"
-      value={formData.link || ""}
-      onChange={(e) => setFormData({ ...formData, link: e.target.value })}
-      placeholder="Project Link (optional)"
-      className="w-full p-3 rounded-lg"
-      style={getInputStyles()}
-    />
-
-    {/* Tags */}
-    <input
-      type="text"
-      name="tags"
-      value={formData.tags || ""}
-      onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-      placeholder="Tags (comma separated)"
-      className="w-full p-3 rounded-lg"
-      style={getInputStyles()}
-    />
-
-    {/* Status */}
-    <select
-      name="status"
-      value={formData.status || "Planned"}
-      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-      className="w-full p-3 rounded-lg"
-      style={getInputStyles()}
-    >
-      <option value="Planned">Planned</option>
-      <option value="In Progress">In Progress</option>
-      <option value="Completed">Completed</option>
-    </select>
-
-    {/* Collaborators */}
-    <input
-      type="text"
-      name="collaborators"
-      value={formData.collaborators || ""}
-      onChange={(e) => setFormData({ ...formData, collaborators: e.target.value })}
-      placeholder="Collaborators (comma separated emails or names)"
-      className="w-full p-3 rounded-lg"
-      style={getInputStyles()}
-    />
-
-    {/* Thesis Draft PDF Upload */}
-    <input
-      type="file"
-      name="thesisPdf"
-      accept="application/pdf"
-      onChange={(e) => setFormData({ ...formData, thesisPdf: e.target.files[0] })}
-      className="w-full p-3 rounded-lg"
-      style={getInputStyles()}
-    />
-  </div>
-
-  <div className="flex justify-end gap-3 mt-6">
-    <button
-      type="button"
-      className="px-3 py-1 rounded-full text-sm font-medium"
-      onClick={() => setCreatingProject(false)}
-      style={getButtonStyles("secondary")}
-    >
-      Cancel
-    </button>
-    <button
-      type="submit"
-      className="px-3 py-1 rounded-full text-sm font-medium"
-      style={getButtonStyles("primary")}
-    >
-      Create
-    </button>
-  </div>
-</form>
-
-
-
-
-
+                <div
+                  className="max-w-2xl mx-auto rounded-xl p-8 mb-8 shadow-lg"
+                  style={getCardStyles("glass")}
+                >
+                  <ProjectForm onProjectCreated={handleProjectCreated} />
+                  <div className="flex justify-end mt-6">
+                    <button
+                      type="button"
+                      className="px-3 py-1 rounded-full text-sm font-medium"
+                      onClick={() => setCreatingProject(false)}
+                      style={getButtonStyles("secondary")}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
               )}
 
               {/* Delete Confirmation */}
@@ -327,9 +211,21 @@ export default function ProjectManagement() {
                       <tbody>
                         {currentProjects.map((p) => (
                           <tr key={p._id} style={{ borderBottom: `1px solid ${colors.border.muted}` }}>
-                            <td className="px-6 py-4">{p.title}</td>
+                            <td className="px-6 py-4">
+                              {(() => {
+                                if (!p.title) return null;
+                                const words = p.title.split(' ');
+                                const lines = [];
+                                for (let i = 0; i < words.length; i += 7) {
+                                  lines.push(words.slice(i, i + 7).join(' '));
+                                }
+                                return lines.map((line, idx) => (
+                                  <span key={idx} style={{ display: 'block', wordBreak: 'break-word' }}>{line}</span>
+                                ));
+                              })()}
+                            </td>
                             <td className="px-6 py-4">{p.creator?.name || "Unknown"}</td>
-                            <td className="px-6 py-4">No collaborators</td>
+                            <td className="px-6 py-4">{p.collaborators || "No collaborators"}</td>
                             <td className="px-6 py-4 text-right">
                               <button
                                 className="px-3 py-1 rounded-full text-sm font-medium"
@@ -345,35 +241,85 @@ export default function ProjectManagement() {
                     </table>
                   </div>
 
-                  {/* Pagination */}
-                  <div className="flex justify-center mt-4 gap-2">
-                    <button
-                      className="px-3 py-1 rounded-full text-sm font-medium"
-                      disabled={currentPage === 1}
-                      onClick={() => setCurrentPage((p) => p - 1)}
-                      style={getButtonStyles("secondary")}
-                    >
-                      Prev
-                    </button>
-                    {Array.from({ length: totalPages }, (_, i) => (
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div className="flex justify-center items-center gap-2 mt-8">
                       <button
-                        key={i}
-                        onClick={() => setCurrentPage(i + 1)}
-                        className="px-3 py-1 rounded-full text-sm font-medium"
-                        style={getButtonStyles(currentPage === i + 1 ? "primary" : "secondary")}
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="flex items-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 shadow-sm disabled:opacity-50"
+                        style={{
+                          backgroundColor: currentPage === 1 ? colors.background.glass : colors.button.primary.background,
+                          color: colors.button.primary.text,
+                          border: `1px solid ${colors.border.primary}`
+                        }}
+                        onMouseEnter={(e) => {
+                          if (currentPage !== 1) {
+                            e.target.style.backgroundColor = colors.button.primary.backgroundHover;
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (currentPage !== 1) {
+                            e.target.style.backgroundColor = colors.button.primary.background;
+                          }
+                        }}
                       >
-                        {i + 1}
+                        <ChevronLeft className="w-4 h-4" />
+                        <span>Previous</span>
                       </button>
-                    ))}
-                    <button
-                      className="px-3 py-1 rounded-full text-sm font-medium"
-                      disabled={currentPage === totalPages}
-                      onClick={() => setCurrentPage((p) => p + 1)}
-                      style={getButtonStyles("secondary")}
-                    >
-                      Next
-                    </button>
-                  </div>
+
+                      <div className="flex gap-1">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                          <button
+                            key={page}
+                            onClick={() => handlePageChange(page)}
+                            className="px-3 py-2 rounded-lg transition-all duration-200 shadow-sm"
+                            style={{
+                              backgroundColor: currentPage === page ? colors.primary.blue[500] : colors.background.card,
+                              color: currentPage === page ? colors.button.primary.text : colors.text.secondary,
+                              border: `1px solid ${colors.border.primary}`
+                            }}
+                            onMouseEnter={(e) => {
+                              if (currentPage !== page) {
+                                e.target.style.backgroundColor = colors.surface.muted;
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (currentPage !== page) {
+                                e.target.style.backgroundColor = colors.background.card;
+                              }
+                            }}
+                          >
+                            {page}
+                          </button>
+                        ))}
+                      </div>
+
+                      <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="flex items-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 shadow-sm disabled:opacity-50"
+                        style={{
+                          backgroundColor: currentPage === totalPages ? colors.background.glass : colors.button.primary.background,
+                          color: colors.button.primary.text,
+                          border: `1px solid ${colors.border.primary}`
+                        }}
+                        onMouseEnter={(e) => {
+                          if (currentPage !== totalPages) {
+                            e.target.style.backgroundColor = colors.button.primary.backgroundHover;
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (currentPage !== totalPages) {
+                            e.target.style.backgroundColor = colors.button.primary.background;
+                          }
+                        }}
+                      >
+                        <span>Next</span>
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
             </div>

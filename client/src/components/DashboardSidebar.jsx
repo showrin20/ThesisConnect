@@ -80,7 +80,7 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
       { icon: ClipboardList, label: 'Project Management', path: '/project-management' },
       { icon: BookOpen, label: 'Publication Management', path: '/publication-management' },
       { icon: FileText, label: 'Blog Management', path: '/blog-management' },
-      { icon: MessageSquare, label: 'Community Management', path: '/admin/community' },
+      { icon: MessageSquare, label: 'Community Management', path: '/community-management' },
     ]
   };
 

@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const projectSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
-  link: { type: String }, // Made optional since we now have thesis draft options
+  link: { type: String  }, // Made optional since we now have thesis draft options
   status: { type: String, enum: ['Planned', 'In Progress', 'Completed'], default: 'Planned' },
   collaborators: [String],
   creator: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },

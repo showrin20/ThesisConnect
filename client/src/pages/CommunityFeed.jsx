@@ -2,11 +2,13 @@ import React, { useEffect, useState } from "react";
 import axios from "../axios";
 import { motion } from "framer-motion";
 import colors from "../styles/colors";
-import { ThumbsUp, MessageSquare, Share2, Calendar, UserCircle2, Heart } from "lucide-react";
+import { ThumbsUp, MessageSquare, UserPlus, Calendar, UserCircle2, Heart } from "lucide-react";
 import Sidebar from '../components/DashboardSidebar';
 import Topbar from '../components/DashboardTopbar';
+import CollaborationRequestModal from '../components/CollaborationRequestModal';
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useAlert } from "../context/AlertContext";
 
 const funEmojis = ['🌟', '✨', '🎨', '🚀', '💡', '🎉', '🌈', '⚡', '🔥', '💫', '🎪', '🎭'];
 const funShapes = ['🔸', '🔹', '🟡', '🟢', '🟣', '🟠', '🔴', '⭐'];
@@ -21,10 +23,15 @@ export default function CommunityFeed() {
   const [comments, setComments] = useState({});
   const [newComment, setNewComment] = useState({});
   const [expanded, setExpanded] = useState(false);
+  const [showCollabModal, setShowCollabModal] = useState(false);
+  const [selectedAuthor, setSelectedAuthor] = useState(null);
+  const [requestLoading, setRequestLoading] = useState(false);
+  const [sentRequests, setSentRequests] = useState(new Set());
 
   const POSTS_PER_PAGE = 8;
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { showSuccess, showError, showWarning } = useAlert();
 
   // Handle logout
   const handleLogout = async () => {
@@ -107,6 +114,28 @@ export default function CommunityFeed() {
     
     fetchPosts();
   }, [user?.id]);
+
+  // Fetch sent collaboration requests
+  useEffect(() => {
+    const fetchSentRequests = async () => {
+      if (!user?.token) return;
+      
+      try {
+        const response = await axios.get('/collaborations/sent');
+        if (response.data.success && response.data.data) {
+          const sentRequestIds = new Set(
+            response.data.data.map(req => req.recipientId?._id || req.recipientId)
+          );
+          setSentRequests(sentRequestIds);
+        }
+      } catch (err) {
+        // If endpoint doesn't exist yet, just continue silently
+        console.log('Collaboration requests endpoint not available yet');
+      }
+    };
+    
+    fetchSentRequests();
+  }, [user?.token]);
 
   const handleLike = async (postId, likedByUser) => {
     if (!postId) return;
@@ -253,18 +282,52 @@ export default function CommunityFeed() {
     return date.toLocaleDateString();
   };
 
-  const handleShare = (post) => {
-    const shareData = {
-      title: post.title || 'Community Post',
-      text: post.content?.substring(0, 100) + '...' || '',
-      url: window.location.origin + `/community-posts/${post.postId}`,
-    };
+  const handleCollabRequest = (post) => {
+    // Don't allow collaboration request with yourself
+    if (post.authorId?._id === user?.id) {
+      showWarning("You can't send a collaboration request to yourself!");
+      return;
+    }
     
-    if (navigator.share) {
-      navigator.share(shareData).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(shareData.url);
-      alert('🎉 Post link copied to clipboard!');
+    // Check if request already sent
+    if (sentRequests.has(post.authorId?._id)) {
+      showWarning("You've already sent a collaboration request to this user!");
+      return;
+    }
+    
+    setSelectedAuthor(post.authorId);
+    setShowCollabModal(true);
+  };
+
+  const sendCollaborationRequest = async (customMessage) => {
+    try {
+      setRequestLoading(true);
+
+      const response = await axios.post('/collaborations/request', {
+        recipientId: selectedAuthor._id,
+        message: customMessage
+      });
+
+      if (response.data.success) {
+        // Add to sent requests set
+        setSentRequests(prev => new Set([...prev, selectedAuthor._id]));
+        
+        setShowCollabModal(false);
+        setSelectedAuthor(null);
+        showSuccess('Collaboration request sent successfully!');
+      }
+    } catch (err) {
+      console.error('Error sending collaboration request:', err);
+      
+      if (err.response?.status === 404) {
+        showWarning('Collaboration feature is not available yet.');
+      } else if (err.response?.data?.message) {
+        showError(err.response.data.message);
+      } else {
+        showError('Failed to send collaboration request. Please try again.');
+      }
+    } finally {
+      setRequestLoading(false);
     }
   };
 
@@ -386,7 +449,7 @@ export default function CommunityFeed() {
           key={i}
           className="absolute text-3xl opacity-10 pointer-events-none"
           style={{
-            left二十世紀の残り物: `${Math.random() * 100}%`,
+            left: `${Math.random() * 100}%`,
             top: `${Math.random() * 100}%`,
           }}
           animate={{
@@ -435,7 +498,7 @@ export default function CommunityFeed() {
                   }}
                   transition={{ duration: 3, repeat: Infinity }}
                 >
-                  🤝💡 Community Vibes 🎪
+                  🤝  Connect & Create 🔗
                 </motion.h1>
                 <motion.div 
                   className="absolute -top-2 -left-6 text-2xl"
@@ -517,7 +580,7 @@ export default function CommunityFeed() {
                           {getRandomShape(index)}
                         </motion.div>
 
-                        <div className="flex items-center space-x-3 mb-3">
+                        <div className="flex items-start space-x-3 mb-3">
                           <motion.div 
                             whileHover={{ scale: 1.1, rotate: 5 }}
                             className="relative"
@@ -541,27 +604,29 @@ export default function CommunityFeed() {
                               <span className="ml-1">🎭</span>
                             </div>
                             <div 
-                              className="text-xs flex items-center space-x-1"
+                              className="text-xs flex items-center space-x-1 mb-1"
                               style={{ color: colors.text?.muted || '#6b7280' }}
                             >
                               <Calendar size={10} />
                               <span>{formatDate(post.createdAt)}</span>
                             </div>
+                            
+                            {/* Status moved under the date */}
+                            {post.status && (
+                              <motion.span 
+                                whileHover={{ scale: 1.05 }}
+                                className="inline-block px-2 py-0.5 rounded-full text-xs font-bold shadow-sm"
+                                style={{ 
+                                  backgroundColor: `${getStatusColor(post.status)}20`,
+                                  color: getStatusColor(post.status),
+                                  border: `1px solid ${getStatusColor(post.status)}50`,
+                                  fontSize: '10px' // Making it even smaller
+                                }}
+                              >
+                                ⚡ {post.status.toUpperCase()}
+                              </motion.span>
+                            )}
                           </div>
-
-                          {post.status && (
-                            <motion.span 
-                              whileHover={{ scale: 1.05 }}
-                              className="px-2 py-1 rounded-full text-xs font-bold shadow-sm"
-                              style={{ 
-                                backgroundColor: `${getStatusColor(post.status)}20`,
-                                color: getStatusColor(post.status),
-                                border: `1px solid ${getStatusColor(post.status)}50`
-                              }}
-                            >
-                              ⚡ {post.status.toUpperCase()}
-                            </motion.span>
-                          )}
                         </div>
 
                         {post.projectId && (
@@ -592,23 +657,22 @@ export default function CommunityFeed() {
                             </h3>
                           </div>
                           
-<p 
-  className="text-md leading-relaxed mb-3"
-  style={{ color: colors.text?.secondary || '#4b5563' }}
->
-  {expanded ? (post.content || "Something amazing is brewing... ✨") 
-            : (post.content || "Something amazing is brewing... ✨").slice(0, 150)}
+                          <p 
+                            className="text-md leading-relaxed mb-3"
+                            style={{ color: colors.text?.secondary || '#4b5563' }}
+                          >
+                            {expanded ? (post.content || "Something amazing is brewing... ✨") 
+                                      : (post.content || "Something amazing is brewing... ✨").slice(0, 150)}
 
-  {(post.content && post.content.length > 150) && (
-    <span
-      onClick={() => setExpanded(!expanded)}
-      className="ml-2 cursor-pointer text-blue-600 hover:underline text-sm font-medium"
-    >
-      {expanded ? "📖 See Less" : "📕 See More"}
-    </span>
-  )}
-</p>
-
+                            {(post.content && post.content.length > 150) && (
+                              <span
+                                onClick={() => setExpanded(!expanded)}
+                                className="ml-2 cursor-pointer text-blue-600 hover:underline text-sm font-medium"
+                              >
+                                {expanded ? "📖 See Less" : "📕 See More"}
+                              </span>
+                            )}
+                          </p>
                         </div>
 
                         {post.skillsNeeded && Array.isArray(post.skillsNeeded) && post.skillsNeeded.length > 0 && (
@@ -704,14 +768,35 @@ export default function CommunityFeed() {
                             <motion.button
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
-                              onClick={() => handleShare(post)}
+                              onClick={() => handleCollabRequest(post)}
                               className="flex items-center px-2 py-1 rounded-full text-xs font-medium transition-all"
                               style={{ 
-                                backgroundColor: `${colors.text?.muted || '#6b7280'}10`,
-                                color: colors.text?.secondary || '#4b5563'
+                                backgroundColor: post.authorId?._id === user?.id || sentRequests.has(post.authorId?._id)
+                                  ? `${colors.text?.muted || '#6b7280'}10` 
+                                  : `${colors.primary?.purple?.[500] || '#9333ea'}20`,
+                                color: post.authorId?._id === user?.id || sentRequests.has(post.authorId?._id)
+                                  ? colors.text?.muted || '#6b7280'
+                                  : colors.primary?.purple?.[500] || '#9333ea',
+                                opacity: post.authorId?._id === user?.id || sentRequests.has(post.authorId?._id) ? 0.5 : 1,
+                                cursor: post.authorId?._id === user?.id || sentRequests.has(post.authorId?._id) ? 'not-allowed' : 'pointer'
                               }}
+                              disabled={post.authorId?._id === user?.id || sentRequests.has(post.authorId?._id)}
+                              title={
+                                post.authorId?._id === user?.id 
+                                  ? "You can't collaborate with yourself" 
+                                  : sentRequests.has(post.authorId?._id)
+                                  ? "Collaboration request already sent"
+                                  : "Send collaboration request"
+                              }
                             >
-                              <Share2 size={12} />
+                              {sentRequests.has(post.authorId?._id) ? (
+                                <>
+                                  <span className="text-xs">✓</span>
+                                  <span className="ml-1 text-xs">Sent</span>
+                                </>
+                              ) : (
+                                <UserPlus size={12} />
+                              )}
                             </motion.button>
                           </div>
 
@@ -749,7 +834,7 @@ export default function CommunityFeed() {
                                       background: colors.gradients?.brand?.primary || 'linear-gradient(135deg, #0ea5e9, #d946ef)'
                                     }}
                                   >
-                                    {comment.author[0]?.toUpperCase()}
+                                    {(comment.author || comment.authorName || 'A')[0]?.toUpperCase()}
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center space-x-2 mb-1">
@@ -757,7 +842,7 @@ export default function CommunityFeed() {
                                         className="text-xs font-semibold truncate"
                                         style={{ color: colors.text?.primary || '#1f2937' }}
                                       >
-                                        {comment.author}
+                                        {comment.author || comment.authorName || 'Anonymous'}
                                       </span>
                                       <span 
                                         className="text-xs opacity-60"
@@ -826,7 +911,7 @@ export default function CommunityFeed() {
                                     borderColor: colors.text?.muted || '#6b7280',
                                     backgroundColor: colors.background?.card || '#ffffff',
                                     focusRingColor: colors.primary?.blue?.[500] || '#0ea5e9',
-                                    color: colors.text.primary 
+                                    color: colors.text?.primary 
                                   }}
                                   onKeyPress={(e) => {
                                     if (e.key === 'Enter' && !e.shiftKey) {
@@ -908,7 +993,7 @@ export default function CommunityFeed() {
                 >
                   Previous
                 </button>
-                <span className="font-bold text-lg" style={{ color: colors.text.primary }}>
+                <span className="font-bold text-lg" style={{ color: colors.text?.primary }}>
                   Page {page} of {totalPages}
                 </span>
                 <button
@@ -924,6 +1009,18 @@ export default function CommunityFeed() {
           </div>
         </main>
       </div>
+
+      {/* Collaboration Request Modal */}
+      <CollaborationRequestModal
+        isOpen={showCollabModal}
+        onClose={() => {
+          setShowCollabModal(false);
+          setSelectedAuthor(null);
+        }}
+        recipient={selectedAuthor}
+        onSend={sendCollaborationRequest}
+        loading={requestLoading}
+      />
     </div>
   );
 }

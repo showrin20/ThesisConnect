@@ -47,7 +47,7 @@ export default function PublicationManagement() {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const publicationsPerPage = 10;
+  const publicationsPerPage = 8;
   const totalPages = Math.ceil(publications.length / publicationsPerPage);
   const indexOfLastPublication = currentPage * publicationsPerPage;
   const indexOfFirstPublication = indexOfLastPublication - publicationsPerPage;
@@ -125,7 +125,10 @@ export default function PublicationManagement() {
         genre: "",
         quality: "N/A",
         tags: "",
-        doi: ""
+        doi: "",
+        abstract: "",
+        citations: 0,
+        location: "",
       });
       fetchPublications();
     } catch (err) {
@@ -174,18 +177,18 @@ export default function PublicationManagement() {
             isLoggingOut={isLoggingOut}
           />
 
-          <main className="flex-1 overflow-y-auto p-6">
-            <div className="container mx-auto">
+          <main className="flex-1 p-4 sm:p-6 max-h-screen overflow-y-auto">
+            <div className="container mx-auto max-h-full flex flex-col">
               {/* Header */}
-              <div className="flex justify-between items-center mb-8">
-                <h1 className="text-4xl font-bold">
+              <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
                   <span style={getGradientTextStyles("secondary")}>
                     Publication Management
                   </span>
                 </h1>
                 <button
                   onClick={() => setCreatingPublication(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm sm:text-base"
                   style={getButtonStyles("primary")}
                 >
                   <PlusCircle size={20} /> Add Publication
@@ -196,8 +199,8 @@ export default function PublicationManagement() {
               {creatingPublication && (
                 <form
                   onSubmit={handleCreate}
-                  className="max-w-3xl mx-auto rounded-xl p-8 mb-8 shadow-lg"
-                  style={getCardStyles("glass")}
+                  className="w-full max-w-3xl mx-auto rounded-xl p-4 sm:p-6 md:p-8 mb-8 shadow-lg"
+                  style={{ ...getCardStyles("glass"), maxHeight: "80vh", overflowY: "auto" }}
                 >
                   <div className="space-y-4">
                     <input
@@ -207,8 +210,8 @@ export default function PublicationManagement() {
                       onChange={handleChange}
                       placeholder="Title"
                       required
-                      className="w-full p-3 rounded-lg"
-                      style={getInputStyles()}
+                      className="w-full p-3 rounded-lg break-words whitespace-normal text-sm sm:text-base"
+                      style={{ ...getInputStyles() }}
                     />
 
                     <input
@@ -218,7 +221,7 @@ export default function PublicationManagement() {
                       onChange={handleChange}
                       placeholder="Authors (comma separated)"
                       required
-                      className="w-full p-3 rounded-lg"
+                      className="w-full p-3 rounded-lg break-words whitespace-normal text-sm sm:text-base"
                       style={getInputStyles()}
                     />
 
@@ -229,7 +232,7 @@ export default function PublicationManagement() {
                       onChange={handleChange}
                       placeholder="Year"
                       required
-                      className="w-full p-3 rounded-lg"
+                      className="w-full p-3 rounded-lg text-sm sm:text-base"
                       style={getInputStyles()}
                     />
 
@@ -240,7 +243,7 @@ export default function PublicationManagement() {
                       onChange={handleChange}
                       placeholder="Venue (Conference/Journal)"
                       required
-                      className="w-full p-3 rounded-lg"
+                      className="w-full p-3 rounded-lg break-words whitespace-normal text-sm sm:text-base"
                       style={getInputStyles()}
                     />
 
@@ -248,7 +251,7 @@ export default function PublicationManagement() {
                       name="type"
                       value={formData.type}
                       onChange={handleChange}
-                      className="w-full p-3 rounded-lg"
+                      className="w-full p-3 rounded-lg text-sm sm:text-base"
                       style={getInputStyles()}
                     >
                       <option>Journal</option>
@@ -264,7 +267,7 @@ export default function PublicationManagement() {
                       value={formData.genre}
                       onChange={handleChange}
                       placeholder="Genre (e.g. Machine Learning)"
-                      className="w-full p-3 rounded-lg"
+                      className="w-full p-3 rounded-lg break-words whitespace-normal text-sm sm:text-base"
                       style={getInputStyles()}
                     />
 
@@ -272,7 +275,7 @@ export default function PublicationManagement() {
                       name="quality"
                       value={formData.quality}
                       onChange={handleChange}
-                      className="w-full p-3 rounded-lg"
+                      className="w-full p-3 rounded-lg text-sm sm:text-base"
                       style={getInputStyles()}
                     >
                       <option>N/A</option>
@@ -290,7 +293,7 @@ export default function PublicationManagement() {
                       value={formData.tags}
                       onChange={handleChange}
                       placeholder="Tags (comma separated)"
-                      className="w-full p-3 rounded-lg"
+                      className="w-full p-3 rounded-lg break-words whitespace-normal text-sm sm:text-base"
                       style={getInputStyles()}
                     />
 
@@ -300,7 +303,7 @@ export default function PublicationManagement() {
                       value={formData.doi}
                       onChange={handleChange}
                       placeholder="DOI"
-                      className="w-full p-3 rounded-lg"
+                      className="w-full p-3 rounded-lg break-words whitespace-normal text-sm sm:text-base"
                       style={getInputStyles()}
                     />
 
@@ -309,7 +312,7 @@ export default function PublicationManagement() {
                       value={formData.abstract}
                       onChange={handleChange}
                       placeholder="Abstract"
-                      className="w-full p-3 rounded-lg resize-none"
+                      className="w-full p-3 rounded-lg resize-none break-words whitespace-normal text-sm sm:text-base"
                       rows={4}
                       style={getInputStyles()}
                     />
@@ -320,7 +323,7 @@ export default function PublicationManagement() {
                       value={formData.citations}
                       onChange={handleChange}
                       placeholder="Citations"
-                      className="w-full p-3 rounded-lg"
+                      className="w-full p-3 rounded-lg text-sm sm:text-base"
                       style={getInputStyles()}
                     />
 
@@ -330,7 +333,7 @@ export default function PublicationManagement() {
                       value={formData.location}
                       onChange={handleChange}
                       placeholder="Location"
-                      className="w-full p-3 rounded-lg"
+                      className="w-full p-3 rounded-lg break-words whitespace-normal text-sm sm:text-base"
                       style={getInputStyles()}
                     />
                   </div>
@@ -362,13 +365,13 @@ export default function PublicationManagement() {
                   style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
                 >
                   <div
-                    className="w-full max-w-md rounded-xl p-6 shadow-2xl flex flex-col gap-4"
+                    className="w-full max-w-md rounded-xl p-4 sm:p-6 shadow-2xl flex flex-col gap-4"
                     style={getCardStyles("glass")}
                   >
                     <h3 className="text-lg font-medium mb-2" style={{ color: colors.text.primary }}>
                       Delete Publication
                     </h3>
-                    <p style={{ color: colors.text.secondary }}>
+                    <p className="break-words whitespace-normal text-sm sm:text-base" style={{ color: colors.text.secondary }}>
                       Are you sure you want to delete <strong>{deletingPublication.title}</strong>?
                     </p>
                     <div className="flex justify-center gap-3">
@@ -400,21 +403,24 @@ export default function PublicationManagement() {
                 <p className="text-center" style={{ color: colors.text.primary }}>No publications found.</p>
               ) : (
                 <>
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto flex-1 min-h-0">
                     <table
-                      className="min-w-full rounded-lg overflow-hidden shadow-lg"
+                      className="w-full rounded-lg overflow-hidden shadow-lg"
                       style={{
                         backgroundColor: colors.background.secondary,
                         color: colors.text.primary,
+                        tableLayout: 'auto',
+                        maxHeight: '60vh',
+                        overflowY: 'auto',
                       }}
                     >
                       <thead style={{ backgroundColor: colors.background.secondary }}>
                         <tr>
-                          <th className="px-6 py-3 text-left">Title</th>
-                          <th className="px-6 py-3 text-left">Year</th>
-                          <th className="px-6 py-3 text-left">Venue</th>
-                          <th className="px-6 py-3 text-left">Type</th>
-                          <th className="px-6 py-3 text-right">Actions</th>
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left text-sm">Title</th>
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left text-sm">Year</th>
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left text-sm">Venue</th>
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left text-sm">Type</th>
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-right text-sm">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -425,13 +431,27 @@ export default function PublicationManagement() {
                               borderBottom: `1px solid ${colors.border.muted}`,
                             }}
                           >
-                            <td className="px-6 py-4">{p.title}</td>
-                            <td className="px-6 py-4">{p.year}</td>
-                            <td className="px-6 py-4">{p.venue}</td>
-                            <td className="px-6 py-4">{p.type}</td>
-                            <td className="px-6 py-4 text-right">
+                                <td className="px-6 py-4">
+                              {(() => {
+                                if (!p.title) return null;
+                                const words = p.title.split(' ');
+                                const lines = [];
+                                for (let i = 0; i < words.length; i += 7) {
+                                  lines.push(words.slice(i, i + 7).join(' '));
+                                }
+                                return lines.map((line, idx) => (
+                                  <span key={idx} style={{ display: 'block', wordBreak: 'break-word' }}>{line}</span>
+                                ));
+                              })()}
+                            </td>
+                            <td className="px-2 py-2 sm:px-4 sm:py-4 text-sm">{p.year}</td>
+                            <td className="px-2 py-2 sm:px-4 sm:py-4 break-words whitespace-normal text-sm">
+                              {p.venue}
+                            </td>
+                            <td className="px-2 py-2 sm:px-4 sm:py-4 text-sm">{p.type}</td>
+                            <td className="px-2 py-2 sm:px-4 sm:py-4 text-right">
                               <button
-                                className="px-3 py-1 rounded-full text-sm font-medium"
+                                className="px-2 py-1 rounded-full text-sm font-medium"
                                 onClick={() => confirmDelete(p)}
                                 style={getButtonStyles("danger")}
                               >

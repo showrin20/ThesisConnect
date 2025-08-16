@@ -39,7 +39,7 @@ const PublicationCard = ({
         }}
       ></div>
       <div 
-        className="relative backdrop-blur-lg rounded-xl p-6 border hover:scale-[1.02] transition-all duration-300"
+        className="relative backdrop-blur-lg rounded-xl p-6 border hover:scale-[1.02] transition-all duration-300 overflow-hidden"
         style={{
           backgroundColor: colors.background.glass,
           borderColor: colors.border.secondary
@@ -48,21 +48,44 @@ const PublicationCard = ({
         onMouseLeave={(e) => e.target.style.backgroundColor = colors.background.glass}
       >
         <h3 
-          className="font-semibold text-lg mb-2 transition-colors duration-300"
-          style={{ color: colors.text.primary }}
+          className="font-semibold text-lg transition-colors duration-300"
+          style={{ 
+            color: colors.text.primary,
+            overflowWrap: 'anywhere'
+          }}
           onMouseEnter={(e) => e.target.style.color = colors.primary.blue[400]}
           onMouseLeave={(e) => e.target.style.color = colors.text.primary}
         >
           {title}
         </h3>
-        <div className="text-xs mb-2 italic" style={{ color: `${colors.text.secondary}99` }}>
+        <div 
+          className="text-xs mb-2 italic" 
+          style={{ 
+            color: `${colors.text.secondary}99`,
+            overflowWrap: 'anywhere'
+          }}
+        >
           {formattedAuthors} {year ? `| ${year}` : ''}
         </div>
-        <div className="text-xs mb-3" style={{ color: `${colors.text.secondary}80` }}>
+        <div 
+          className="text-xs mb-3" 
+          style={{ 
+            color: `${colors.text.secondary}80`,
+            overflowWrap: 'anywhere'
+          }}
+        >
           {venue || 'Unknown Venue'}
         </div>
         {shortAbstract && (
-          <p className="text-sm mb-4 line-clamp-3" style={{ color: `${colors.text.secondary}B3` }}>{shortAbstract}</p>
+          <p 
+            className="text-sm mb-4 line-clamp-3" 
+            style={{ 
+              color: `${colors.text.secondary}B3`,
+              overflowWrap: 'anywhere'
+            }}
+          >
+            {shortAbstract}
+          </p>
         )}
         <div className="flex flex-wrap gap-2 mb-4">
           {tags && tags.map((tag, i) => (
@@ -72,7 +95,8 @@ const PublicationCard = ({
               style={{
                 backgroundColor: `${colors.accent.green[500]}33`,
                 color: colors.text.primary,
-                borderColor: `${colors.accent.green[500]}4D`
+                borderColor: `${colors.accent.green[500]}4D`,
+                overflowWrap: 'anywhere'
               }}
             >
               {tag}
@@ -91,14 +115,22 @@ const PublicationCard = ({
                 color: colors.text.primary,
                 borderColor: `${colors.accent.green[500]}4D`
               }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.text.primary}4D`}
-              onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.text.primary}33`}
+              onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.accent.green[500]}4D`}
+              onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.accent.green[500]}33`}
             >
               <span>View Publication</span>
               <ExternalLink size={12} />
             </a>
           ) : (
-            <span className="text-xs italic" style={{ color: colors.text.disabled }}>No link available</span>
+            <span 
+              className="text-xs italic" 
+              style={{ 
+                color: colors.text.disabled,
+                overflowWrap: 'anywhere'
+              }}
+            >
+              No link available
+            </span>
           )}
         </div>
       </div>

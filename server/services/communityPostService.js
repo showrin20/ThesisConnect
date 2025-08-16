@@ -165,14 +165,15 @@ class CommunityPostService {
   }
 
   // Delete a post
-  static async deletePost(postId, userId) {
+  static async deletePost(postId, userId, userRole = 'user') {
     const existingPost = await CommunityPost.findOne({ postId });
     
     if (!existingPost) {
       throw new Error('Post not found');
     }
 
-    if (existingPost.authorId.toString() !== userId) {
+    // Admin or author can delete
+    if (existingPost.authorId.toString() !== userId && userRole !== 'admin') {
       throw new Error('Unauthorized: You can only delete your own posts');
     }
 
@@ -209,22 +210,18 @@ class CommunityPostService {
       throw new Error('Post not found');
     }
 
-    // Check if user already liked the post
     const userIndex = post.likedBy.findIndex(id => id.toString() === userId);
     
     if (userIndex > -1) {
-      // User already liked, so unlike
       post.likedBy.splice(userIndex, 1);
       post.likes = Math.max(0, post.likes - 1);
     } else {
-      // User hasn't liked, so like
       post.likedBy.push(userId);
       post.likes = post.likes + 1;
     }
 
     await post.save();
     
-    // Return populated post
     return await CommunityPost.findOne({ postId })
       .populate('authorId', 'name email')
       .populate('projectId', 'title description');
@@ -251,7 +248,6 @@ class CommunityPostService {
     post.comments.push(comment);
     await post.save();
 
-    // Return the updated post with populated fields
     return await CommunityPost.findOne({ postId })
       .populate('authorId', 'name email')
       .populate('projectId', 'title description');
@@ -281,29 +277,25 @@ class CommunityPostService {
       throw new Error('Comment not found');
     }
 
-    // Check if user already liked the comment
     const userIndex = comment.likedBy.findIndex(id => id.toString() === userId);
     
     if (userIndex > -1) {
-      // User already liked, so unlike
       comment.likedBy.splice(userIndex, 1);
       comment.likes = Math.max(0, comment.likes - 1);
     } else {
-      // User hasn't liked, so like
       comment.likedBy.push(userId);
       comment.likes = comment.likes + 1;
     }
 
     await post.save();
     
-    // Return the updated post with populated fields
     return await CommunityPost.findOne({ postId })
       .populate('authorId', 'name email')
       .populate('projectId', 'title description');
   }
 
   // Delete a comment
-  static async deleteComment(postId, commentId, userId) {
+  static async deleteComment(postId, commentId, userId, userRole = 'user') {
     const post = await CommunityPost.findOne({ postId });
     
     if (!post) {
@@ -316,14 +308,15 @@ class CommunityPostService {
     }
 
     const comment = post.comments[commentIndex];
-    if (comment.authorId.toString() !== userId) {
+
+    // Admin or comment author can delete
+    if (comment.authorId.toString() !== userId && userRole !== 'admin') {
       throw new Error('Unauthorized: You can only delete your own comments');
     }
 
     post.comments.splice(commentIndex, 1);
     await post.save();
 
-    // Return the updated post with populated fields
     return await CommunityPost.findOne({ postId })
       .populate('authorId', 'name email')
       .populate('projectId', 'title description');

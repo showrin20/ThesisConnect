@@ -9,7 +9,7 @@ import Home from './pages/Home';
 import Profile from './pages/Profile';
 import Explore from './pages/Explore';
 import ProjectHub from './pages/ProjectHub';
-import Publications from './pages/Publication';
+import Publications from './pages/publication';
 import Dashboard from './pages/Dashboard';
 import MentorDashboard from './pages/MentorDashboard';
 import AdminDashboard from './pages/AdminDashboard';
@@ -31,6 +31,7 @@ import PublicationManagement from './pages/PublicationManagement';
 import BlogManagement from './pages/BlogManagement';
 import CommunityFeed from './pages/CommunityFeed';
 import FindMentors from './pages/FindMentors'; 
+import CommunityManagement from './pages/CommunityManagement';
 
 
 // Component to conditionally render navbar
@@ -56,11 +57,8 @@ function AppContent() {
     '/publication-management',
     '/blog-management',
     '/community-feed',
-    '/find-mentors'
-
-  
-
-
+    '/find-mentors',
+    '/community-management'
   ].includes(location.pathname) || location.pathname.startsWith('/profile/'); // ✅ Added dynamic profile routes
 
   return (
@@ -144,6 +142,14 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <UserManagement />
+              </ProtectedRoute>
+            }
+          />
+             <Route
+            path="/community-management"
+            element={
+              <ProtectedRoute>
+                <CommunityManagement />
               </ProtectedRoute>
             }
           />

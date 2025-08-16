@@ -5,6 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const Project = require('../models/Project');
+const User = require('../models/User');
 
 const router = express.Router();
 
@@ -12,16 +13,11 @@ const router = express.Router();
 // 📁 FILE UPLOAD SETUP
 //////////////////////////
 const uploadsDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
-  filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${req.user.id}-${file.originalname}`;
-    cb(null, uniqueName);
-  },
+  filename: (req, file, cb) => cb(null, `${Date.now()}-${req.user.id}-${file.originalname}`)
 });
 
 const fileFilter = (req, file, cb) => {
@@ -32,7 +28,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
 });
 
 //////////////////////////
@@ -55,7 +51,7 @@ const auth = (req, res, next) => {
 //////////////////////////
 // 🔗 URL VALIDATION UTIL
 //////////////////////////
-const isValidURL = (url) => {
+const isValidURL = url => {
   try { new URL(url); return true; } catch { return false; }
 };
 
@@ -66,7 +62,8 @@ router.post('/', auth, upload.single('thesisPdf'), async (req, res) => {
   try {
     const { title, description, link, tags, status, collaborators, thesisDraft } = req.body;
 
-    if (!title || !description) return res.status(400).json({ msg: 'Title and description are required' });
+    if (!title || !description)
+      return res.status(400).json({ msg: 'Title and description are required' });
 
     let parsedThesisDraft = {};
     if (thesisDraft) {
@@ -76,9 +73,11 @@ router.post('/', auth, upload.single('thesisPdf'), async (req, res) => {
 
     const hasLink = link?.trim();
     const hasThesisDraft = req.file || parsedThesisDraft?.externalLink?.trim();
-    if (!hasLink && !hasThesisDraft) return res.status(400).json({ msg: 'Either project link or thesis draft is required' });
+    if (!hasLink && !hasThesisDraft)
+      return res.status(400).json({ msg: 'Either project link or thesis draft is required' });
 
-    if (hasLink && !isValidURL(link)) return res.status(400).json({ msg: 'Invalid project link URL' });
+    if (hasLink && !isValidURL(link))
+      return res.status(400).json({ msg: 'Invalid project link URL' });
     if (parsedThesisDraft?.externalLink && !isValidURL(parsedThesisDraft.externalLink))
       return res.status(400).json({ msg: 'Invalid thesis draft external link URL' });
 
@@ -96,13 +95,20 @@ router.post('/', auth, upload.single('thesisPdf'), async (req, res) => {
       uploadedAt: new Date(),
     };
 
+    // Ensure collaborators are valid registered users
+    let validCollaborators = [];
+    if (collaborators && Array.isArray(collaborators)) {
+      validCollaborators = await User.find({ _id: { $in: collaborators } }).select('_id');
+      validCollaborators = validCollaborators.map(u => u._id);
+    }
+
     const project = new Project({
       title,
       description,
       link: link || '',
       tags: Array.isArray(tags) ? tags : (tags ? tags.split(',').map(t => t.trim()) : []),
       status: status || 'Planned',
-      collaborators: Array.isArray(collaborators) ? collaborators : [],
+      collaborators: validCollaborators,
       creator: req.user.id,
       thesisDraft: Object.keys(thesisDraftData).length ? thesisDraftData : undefined,
     });
@@ -122,14 +128,23 @@ router.post('/', auth, upload.single('thesisPdf'), async (req, res) => {
 });
 
 //////////////////////////
-// � SERVE UPLOADED FILES
+// 🔍 SEARCH COLLABORATORS
 //////////////////////////
-router.get('/uploads/:filename', auth, (req, res) => {
-  const filePath = path.join(__dirname, '../uploads', req.params.filename);
-  if (!fs.existsSync(filePath)) return res.status(404).json({ msg: 'File not found' });
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `inline; filename="${req.params.filename}"`);
-  res.sendFile(filePath);
+router.get('/search-collaborators', auth, async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q || !q.trim()) return res.json({ success: true, data: [] });
+
+    const regex = new RegExp(q.trim(), 'i');
+    const users = await User.find({
+      $or: [{ name: regex }, { email: regex }]
+    }).limit(10).select('_id name email');
+
+    res.json({ success: true, data: users });
+  } catch (error) {
+    console.error('Search collaborators error:', error);
+    res.status(500).json({ msg: 'Server error while searching collaborators', error: error.message });
+  }
 });
 
 //////////////////////////
@@ -137,26 +152,15 @@ router.get('/uploads/:filename', auth, (req, res) => {
 //////////////////////////
 router.get('/', async (_req, res) => {
   try {
-    // Run both queries in parallel for better performance
     const [projects, total] = await Promise.all([
-      Project.find()
-        .populate('creator', 'name email university')
-        .sort({ createdAt: -1 }),
+      Project.find().populate('creator', 'name email university').sort({ createdAt: -1 }),
       Project.countDocuments()
     ]);
 
-    res.json({
-      success: true,
-      total, // total number of projects in DB
-      count: projects.length, // number returned in this request
-      data: projects
-    });
+    res.json({ success: true, total, count: projects.length, data: projects });
   } catch (error) {
     console.error('Get projects error:', error);
-    res.status(500).json({
-      msg: 'Server error while fetching projects',
-      error: error.message
-    });
+    res.status(500).json({ msg: 'Server error while fetching projects', error: error.message });
   }
 });
 
@@ -165,7 +169,9 @@ router.get('/', async (_req, res) => {
 //////////////////////////
 router.get('/my-projects', auth, async (req, res) => {
   try {
-    const projects = await Project.find({ creator: req.user.id }).populate('creator', 'name email university').sort({ createdAt: -1 });
+    const projects = await Project.find({ creator: req.user.id })
+      .populate('creator', 'name email university')
+      .sort({ createdAt: -1 });
     res.json({ success: true, count: projects.length, data: projects });
   } catch (error) {
     console.error('Get my projects error:', error);
@@ -197,7 +203,12 @@ router.put('/:id', auth, async (req, res) => {
     }
     if (tags !== undefined) project.tags = Array.isArray(tags) ? tags : [];
     if (status !== undefined) project.status = status;
-    if (collaborators !== undefined) project.collaborators = Array.isArray(collaborators) ? collaborators : [];
+
+    // Ensure collaborators are valid registered users
+    if (collaborators !== undefined && Array.isArray(collaborators)) {
+      const validCollaborators = await User.find({ _id: { $in: collaborators } }).select('_id');
+      project.collaborators = validCollaborators.map(u => u._id);
+    }
 
     await project.save();
     await project.populate('creator', 'name email university');
@@ -216,7 +227,11 @@ router.get('/user/:userId', async (req, res) => {
     const { userId } = req.params;
     if (!mongoose.Types.ObjectId.isValid(userId)) return res.status(400).json({ msg: 'Invalid user ID format' });
 
-    const projects = await Project.find({ creator: userId }).populate('creator', 'name email university').sort({ createdAt: -1 }).limit(10);
+    const projects = await Project.find({ creator: userId })
+      .populate('creator', 'name email university')
+      .sort({ createdAt: -1 })
+      .limit(10);
+
     res.json({ success: true, count: projects.length, data: projects });
   } catch (error) {
     console.error('Get user projects error:', error);

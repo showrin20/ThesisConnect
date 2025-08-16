@@ -3,6 +3,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useAlert } from '../context/AlertContext';
 import axios from '../axios';
+import CollaborationRequestModal from './CollaborationRequestModal';
 import { 
   User, 
   MapPin, 
@@ -40,6 +41,7 @@ const CollaboratorsCard = ({
   const [collaborationStatus, setCollaborationStatus] = useState('none'); // none, pending, sent, accepted
   const [loading, setLoading] = useState(false);
   const [requestLoading, setRequestLoading] = useState(false);
+  const [showRequestModal, setShowRequestModal] = useState(false);
 
   useEffect(() => {
     if (student?._id) {
@@ -92,17 +94,18 @@ const checkCollaborationStatus = async () => {
 };
 
 // Update the sendCollaborationRequest function
-const sendCollaborationRequest = async () => {
+const sendCollaborationRequest = async (customMessage) => {
   try {
     setRequestLoading(true);
 
     const response = await axios.post('/collaborations/request', {
       recipientId: student._id,
-      message: `Hi ${student.name}, I'd like to collaborate with you on academic projects. Let's connect!`
+      message: customMessage || `Hi ${student.name}, I'd like to collaborate with you on academic projects. Let's connect!`
     });
 
     if (response.data.success) {
       setCollaborationStatus('sent');
+      setShowRequestModal(false);
       onRequestSent(student._id);
       
       // Show success message (you can customize this)
@@ -145,7 +148,7 @@ const sendCollaborationRequest = async () => {
         };
       case 'pending':
         return {
-          text: 'Respond to Request',
+          text: 'Please Respond to Request',
           icon: MessageCircle,
           disabled: false,
           color: colors.primary?.blue?.[500] || '#3b82f6',
@@ -432,7 +435,7 @@ const sendCollaborationRequest = async () => {
       <div className="flex space-x-2">
         {!isOwnProfile && (
           <button
-            onClick={collaborationStatus === 'none' ? sendCollaborationRequest : undefined}
+            onClick={collaborationStatus === 'none' ? () => setShowRequestModal(true) : undefined}
             disabled={buttonConfig.disabled || requestLoading}
             className="flex-1 flex items-center justify-center py-2 px-3 rounded-lg transition-all duration-200 font-medium text-sm disabled:opacity-50"
             style={{
@@ -475,6 +478,15 @@ const sendCollaborationRequest = async () => {
           </span>
         </div>
       </div>
+
+      {/* Collaboration Request Modal */}
+      <CollaborationRequestModal
+        isOpen={showRequestModal}
+        onClose={() => setShowRequestModal(false)}
+        recipient={student}
+        onSend={sendCollaborationRequest}
+        loading={requestLoading}
+      />
     </div>
   );
 };

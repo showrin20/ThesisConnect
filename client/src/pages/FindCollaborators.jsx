@@ -376,23 +376,44 @@ const FindCollaborators = () => {
                 </div>
 
                 {/* Pagination Controls */}
-                <div className="flex justify-center items-center mt-8 space-x-2">
-                  {Array.from({ length: totalPages }, (_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setCurrentPage(idx + 1)}
-                      className={`px-4 py-2 rounded-lg border transition-all ${
-                        currentPage === idx + 1
-                          ? "bg-blue-500 text-white"
-                          : "bg-transparent text-gray-600"
-                      }`}
-                      style={{
-                        borderColor: colors.border.secondary
-                      }}
-                    >
-                      {idx + 1}
-                    </button>
-                  ))}
+                <div className="flex items-center justify-center gap-4 mt-8">
+                  <button
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className={`px-4 py-2 rounded-full font-bold shadow border-2 transition-all duration-150 ${
+                      currentPage === 1 
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                        : 'bg-white border-blue-200 hover:bg-blue-50'
+                    }`}
+                    style={{
+                      color: currentPage === 1 ? '#9ca3af' : colors.primary?.blue?.[500] || '#3b82f6',
+                      borderColor: currentPage === 1 ? '#d1d5db' : colors.primary?.blue?.[200] || '#93c5fd'
+                    }}
+                    aria-label="Previous Page"
+                  >
+                    Previous
+                  </button>
+                  
+                  <span className="font-bold text-lg" style={{ color: colors.text.primary }}>
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  
+                  <button
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className={`px-4 py-2 rounded-full font-bold shadow border-2 transition-all duration-150 ${
+                      currentPage === totalPages 
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                        : 'bg-white border-blue-200 hover:bg-blue-50'
+                    }`}
+                    style={{
+                      color: currentPage === totalPages ? '#9ca3af' : colors.primary?.blue?.[500] || '#3b82f6',
+                      borderColor: currentPage === totalPages ? '#d1d5db' : colors.primary?.blue?.[200] || '#93c5fd'
+                    }}
+                    aria-label="Next Page"
+                  >
+                    Next
+                  </button>
                 </div>
               </>
             ) : (

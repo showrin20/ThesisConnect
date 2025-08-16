@@ -408,7 +408,7 @@ export default function Publications() {
                       <div className="flex flex-wrap items-start gap-3 mb-4">
                         <h3 
                           className="text-xl lg:text-2xl font-bold group-hover:text-blue-400 transition-colors leading-tight flex-1"
-                          style={{ color: colors.text.primary }}
+                          style={{ color: colors.text.primary , overflowWrap: 'anywhere' }}
                         >
                           {pub.title}
                         </h3>

@@ -52,9 +52,12 @@ const ProjectCard = ({ title, description, link, tags, status, category }) => {
         onMouseLeave={(e) => e.target.style.backgroundColor = colors.background.glass}
       >
         <div className="flex justify-between items-start mb-4">
-          <h3 
+         <h3 
             className="font-semibold text-lg transition-colors duration-300"
-            style={{ color: colors.text.primary }}
+            style={{ 
+              color: colors.text.primary,
+              overflowWrap: 'anywhere' // Ensure long titles wrap
+            }}
             onMouseEnter={(e) => e.target.style.color = colors.primary.blue[400]}
             onMouseLeave={(e) => e.target.style.color = colors.text.primary}
           >

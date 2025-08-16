@@ -452,16 +452,6 @@ export default function AdminDashboard() {
                     </div>
                   )}
 
-                  {/* Pending Approvals */}
-                  <div className="flex items-center justify-between p-4 rounded-lg" 
-                       style={{ backgroundColor: colors.background?.secondary }}>
-                    <div>
-                      <p className="font-medium" style={{ color: colors.text?.primary }}>Pending Approvals</p>
-                      <p className="text-sm" style={{ color: colors.text?.secondary }}>
-                        {dashboardData.stats.pendingApprovals} mentor applications
-                      </p>
-                    </div>
-                  </div>
                 </div>
                 
                 <Link 

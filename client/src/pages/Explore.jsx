@@ -6,9 +6,12 @@ import {
   Search,
   Filter,
   X,
+  Download,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
-import axios from '../axios'; // Update path to match your setup
+import axios from '../axios';
 import { colors } from '../styles/colors';
 import { getButtonStyles } from '../styles/styleUtils';
 
@@ -21,32 +24,31 @@ export default function MyProjects() {
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [projectsError, setProjectsError] = useState(null);
 
-
-    // Pagination state
+  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(6); // default for desktop
 
-useEffect(() => {
-  const fetchProjects = async () => {
-    setLoadingProjects(true);
-    setProjectsError(null);
-    try {
-      const response = await axios.get('/projects');
-      const fetchedProjects = response.data?.data || [];
-      console.log('Fetched Projects:', fetchedProjects); // <-- Add this
-      setProjects(fetchedProjects);
-    } catch (error) {
-      console.error('Failed to fetch projects:', error);
-      setProjectsError('Failed to load projects');
-      setProjects([]);
-    } finally {
-      setLoadingProjects(false);
-    }
-  };
-  fetchProjects();
-}, []);
+  useEffect(() => {
+    const fetchProjects = async () => {
+      setLoadingProjects(true);
+      setProjectsError(null);
+      try {
+        const response = await axios.get('/projects');
+        const fetchedProjects = response.data?.data || [];
+        console.log('Fetched Projects:', fetchedProjects);
+        setProjects(fetchedProjects);
+      } catch (error) {
+        console.error('Failed to fetch projects:', error);
+        setProjectsError('Failed to load projects');
+        setProjects([]);
+      } finally {
+        setLoadingProjects(false);
+      }
+    };
+    fetchProjects();
+  }, []);
 
-// Adjust items per page based on screen size
+  // Adjust items per page based on screen size
   useEffect(() => {
     const updateItemsPerPage = () => {
       if (window.innerWidth < 768) {
@@ -62,8 +64,7 @@ useEffect(() => {
     return () => window.removeEventListener('resize', updateItemsPerPage);
   }, []);
 
-
-  const statuses = ['All', 'Personal']; 
+  const statuses = ['All', 'Personal'];
 
   const allKeywords = useMemo(
     () => [...new Set(projects.flatMap((p) => p.tags || []))].sort(),
@@ -92,7 +93,7 @@ useEffect(() => {
     });
   }, [projects, searchTerm, selectedStatus, selectedKeywords]);
 
-// Calculate pagination
+  // Calculate pagination
   const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
   const paginatedProjects = filteredProjects.slice(
     (currentPage - 1) * itemsPerPage,
@@ -108,12 +109,11 @@ useEffect(() => {
     setCurrentPage(1); // reset page when filter changes
   };
 
-
-
   const clearFilters = () => {
     setSearchTerm('');
     setSelectedStatus('All');
     setSelectedKeywords([]);
+    setCurrentPage(1); // reset page when clearing filters
   };
 
   const getStatusBadgeColor = (status) => {
@@ -122,6 +122,27 @@ useEffect(() => {
       color: colors.text.secondary,
       borderColor: colors.border.primary
     };
+  };
+
+  const handleThesisClick = (thesisDraft) => {
+    if (thesisDraft.pdfUrl) {
+      const link = document.createElement('a');
+      link.href = thesisDraft.pdfUrl;
+      link.download = thesisDraft.pdfFileName || 'thesis.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else if (thesisDraft.externalLink) {
+      const url = thesisDraft.externalLink.startsWith('http') ? thesisDraft.externalLink : `https://${thesisDraft.externalLink}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  // Pagination navigation
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
   };
 
   return (
@@ -212,7 +233,6 @@ useEffect(() => {
                     ></span>
                   )}
                 </button>
-               
               </div>
             </div>
 
@@ -347,134 +367,238 @@ useEffect(() => {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredProjects.map((project) => (
-              <article
-                key={project._id}
-                className="group backdrop-blur-sm rounded-2xl p-6 border hover:shadow-xl transform hover:-translate-y-2 transition-all duration-300 shadow-lg"
-                style={{
-                  background: `linear-gradient(135deg, ${colors.background.glass}CC, ${colors.primary.blue[50]}CC)`,
-                  borderColor: `${colors.border.primary}99`
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.borderColor = `${colors.border.primary}CC`;
-                  e.target.style.boxShadow = `0 20px 25px -5px ${colors.primary.blue[400]}26, 0 10px 10px -5px ${colors.primary.blue[400]}1A`;
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.borderColor = `${colors.border.primary}99`;
-                  e.target.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
-                }}
-              >
-                <div className="mb-4">
-                  <h2 className="text-xl font-bold mb-3 leading-tight">
-                    <span 
-                      className="bg-clip-text text-transparent"
-                      style={{
-                        background: colors.gradients.brand.primary,
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent'
-                      }}
-                    >
-                      {project.title}
-                    </span>
-                  </h2>
-                  <div className="flex items-center gap-2 mb-3">
-                    <div
-                      className="flex items-center gap-1 px-3 py-1 rounded-full border text-xs font-medium"
-                      style={getStatusBadgeColor()}
-                    >
-                      <Clock className="w-3 h-3" />
-                      <span>{new Date(project.createdAt).toDateString()}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <p className="text-sm leading-relaxed mb-4 line-clamp-3" style={{ color: colors.text.secondary }}>
-                  {project.description}
-                </p>
-
-                {project.tags?.length > 0 && (
-                  <div className="mb-4">
-                    <div className="flex items-center gap-1 mb-2">
-                      <Tag className="w-4 h-4" style={{ color: colors.primary.blue[500] }} />
-                      <span className="text-xs font-medium" style={{ color: colors.text.muted }}>Tags</span>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {project.tags.slice(0, 3).map((tag, idx) => (
-                        <span
-                          key={idx}
-                          className="px-2 py-1 text-xs rounded-md border transition-all duration-200 shadow-sm"
-                          style={{
-                            backgroundColor: colors.surface.secondary,
-                            color: colors.text.secondary,
-                            borderColor: colors.border.primary
-                          }}
-                          onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = `${colors.primary.blue[100]}`;
-                            e.target.style.borderColor = `${colors.primary.blue[300]}`;
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = colors.surface.secondary;
-                            e.target.style.borderColor = colors.border.primary;
-                          }}
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                      {project.tags.length > 3 && (
-                        <span 
-                          className="px-2 py-1 text-xs rounded-md border shadow-sm"
-                          style={{
-                            backgroundColor: colors.surface.secondary,
-                            color: colors.text.muted,
-                            borderColor: colors.border.primary
-                          }}
-                        >
-                          +{project.tags.length - 3} more
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {project.creator?.name && (
-                  <div className="mb-6">
-                    <div className="flex items-center gap-1 mb-2">
-                      <Users className="w-4 h-4" style={{ color: colors.primary.purple[500] }} />
-                      <span className="text-xs font-medium" style={{ color: colors.text.muted }}>Created by</span>
-                    </div>
-                    <div className="text-sm" style={{ color: colors.text.secondary }}>{project.creator.name}</div>
-                  </div>
-                )}
-
-                <button
-                  onClick={() => {
-                    if (project.link) {
-                      const url = project.link.startsWith('http') ? project.link : `https://${project.link}`;
-                      window.open(url, '_blank', 'noopener,noreferrer');
-                    } else {
-                      alert('No project link available');
-                    }
-                  }}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-200 text-sm font-medium"
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {paginatedProjects.map((project) => (
+                <article
+                  key={project._id}
+                  className="group backdrop-blur-sm rounded-2xl p-6 border hover:shadow-xl transform hover:-translate-y-2 transition-all duration-300 shadow-lg"
                   style={{
-                    background: colors.gradients.brand.primary,
-                    color: colors.text.primary,
-                    boxShadow: `0 4px 12px ${colors.primary.blue[500]}33`
+                    background: `linear-gradient(135deg, ${colors.background.glass}CC, ${colors.primary.blue[50]}CC)`,
+                    borderColor: `${colors.border.primary}99`
                   }}
                   onMouseEnter={(e) => {
-                    e.target.style.boxShadow = `0 6px 20px ${colors.primary.blue[500]}44`;
+                    e.target.style.borderColor = `${colors.border.primary}CC`;
+                    e.target.style.boxShadow = `0 20px 25px -5px ${colors.primary.blue[400]}26, 0 10px 10px -5px ${colors.primary.blue[400]}1A`;
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.boxShadow = `0 4px 12px ${colors.primary.blue[500]}33`;
+                    e.target.style.borderColor = `${colors.border.primary}99`;
+                    e.target.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
                   }}
                 >
-                  <BookOpen className="w-4 h-4" />
-                  <span>View Project</span>
+                  <div className="mb-4">
+                    <h2 className="text-xl font-bold mb-3 leading-tight">
+                      <span 
+                        className="bg-clip-text text-transparent"
+                        style={{
+                          background: colors.gradients.brand.primary,
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          overflowWrap: 'anywhere'
+                        }}
+                      >
+                        {project.title}
+                      </span>
+                    </h2>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div
+                        className="flex items-center gap-1 px-3 py-1 rounded-full border text-xs font-medium"
+                        style={getStatusBadgeColor()}
+                      >
+                        <Clock className="w-3 h-3" />
+                        <span>{new Date(project.createdAt).toDateString()}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-sm leading-relaxed mb-4 line-clamp-3" style={{ color: colors.text.secondary }}>
+                    {project.description}
+                  </p>
+
+                  {project.tags?.length > 0 && (
+                    <div className="mb-4">
+                      <div className="flex items-center gap-1 mb-2">
+                        <Tag className="w-4 h-4" style={{ color: colors.primary.blue[500] }} />
+                        <span className="text-xs font-medium" style={{ color: colors.text.muted }}>Tags</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {project.tags.slice(0, 3).map((tag, idx) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-1 text-xs rounded-md border transition-all duration-200 shadow-sm"
+                            style={{
+                              backgroundColor: colors.surface.secondary,
+                              color: colors.text.secondary,
+                              borderColor: colors.border.primary
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.backgroundColor = `${colors.primary.blue[100]}`;
+                              e.target.style.borderColor = `${colors.primary.blue[300]}`;
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.backgroundColor = colors.surface.secondary;
+                              e.target.style.borderColor = colors.border.primary;
+                            }}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                        {project.tags.length > 3 && (
+                          <span 
+                            className="px-2 py-1 text-xs rounded-md border shadow-sm"
+                            style={{
+                              backgroundColor: colors.surface.secondary,
+                              color: colors.text.muted,
+                              borderColor: colors.border.primary
+                            }}
+                          >
+                            +{project.tags.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {project.creator?.name && (
+                    <div className="mb-6">
+                      <div className="flex items-center gap-1 mb-2">
+                        <Users className="w-4 h-4" style={{ color: colors.primary.purple[500] }} />
+                        <span className="text-xs font-medium" style={{ color: colors.text.muted }}>Created by</span>
+                      </div>
+                      <div className="text-sm" style={{ color: colors.text.secondary }}>{project.creator.name}</div>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3">
+                    {project.link && (
+                      <button
+                        onClick={() => {
+                          const url = project.link.startsWith('http') ? project.link : `https://${project.link}`;
+                          window.open(url, '_blank', 'noopener,noreferrer');
+                        }}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-200 text-sm font-medium"
+                        style={{
+                          background: colors.gradients.brand.primary,
+                          color: colors.text.primary,
+                          boxShadow: `0 4px 12px ${colors.primary.blue[500]}33`
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.boxShadow = `0 6px 20px ${colors.primary.blue[500]}44`;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.boxShadow = `0 4px 12px ${colors.primary.blue[500]}33`;
+                        }}
+                      >
+                        <BookOpen className="w-4 h-4" />
+                        <span>Project Link</span>
+                      </button>
+                    )}
+                    {project.thesisDraft && (project.thesisDraft.pdfUrl || project.thesisDraft.externalLink) && (
+                      <button
+                        onClick={() => handleThesisClick(project.thesisDraft)}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-200 text-sm font-medium"
+                        style={{
+                          background: colors.gradients.brand.secondary || colors.gradients.brand.primary,
+                          color: colors.text.primary,
+                          boxShadow: `0 4px 12px ${colors.primary.blue[500]}33`
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.boxShadow = `0 6px 20px ${colors.primary.blue[500]}44`;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.boxShadow = `0 4px 12px ${colors.primary.blue[500]}33`;
+                        }}
+                      >
+                        <Download className="w-4 h-4" />
+                        <span style={{ color: colors.text.primary }}>View Project Report</span>
+                      </button>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-8">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="flex items-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 shadow-sm disabled:opacity-50"
+                  style={{
+                    backgroundColor: currentPage === 1 ? colors.background.glass : colors.button.primary.background,
+                    color: colors.button.primary.text,
+                    border: `1px solid ${colors.border.primary}`
+                  }}
+                  onMouseEnter={(e) => {
+                    if (currentPage !== 1) {
+                      e.target.style.backgroundColor = colors.button.primary.backgroundHover;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (currentPage !== 1) {
+                      e.target.style.backgroundColor = colors.button.primary.background;
+                    }
+                  }}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Previous</span>
                 </button>
-              </article>
-            ))}
-          </div>
+
+                {/* Page Numbers */}
+                <div className="flex gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className="px-3 py-2 rounded-lg transition-all duration-200 shadow-sm"
+                      style={{
+                        backgroundColor: currentPage === page ? colors.primary.blue[500] : colors.background.card,
+                        color: currentPage === page ? colors.button.primary.text : colors.text.secondary,
+                        border: `1px solid ${colors.border.primary}`
+                      }}
+                      onMouseEnter={(e) => {
+                        if (currentPage !== page) {
+                          e.target.style.backgroundColor = colors.surface.muted;
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (currentPage !== page) {
+                          e.target.style.backgroundColor = colors.background.card;
+                        }
+                      }}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="flex items-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 shadow-sm disabled:opacity-50"
+                  style={{
+                    backgroundColor: currentPage === totalPages ? colors.background.glass : colors.button.primary.background,
+                    color: colors.button.primary.text,
+                    border: `1px solid ${colors.border.primary}`
+                  }}
+                  onMouseEnter={(e) => {
+                    if (currentPage !== totalPages) {
+                      e.target.style.backgroundColor = colors.button.primary.backgroundHover;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (currentPage !== totalPages) {
+                      e.target.style.backgroundColor = colors.button.primary.background;
+                    }
+                  }}
+                >
+                  <span>Next</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

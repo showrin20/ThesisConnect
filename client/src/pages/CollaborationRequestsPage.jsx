@@ -7,6 +7,8 @@ import Sidebar from "../components/DashboardSidebar";
 import Topbar from "../components/DashboardTopbar";
 import ConfirmModal from "../components/ConfirmModal";
 import CollaboratorsCard from "../components/CollaboratorsCard";
+import CollaborationResponseModal from "../components/CollaborationResponseModal";
+import { Check, X, Trash2 } from "lucide-react";
 
 export default function CollaborationRequestsPage() {
   const { user: currentUser, logout } = useAuth();
@@ -25,6 +27,11 @@ export default function CollaborationRequestsPage() {
   const pageSize = 5;
 
   const [confirmData, setConfirmData] = useState({ open: false, id: null, type: null });
+  const [responseModal, setResponseModal] = useState({ 
+    open: false, 
+    request: null 
+  });
+  const [responding, setResponding] = useState(false);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -53,6 +60,31 @@ export default function CollaborationRequestsPage() {
       }
     } catch (err) {
       console.error("Error deletling request:", err);
+    }
+  };
+
+  const handleResponseClick = (request) => {
+    setResponseModal({ open: true, request });
+  };
+
+  const handleRespond = async (status, responseMessage) => {
+    try {
+      setResponding(true);
+      await axios.put(`/collaborations/respond/${responseModal.request._id}`, {
+        status,
+        responseMessage
+      });
+      
+      // Remove the request from received list
+      setReceivedRequests((prev) => 
+        prev.filter((req) => req._id !== responseModal.request._id)
+      );
+      
+      setResponseModal({ open: false, request: null });
+    } catch (err) {
+      console.error("Error responding to request:", err);
+    } finally {
+      setResponding(false);
     }
   };
 
@@ -91,6 +123,13 @@ export default function CollaborationRequestsPage() {
         title="Confirm Deletion"
         message="Are you sure you want to delete this request?"
         colors={colors}
+      />
+      <CollaborationResponseModal
+        isOpen={responseModal.open}
+        onClose={() => setResponseModal({ open: false, request: null })}
+        request={responseModal.request}
+        onRespond={handleRespond}
+        loading={responding}
       />
 
       <div className="flex-1 flex flex-col">
@@ -143,11 +182,12 @@ export default function CollaborationRequestsPage() {
                             student={{ ...req.requester, profileImage: null }}
                             showProjects={true}
                             showPublications={false}
+                            
                             compact={true}
                           />
 
                           {/* Message & Actions */}
-                          <div className="flex justify-between items-center">
+                          <div className="flex flex-col gap-3">
                             <div>
                               <p style={{ color: colors.text.secondary }}>
                                 <strong>Message:</strong> {req.message}
@@ -156,23 +196,53 @@ export default function CollaborationRequestsPage() {
                                 <strong>Status:</strong> {req.status}
                               </p>
                             </div>
-                            <button
-                              onClick={() => handleDeleteClick(req._id, "received")}
-                              style={{
-                                backgroundColor: colors.error?.main || "red",
-                                color: "white",
-                                padding: "4px 8px",
-                                borderRadius: "6px",
-                              }}
-                            >
-                              Delete
-                            </button>
+                            
+                            {/* Action buttons based on status */}
+                            <div className="flex items-center justify-between">
+                              {req.status === 'pending' ? (
+                                <button
+                                  onClick={() => handleResponseClick(req)}
+                                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium transition-colors"
+                                  style={{
+                                    backgroundColor: colors.primary?.blue?.[900] || '#3b82f6'
+                                  }}
+                                >
+                                  <Check size={16} />
+                                  Respond
+                                </button>
+                              ) : (
+                                <div 
+                                  className="px-4 py-2 rounded-lg text-sm font-medium"
+                                  style={{
+                                    backgroundColor: req.status === 'accepted' 
+                                      ? `${colors.accent?.green?.[500] || '#22c55e'}20`
+                                      : `${colors.accent?.red?.[500] || '#ef4444'}20`,
+                                    color: req.status === 'accepted'
+                                      ? colors.accent?.green?.[500] || '#22c55e'
+                                      : colors.accent?.red?.[500] || '#ef4444'
+                                  }}
+                                >
+                                  {req.status === 'accepted' ? '✅ Accepted' : '❌ Declined'}
+                                </div>
+                              )}
+                              
+                              <button
+                                onClick={() => handleDeleteClick(req._id, "received")}
+                                className="p-2 rounded-lg transition-colors hover:bg-red-100"
+                                style={{
+                                  color: colors.error?.main || "red"
+                                }}
+                                title="Delete request"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
                           </div>
                         </li>
                       ))}
-                    </ul>
-
-                    {/* Pagination controls */}
+                    </ul>             
+                    
+                           {/* Pagination controls */}
                     <div className="flex justify-between mt-4">
                       <button
                         disabled={receivedPage === 1}
@@ -236,25 +306,44 @@ export default function CollaborationRequestsPage() {
                           />
 
                           {/* Message & Actions */}
-                          <div className="flex justify-between items-center">
-                            <div>
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
                               <p style={{ color: colors.text.secondary }}>
-                                <strong>Message:</strong> {req.message}
+                                <strong>Your Message:</strong> {req.message}
                               </p>
                               <p style={{ color: colors.text.primary }}>
                                 <strong>Status:</strong> {req.status}
                               </p>
+                              {req.responseMessage && (
+                                <div 
+                                  className="mt-3 p-3 rounded-lg border"
+                                  style={{
+                                    backgroundColor: req.status === 'accepted' 
+                                      ? `${colors.accent?.green?.[500] || '#22c55e'}10`
+                                      : `${colors.accent?.red?.[500] || '#ef4444'}10`,
+                                    borderColor: req.status === 'accepted'
+                                      ? `${colors.accent?.green?.[500] || '#22c55e'}30`
+                                      : `${colors.accent?.red?.[500] || '#ef4444'}30`
+                                  }}
+                                >
+                                  <p className="text-sm font-medium mb-1" style={{ color: colors.text.primary }}>
+                                    {req.status === 'accepted' ? '✅ Accepted' : '❌ Declined'} - Response:
+                                  </p>
+                                  <p className="text-sm" style={{ color: colors.text.secondary }}>
+                                    "{req.responseMessage}"
+                                  </p>
+                                </div>
+                              )}
                             </div>
                             <button
                               onClick={() => handleDeleteClick(req._id, "sent")}
+                              className="p-2 rounded-lg transition-colors hover:bg-red-100 ml-4"
                               style={{
-                                backgroundColor: colors.error?.main || "red",
-                                color: "white",
-                                padding: "4px 8px",
-                                borderRadius: "6px",
+                                color: colors.error?.main || "red"
                               }}
+                              title="Delete request"
                             >
-                              Delete
+                              <Trash2 size={16} />
                             </button>
                           </div>
                         </li>

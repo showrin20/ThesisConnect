@@ -364,7 +364,7 @@ export default function MyPublications() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {publications.map((pub) => (
                     <div key={pub._id} className="relative group p-4 rounded-xl shadow-md hover:shadow-lg transition-all duration-200" style={getCardStyles()}>
-                      <h3 className="text-lg font-semibold mb-1" style={{ color: colors.text.primary }}>{pub.title}</h3>
+                      <h3 className="text-lg font-semibold mb-1" style={{ color: colors.text.primary,overflowWrap: 'anywhere' }}>{pub.title}</h3>
                       <p className="text-sm mb-1" style={{ color: colors.text.secondary }}>{pub.authors.join(', ')}</p>
                       <p className="text-sm italic" style={{ color: colors.text.muted }}>{pub.journal} • {pub.year}</p>
                       {pub.doi && (

@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { auth } = require('../middlewares/auth');
+const { body, validationResult, query } = require('express-validator');
 const CommunityPostService = require('../services/communityPostService');
 const Project = require('../models/Project');
-const { body, validationResult, query } = require('express-validator');
+const { auth } = require('../middlewares/auth');
 
 // ===== VALIDATION MIDDLEWARE =====
 const validateCreatePost = [
@@ -32,12 +32,10 @@ const validatePagination = [
   query('type').optional().isIn(['collab', 'general']),
 ];
 
-// ===== HELPER: VALIDATION ERRORS =====
+// ===== VALIDATION ERROR HANDLER =====
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ success: false, errors: errors.array() });
-  }
+  if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
   next();
 };
 
@@ -76,10 +74,9 @@ router.post('/', auth, validateCreatePost, handleValidationErrors, async (req, r
       postId: `post_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     };
 
-    // Safe project ownership check
     if (postData.projectId) {
       const project = await Project.findById(postData.projectId);
-      if (!project || !project.creator || String(project.creator) !== String(req.user.id)) {
+      if (!project || String(project.creator) !== String(req.user.id)) {
         return res.status(400).json({ success: false, message: 'Invalid project selected.' });
       }
     }
@@ -122,29 +119,39 @@ router.put('/:postId', auth, validateUpdatePost, handleValidationErrors, async (
   try {
     if (req.body.projectId) {
       const project = await Project.findById(req.body.projectId);
-      if (!project || !project.creator || String(project.creator) !== String(req.user.id)) {
+      if (!project || String(project.creator) !== String(req.user.id)) {
         return res.status(400).json({ success: false, message: 'Invalid project selected.' });
       }
     }
 
-    const updatedPost = await CommunityPostService.updatePost(req.params.postId, req.body, req.user.id);
+    const updatedPost = await CommunityPostService.updatePost(
+      req.params.postId,
+      req.body,
+      req.user.id,
+      req.user.role
+    );
+
     res.json({ success: true, data: updatedPost });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(403).json({ success: false, message: err.message });
   }
 });
 
 // DELETE: Delete post
 router.delete('/:postId', auth, async (req, res) => {
   try {
-    const result = await CommunityPostService.deletePost(req.params.postId, req.user.id);
+    const result = await CommunityPostService.deletePost(
+      req.params.postId,
+      req.user.id,
+      req.user.role
+    );
     res.json({ success: true, message: result.message });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(403).json({ success: false, message: err.message });
   }
 });
 
-// POST: Toggle like/unlike
+// POST: Toggle like/unlike post
 router.post('/:postId/like', auth, async (req, res) => {
   try {
     const post = await CommunityPostService.toggleLike(req.params.postId, req.user.id);
@@ -154,23 +161,29 @@ router.post('/:postId/like', auth, async (req, res) => {
   }
 });
 
-// POST: Add comment to post
+// POST: Add comment
 router.post('/:postId/comments', auth, [
   body('text').trim().isLength({ min: 1, max: 500 }).withMessage('Comment text is required and must be under 500 characters'),
 ], handleValidationErrors, async (req, res) => {
   try {
     const commentData = {
       text: req.body.text,
-      commentId: req.body.commentId
+      commentId: req.body.commentId || `cmt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     };
-    const post = await CommunityPostService.addComment(req.params.postId, commentData, req.user.id, req.user.name);
+    const post = await CommunityPostService.addComment(
+      req.params.postId,
+      commentData,
+      req.user.id,
+      req.user.name || 'Anonymous',
+      req.user.role
+    );
     res.status(201).json({ success: true, data: post });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
 
-// GET: Get comments for a post
+// GET: Get comments
 router.get('/:postId/comments', async (req, res) => {
   try {
     const comments = await CommunityPostService.getComments(req.params.postId);
@@ -180,23 +193,32 @@ router.get('/:postId/comments', async (req, res) => {
   }
 });
 
-// POST: Like/unlike a comment
+// POST: Like/unlike comment
 router.post('/:postId/comments/:commentId/like', auth, async (req, res) => {
   try {
-    const post = await CommunityPostService.toggleCommentLike(req.params.postId, req.params.commentId, req.user.id);
+    const post = await CommunityPostService.toggleCommentLike(
+      req.params.postId,
+      req.params.commentId,
+      req.user.id
+    );
     res.json({ success: true, data: post });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
 
-// DELETE: Delete a comment
+// DELETE: Delete comment
 router.delete('/:postId/comments/:commentId', auth, async (req, res) => {
   try {
-    const post = await CommunityPostService.deleteComment(req.params.postId, req.params.commentId, req.user.id);
+    const post = await CommunityPostService.deleteComment(
+      req.params.postId,
+      req.params.commentId,
+      req.user.id,
+      req.user.role
+    );
     res.json({ success: true, data: post });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(403).json({ success: false, message: err.message });
   }
 });
 

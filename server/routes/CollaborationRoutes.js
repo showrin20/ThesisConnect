@@ -209,7 +209,7 @@ router.get('/requests', auth, async (req, res) => {
 router.put('/respond/:collaborationId', auth, async (req, res) => {
   try {
     const { collaborationId } = req.params;
-    const { status } = req.body; // 'accepted' or 'declined'
+    const { status, responseMessage } = req.body; // 'accepted' or 'declined' with optional responseMessage
     
     if (!['accepted', 'declined'].includes(status)) {
       return res.status(400).json({ 
@@ -243,8 +243,9 @@ router.put('/respond/:collaborationId', auth, async (req, res) => {
       });
     }
 
-    // Update collaboration status
+    // Update collaboration status and response message
     collaboration.status = status;
+    collaboration.responseMessage = responseMessage || null;
     collaboration.respondedAt = new Date();
     await collaboration.save();
 
@@ -292,13 +293,13 @@ router.delete('/cancel/:collaborationId', auth, async (req, res) => {
       });
     }
 
-    // Only allow deletion of pending requests
-    if (collaboration.status !== 'pending') {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Can only delete pending requests' 
-      });
-    }
+    // // Only allow deletion of pending requests
+    // if (collaboration.status !== 'pending' && ) {
+    //   return res.status(400).json({ 
+    //     success: false, 
+    //     message: 'Can only delete pending requests' 
+    //   });
+    // }
 
     await Collaboration.findByIdAndDelete(collaborationId);
 

@@ -1,15 +1,10 @@
-import React from 'react';
-import { Calendar, Clock, User, Eye, Heart, MessageCircle, ExternalLink } from 'lucide-react';
+import React, { useState } from 'react';
+import { Calendar, Clock, User, Eye, Heart, MessageCircle } from 'lucide-react';
 import { colors } from '../styles/colors';
-
-
-
-
-
-
-
+import { useNavigate } from 'react-router-dom';
 
 const BlogCard = ({ 
+  _id, 
   title, 
   excerpt, 
   content,
@@ -24,6 +19,10 @@ const BlogCard = ({
   comments = 0,
   featuredImage
 }) => {
+  const navigate = useNavigate();
+  const [hovered, setHovered] = useState(false);
+  const [readMoreHover, setReadMoreHover] = useState(false);
+
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case 'published':
@@ -81,21 +80,28 @@ const BlogCard = ({
   };
 
   return (
-    <div className="relative group">
+    <div 
+      className="relative group"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        transform: hovered ? 'scale(1.02)' : 'scale(1)',
+        transition: 'transform 0.3s ease'
+      }}
+    >
       <div 
         className="absolute inset-0 rounded-xl blur-sm group-hover:blur-none transition-all duration-300"
         style={{
           background: `linear-gradient(to right, ${colors.primary.purple[600]}1A, ${colors.primary.blue[600]}1A)`
         }}
       ></div>
+
       <div 
-        className="relative backdrop-blur-lg rounded-xl p-6 border hover:scale-[1.02] transition-all duration-300"
+        className="relative backdrop-blur-lg rounded-xl p-6 border"
         style={{
           backgroundColor: colors.background.glass,
           borderColor: colors.border.secondary
         }}
-        onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.background.glass}CC`}
-        onMouseLeave={(e) => e.target.style.backgroundColor = colors.background.glass}
       >
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
@@ -222,14 +228,14 @@ const BlogCard = ({
 
         {/* Action Button */}
         <div className="mt-4 pt-4 border-t" style={{ borderColor: colors.border.light }}>
-          <button 
-            className="flex items-center gap-2 text-sm font-medium transition-colors group"
-            style={{ color: colors.primary.blue[400] }}
-            onMouseEnter={(e) => e.target.style.color = colors.primary.blue[300]}
-            onMouseLeave={(e) => e.target.style.color = colors.primary.blue[400]}
+          <button
+            className="flex items-center gap-2 text-sm font-medium transition-colors"
+            style={{ color: readMoreHover ? colors.primary.blue[300] : colors.primary.blue[400] }}
+            onClick={(e) => { e.stopPropagation(); navigate(`/blog/${_id}`); }}
+            onMouseEnter={() => setReadMoreHover(true)}
+            onMouseLeave={() => setReadMoreHover(false)}
           >
             <span>Read More</span>
-            <ExternalLink size={14} className="transition-transform group-hover:translate-x-1" />
           </button>
         </div>
       </div>

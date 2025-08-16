@@ -15,7 +15,7 @@ import {
 import { colors } from "../styles/colors";
 
 export default function BlogManagement() {
-  const { user, token } = useAuth();
+  const { user, logout, token } = useAuth();
   const { showAlert } = useAlert();
   const navigate = useNavigate();
 
@@ -23,6 +23,8 @@ export default function BlogManagement() {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  
 
   const [creatingBlog, setCreatingBlog] = useState(false);
   const [deletingBlog, setDeletingBlog] = useState(null);
@@ -45,7 +47,22 @@ export default function BlogManagement() {
   const indexOfFirstBlog = indexOfLastBlog - blogsPerPage;
   const currentBlogs = blogs.slice(indexOfFirstBlog, indexOfLastBlog);
 
-  const authHeader = { Authorization: `Bearer ${token}` };
+   const authHeader = { Authorization: `Bearer ${token}` };
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      showAlert("success", "Logged out successfully");
+    } catch {
+      showAlert("error", "Logout failed");
+    } finally {
+      navigate("/login");
+      setIsLoggingOut(false);
+    }
+  };
+
+
 
   useEffect(() => {
     fetchBlogs();
@@ -137,8 +154,12 @@ export default function BlogManagement() {
       <div className="relative flex h-screen">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <div className="flex-1 flex flex-col lg:ml-0">
-          <Topbar onMenuToggle={() => setSidebarOpen(!sidebarOpen)} user={user} />
-
+      <Topbar
+            onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
+            user={user}
+            onLogout={handleLogout}
+            isLoggingOut={isLoggingOut}
+          />
           <main className="flex-1 overflow-y-auto p-6">
             <div className="container mx-auto">
               {/* Header */}

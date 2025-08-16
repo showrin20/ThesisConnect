@@ -15,6 +15,10 @@ const collaborationSchema = new mongoose.Schema({
     type: String,
     default: 'Would like to collaborate with you!'
   },
+  responseMessage: {
+    type: String,
+    default: null
+  },
   status: {
     type: String,
     enum: ['pending', 'accepted', 'declined', 'cancelled'],
