@@ -2,20 +2,20 @@ import React, { useState, useEffect } from 'react';
 import axios from '../axios';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-import CollaboratorsCard from '../components/CollaboratorsCard';
+import CollaboratorsCard from '../components/CollaboratorsCard'; // Reused as MentorCard
 import Sidebar from '../components/DashboardSidebar';
 import Topbar from '../components/DashboardTopbar';
 import { useAlert } from '../context/AlertContext';
 import { useNavigate } from 'react-router-dom';
 import { Search, Loader2, Filter, Users } from 'lucide-react';
 
-const FindCollaborators = () => {
+const FindMentors = () => {
   const { colors } = useTheme();
   const { user: currentUser, logout } = useAuth();
   const { showError } = useAlert();
   const navigate = useNavigate();
 
-  const [collaborators, setCollaborators] = useState([]);
+  const [mentors, setMentors] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -48,15 +48,15 @@ const FindCollaborators = () => {
     }
   };
 
-  // Fetch collaborators
+  // Fetch mentors
   useEffect(() => {
-    fetchCollaborators();
+    fetchMentors();
   }, []);
 
-  const fetchCollaborators = async () => {
+  const fetchMentors = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('/users?role=student&limit=50');
+      const res = await axios.get('/users?role=mentor&limit=50');
       const data = res.data.data || res.data || [];
 
       const filteredList = data
@@ -64,7 +64,7 @@ const FindCollaborators = () => {
         .map(user => ({
           ...user,
           skills: user.skills || ['React', 'Node.js', 'Python', 'Machine Learning'],
-          bio: user.bio || 'Passionate about technology and research. Looking for collaboration opportunities.',
+          bio: user.bio || 'Experienced mentor passionate about guiding students in research and technology.',
           rating: user.rating || (4.0 + Math.random()).toFixed(1),
           reviewCount: user.reviewCount || Math.floor(Math.random() * 20) + 5,
           collaborations: user.collaborations || Math.floor(Math.random() * 10),
@@ -73,18 +73,18 @@ const FindCollaborators = () => {
           university: user.university || 'University'
         }));
 
-      setCollaborators(filteredList);
+      setMentors(filteredList);
       setFiltered(filteredList);
     } catch (error) {
-      console.error('Error fetching collaborators:', error);
+      console.error('Error fetching mentors:', error);
       try {
-        const fallbackRes = await axios.get('/users/students?limit=50');
+        const fallbackRes = await axios.get('/users/mentors?limit=50');
         const fallbackData = fallbackRes.data.data || fallbackRes.data || [];
-        setCollaborators(fallbackData);
+        setMentors(fallbackData);
         setFiltered(fallbackData);
       } catch (fallbackError) {
         console.error('Fallback request failed:', fallbackError);
-        showError && showError('Failed to load collaborators');
+        showError && showError('Failed to load mentors');
       }
     } finally {
       setLoading(false);
@@ -93,7 +93,7 @@ const FindCollaborators = () => {
 
   // Search and filter logic
   useEffect(() => {
-    let result = collaborators;
+    let result = mentors;
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
@@ -133,12 +133,12 @@ const FindCollaborators = () => {
 
     setFiltered(result);
     setCurrentPage(1); // reset to first page when filters/search change
-  }, [searchQuery, collaborators, filters]);
+  }, [searchQuery, mentors, filters]);
 
-  const handleRequestSent = (studentId) => {
-    setCollaborators(prev =>
+  const handleRequestSent = (mentorId) => {
+    setMentors(prev =>
       prev.map(user =>
-        user._id === studentId
+        user._id === mentorId
           ? { ...user, collaborationStatus: 'sent' }
           : user
       )
@@ -183,10 +183,10 @@ const FindCollaborators = () => {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
                 <div>
                   <h1 className="text-3xl font-bold mb-2" style={{ color: colors.text.primary }}>
-                    Find Collaborators
+                    Find Mentors
                   </h1>
                   <p style={{ color: colors.text.secondary }}>
-                    Connect with fellow students and researchers for your projects
+                    Connect with experienced mentors for guidance in your projects
                   </p>
                 </div>
                 <div
@@ -198,7 +198,7 @@ const FindCollaborators = () => {
                   }}
                 >
                   <Users size={16} className="inline mr-2" />
-                  {filtered.length} Students
+                  {filtered.length} Mentors
                 </div>
               </div>
 
@@ -345,9 +345,9 @@ const FindCollaborators = () => {
             {/* Results */}
             {!loading && (
               <p style={{ color: colors.text.secondary }} className="mb-6">
-                {filtered.length === collaborators.length
-                  ? `Showing all ${filtered.length} students`
-                  : `Showing ${filtered.length} of ${collaborators.length} students`}
+                {filtered.length === mentors.length
+                  ? `Showing all ${filtered.length} mentors`
+                  : `Showing ${filtered.length} of ${mentors.length} mentors`}
               </p>
             )}
 
@@ -358,15 +358,15 @@ const FindCollaborators = () => {
                   size={48}
                   style={{ color: colors.primary?.blue?.[500] || '#3b82f6' }}
                 />
-                <p style={{ color: colors.text.secondary }}>Loading collaborators...</p>
+                <p style={{ color: colors.text.secondary }}>Loading mentors...</p>
               </div>
             ) : paginatedData.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {paginatedData.map((student) => (
+                  {paginatedData.map((mentor) => (
                     <CollaboratorsCard
-                      key={student._id}
-                      student={student}
+                      key={mentor._id}
+                      student={mentor} // Reusing CollaboratorsCard, passing mentor as 'student' prop
                       showProjects={true}
                       showPublications={false}
                       compact={false}
@@ -405,7 +405,7 @@ const FindCollaborators = () => {
               >
                 <Users size={48} style={{ color: colors.text.secondary }} className="mx-auto mb-4" />
                 <h3 className="text-xl font-semibold mb-2" style={{ color: colors.text.primary }}>
-                  No collaborators found
+                  No mentors found
                 </h3>
                 <p style={{ color: colors.text.secondary }}>
                   Try adjusting your search criteria or filters
@@ -431,4 +431,4 @@ const FindCollaborators = () => {
   );
 };
 
-export default FindCollaborators;
+export default FindMentors;

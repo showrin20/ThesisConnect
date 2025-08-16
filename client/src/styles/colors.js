@@ -59,16 +59,19 @@ const lightColors = {
     }
   },
 
-  background: {
-    primary: '#F2F2F2',         // Soft off-white, easier than pure white
-    secondary: '#faf9f7',       // Warm cream tone
-    tertiary: '#f5f4f1',        // Gentle beige
-    dark: '#ebe8e3',           // Soft taupe for contrast elements
-    gray: {
-      700: '#4a5568',          // Softer dark gray
-      800: '#2d3748',
-      900: '#1a202c'
-    },
+background: {
+  primary: '#E6E4DF',   // Soft stone (main background, not white at all)
+  secondary: '#DCD9D3', // Warmer beige-gray (for sections/cards)
+  tertiary: '#D1CEC7',  // Slightly darker stone (panels, sidebars)
+  dark: '#B8B5AE',      // Muted taupe (contrasting elements)
+  gray: {
+    700: '#5C5B58',     // Text gray (softer than pure black)
+    800: '#3F3E3C',     // Strong headings
+    900: '#2A2927'      // Deep charcoal, not pure black
+  }
+    
+    
+    ,
     card: 'rgba(250, 249, 247, 0.98)',      // Warm card background
     glass: 'rgba(255, 255, 255, 0.6)',      // Light glass effect
     overlay: 'rgba(255, 255, 255, 0.45)'    // Light overlay effect

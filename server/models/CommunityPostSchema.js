@@ -27,7 +27,17 @@ const CommunityPostSchema = new mongoose.Schema({
   tags: { type: [String], default: [] },
 
   likes: { type: Number, default: 0 },
-  likedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+  likedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+
+  comments: [{
+    commentId: { type: String, required: true },
+    text: { type: String, required: true, maxLength: 500 },
+    authorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    authorName: { type: String, required: true },
+    likes: { type: Number, default: 0 },
+    likedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    createdAt: { type: Date, default: Date.now }
+  }]
 
 }, { timestamps: true });
 

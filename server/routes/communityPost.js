@@ -8,7 +8,7 @@ const { body, validationResult, query } = require('express-validator');
 // ===== VALIDATION MIDDLEWARE =====
 const validateCreatePost = [
   body('type').isIn(['collab', 'general']),
-  body('content').trim().isLength({ min: 1, max: 2000 }),
+  body('content').trim().isLength({ min: 1, max: 300 }),
   body('title').optional().trim().isLength({ min: 1, max: 200 }),
   body('skillsNeeded').optional().isArray(),
   body('status').optional().isIn(['open', 'closed', 'in-progress']),
@@ -18,7 +18,7 @@ const validateCreatePost = [
 
 const validateUpdatePost = [
   body('type').optional().isIn(['collab', 'general']),
-  body('content').optional().trim().isLength({ min: 1, max: 2000 }),
+  body('content').optional().trim().isLength({ min: 1, max: 300 }),
   body('title').optional().trim().isLength({ min: 1, max: 200 }),
   body('skillsNeeded').optional().isArray(),
   body('status').optional().isIn(['open', 'closed', 'in-progress']),
@@ -148,6 +148,52 @@ router.delete('/:postId', auth, async (req, res) => {
 router.post('/:postId/like', auth, async (req, res) => {
   try {
     const post = await CommunityPostService.toggleLike(req.params.postId, req.user.id);
+    res.json({ success: true, data: post });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST: Add comment to post
+router.post('/:postId/comments', auth, [
+  body('text').trim().isLength({ min: 1, max: 500 }).withMessage('Comment text is required and must be under 500 characters'),
+], handleValidationErrors, async (req, res) => {
+  try {
+    const commentData = {
+      text: req.body.text,
+      commentId: req.body.commentId
+    };
+    const post = await CommunityPostService.addComment(req.params.postId, commentData, req.user.id, req.user.name);
+    res.status(201).json({ success: true, data: post });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// GET: Get comments for a post
+router.get('/:postId/comments', async (req, res) => {
+  try {
+    const comments = await CommunityPostService.getComments(req.params.postId);
+    res.json({ success: true, data: comments });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST: Like/unlike a comment
+router.post('/:postId/comments/:commentId/like', auth, async (req, res) => {
+  try {
+    const post = await CommunityPostService.toggleCommentLike(req.params.postId, req.params.commentId, req.user.id);
+    res.json({ success: true, data: post });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// DELETE: Delete a comment
+router.delete('/:postId/comments/:commentId', auth, async (req, res) => {
+  try {
+    const post = await CommunityPostService.deleteComment(req.params.postId, req.params.commentId, req.user.id);
     res.json({ success: true, data: post });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

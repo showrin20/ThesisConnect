@@ -29,6 +29,10 @@ import UserManagement from './pages/UserManagement';
 import ProjectManagement from './pages/ProjectManagement';
 import PublicationManagement from './pages/PublicationManagement';
 import BlogManagement from './pages/BlogManagement';
+import CommunityFeed from './pages/CommunityFeed';
+import FindMentors from './pages/FindMentors'; 
+
+
 // Component to conditionally render navbar
 function AppContent() {
   const location = useLocation();
@@ -50,7 +54,12 @@ function AppContent() {
     '/user-management',
     '/project-management',
     '/publication-management',
-    '/blog-management'
+    '/blog-management',
+    '/community-feed',
+    '/find-mentors'
+
+  
+
 
   ].includes(location.pathname) || location.pathname.startsWith('/profile/'); // ✅ Added dynamic profile routes
 
@@ -173,7 +182,35 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+   <Route
+            path="/community-feed"
+            element={
+              <ProtectedRoute>
+                <CommunityFeed />
+              </ProtectedRoute>
+            }
+          />
+
+   <Route
+            path="/find-mentors"
+            element={
+              <ProtectedRoute>
+                <FindMentors />
+              </ProtectedRoute>
+            }
+          />
+
+
           <Route
+            path="/my-blogs"
+            element={
+              <ProtectedRoute>
+                <MyBlogs />
+              </ProtectedRoute>
+            }
+          />
+
+                 <Route
             path="/my-blogs"
             element={
               <ProtectedRoute>

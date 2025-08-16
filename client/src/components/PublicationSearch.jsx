@@ -57,7 +57,7 @@ const PublicationSearch = ({ onPublicationAdd }) => {
 //           newSet.delete(pub.id);
 //           return newSet;
 //         });
-//       }, 2000);
+//       }, 300);
       
 //     } catch (error) {
 //       console.error('Error adding publication:', error);

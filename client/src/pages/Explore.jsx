@@ -63,7 +63,7 @@ useEffect(() => {
   }, []);
 
 
-  const statuses = ['All', 'Personal']; // No actual status in response, use static filter or infer if needed
+  const statuses = ['All', 'Personal']; 
 
   const allKeywords = useMemo(
     () => [...new Set(projects.flatMap((p) => p.tags || []))].sort(),

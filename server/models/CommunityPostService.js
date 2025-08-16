@@ -101,21 +101,19 @@ class CommunityPostService {
     return { message: 'Community post deleted successfully' };
   }
 
-  // Toggle like/unlike
+  // Like only once per user
   static async toggleLike(postId, userId) {
     const post = await CommunityPost.findOne({ postId });
     if (!post) throw new Error('Post not found');
 
-    const index = post.likedBy.findIndex(id => id.toString() === userId);
-    if (index === -1) {
+    // If already liked, do nothing
+    const alreadyLiked = post.likedBy.some(id => id.toString() === userId);
+    if (!alreadyLiked) {
       post.likedBy.push(userId);
       post.likes += 1;
-    } else {
-      post.likedBy.splice(index, 1);
-      post.likes -= 1;
+      await post.save();
     }
-
-    await post.save();
+    // If already liked, do not unlike
     return post;
   }
 }

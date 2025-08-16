@@ -63,7 +63,6 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
       { icon: BookOpen, label: 'My Publications', path: '/my-publications' },
       { icon: FileText, label: 'My Blogs', path: '/my-blogs' },
       { icon: MessageSquare, label: 'My Community Posts', path: '/my-community-posts' },
-      { icon: Users, label: 'Find People', path: '/people' },
       { icon: Settings, label: 'Settings', path: '/settings' },
     ],
     mentor: [
@@ -101,13 +100,14 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
         color: colors.primary?.purple?.[500] || '#9333ea',
         description: 'Find research partners'
       },
-      { 
-        icon: MessageCircle, 
-        label: 'Messages', 
-        path: '/messages', 
+            { 
+        icon: TrendingUp, 
+        label: 'Community Feed', 
+        path: '/community-feed', 
         color: colors.accent?.green?.[500] || '#22c55e',
-        description: 'Chat with connections'
+        description: 'Student communications'
       },
+
       { 
         icon: UserCheck, 
         label: 'Requests', 
@@ -127,7 +127,7 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
       { 
         icon: TrendingUp, 
         label: 'Community Feed', 
-        path: '/community', 
+        path: '/community-feed', 
         color: colors.accent?.green?.[500] || '#22c55e',
         description: 'Student communications'
       },

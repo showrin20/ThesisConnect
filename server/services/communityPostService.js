@@ -65,6 +65,7 @@ class CommunityPostService {
     if (tags && tags.length > 0) query.tags = { $in: tags };
 
     const posts = await CommunityPost.find(query)
+      .populate('authorId', 'name email')
       .populate('projectId', 'title description')
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -93,6 +94,7 @@ class CommunityPostService {
     if (type) query.type = type;
 
     const posts = await CommunityPost.find(query)
+      .populate('authorId', 'name email')
       .populate('projectId', 'title description')
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -115,6 +117,7 @@ class CommunityPostService {
   // Get a single post by ID
   static async getPostById(postId) {
     const post = await CommunityPost.findOne({ postId })
+      .populate('authorId', 'name email')
       .populate('projectId', 'title description creator');
     
     if (!post) {
@@ -132,7 +135,7 @@ class CommunityPostService {
       throw new Error('Post not found');
     }
 
-    if (existingPost.authorId !== userId) {
+    if (existingPost.authorId.toString() !== userId) {
       throw new Error('Unauthorized: You can only update your own posts');
     }
 
@@ -155,7 +158,8 @@ class CommunityPostService {
       { postId },
       { ...updateData, updatedAt: new Date() },
       { new: true, runValidators: true }
-    ).populate('projectId', 'title description');
+    ).populate('authorId', 'name email')
+     .populate('projectId', 'title description');
 
     return updatedPost;
   }
@@ -168,7 +172,7 @@ class CommunityPostService {
       throw new Error('Post not found');
     }
 
-    if (existingPost.authorId !== userId) {
+    if (existingPost.authorId.toString() !== userId) {
       throw new Error('Unauthorized: You can only delete your own posts');
     }
 
@@ -205,12 +209,124 @@ class CommunityPostService {
       throw new Error('Post not found');
     }
 
-    // Simple like system - increment/decrement
-    // In a real system, you'd track who liked what
-    post.likes = Math.max(0, post.likes + 1);
+    // Check if user already liked the post
+    const userIndex = post.likedBy.findIndex(id => id.toString() === userId);
+    
+    if (userIndex > -1) {
+      // User already liked, so unlike
+      post.likedBy.splice(userIndex, 1);
+      post.likes = Math.max(0, post.likes - 1);
+    } else {
+      // User hasn't liked, so like
+      post.likedBy.push(userId);
+      post.likes = post.likes + 1;
+    }
+
+    await post.save();
+    
+    // Return populated post
+    return await CommunityPost.findOne({ postId })
+      .populate('authorId', 'name email')
+      .populate('projectId', 'title description');
+  }
+
+  // Add a comment to a post
+  static async addComment(postId, commentData, userId, userName) {
+    const post = await CommunityPost.findOne({ postId });
+    
+    if (!post) {
+      throw new Error('Post not found');
+    }
+
+    const comment = {
+      commentId: commentData.commentId || `comment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      text: commentData.text,
+      authorId: userId,
+      authorName: userName,
+      likes: 0,
+      likedBy: [],
+      createdAt: new Date()
+    };
+
+    post.comments.push(comment);
     await post.save();
 
-    return post;
+    // Return the updated post with populated fields
+    return await CommunityPost.findOne({ postId })
+      .populate('authorId', 'name email')
+      .populate('projectId', 'title description');
+  }
+
+  // Get comments for a post
+  static async getComments(postId) {
+    const post = await CommunityPost.findOne({ postId }).select('comments');
+    
+    if (!post) {
+      throw new Error('Post not found');
+    }
+
+    return post.comments || [];
+  }
+
+  // Like/unlike a comment
+  static async toggleCommentLike(postId, commentId, userId) {
+    const post = await CommunityPost.findOne({ postId });
+    
+    if (!post) {
+      throw new Error('Post not found');
+    }
+
+    const comment = post.comments.find(c => c.commentId === commentId);
+    if (!comment) {
+      throw new Error('Comment not found');
+    }
+
+    // Check if user already liked the comment
+    const userIndex = comment.likedBy.findIndex(id => id.toString() === userId);
+    
+    if (userIndex > -1) {
+      // User already liked, so unlike
+      comment.likedBy.splice(userIndex, 1);
+      comment.likes = Math.max(0, comment.likes - 1);
+    } else {
+      // User hasn't liked, so like
+      comment.likedBy.push(userId);
+      comment.likes = comment.likes + 1;
+    }
+
+    await post.save();
+    
+    // Return the updated post with populated fields
+    return await CommunityPost.findOne({ postId })
+      .populate('authorId', 'name email')
+      .populate('projectId', 'title description');
+  }
+
+  // Delete a comment
+  static async deleteComment(postId, commentId, userId) {
+    const post = await CommunityPost.findOne({ postId });
+    
+    if (!post) {
+      throw new Error('Post not found');
+    }
+
+    const commentIndex = post.comments.findIndex(c => c.commentId === commentId);
+    if (commentIndex === -1) {
+      throw new Error('Comment not found');
+    }
+
+    const comment = post.comments[commentIndex];
+    if (comment.authorId.toString() !== userId) {
+      throw new Error('Unauthorized: You can only delete your own comments');
+    }
+
+    post.comments.splice(commentIndex, 1);
+    await post.save();
+
+    // Return the updated post with populated fields
+    return await CommunityPost.findOne({ postId })
+      .populate('authorId', 'name email')
+      .populate('projectId', 'title description');
   }
 }
 

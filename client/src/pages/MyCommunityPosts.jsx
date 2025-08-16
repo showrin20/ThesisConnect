@@ -3,12 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from '../axios';
 import CommunityPostCard from '../components/CommunityPostCard';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { MessageSquare, Edit, Trash2 } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
 import statsService from '../services/statsService';
 import { colors } from '../styles/colors';
 import { getInputStyles, getButtonStyles, getStatusStyles, getCardStyles, getGradientTextStyles } from '../styles/styleUtils';
-
-// Import Dashboard components
 import Sidebar from '../components/DashboardSidebar';
 import Topbar from '../components/DashboardTopbar';
 
@@ -17,13 +16,15 @@ export default function MyCommunityPosts() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [editingPost, setEditingPost] = useState(null);
   const [deletingPost, setDeletingPost] = useState(null);
-  
+  const [userProjects, setUserProjects] = useState([]);
+  const [loadingProjects, setLoadingProjects] = useState(false);
+  const [success, setSuccess] = useState(false);
+
   // User statistics state
   const [userStats, setUserStats] = useState({
     projects: { total: 0, planned: 0, inProgress: 0, completed: 0 },
@@ -31,7 +32,20 @@ export default function MyCommunityPosts() {
     collaborators: { total: 0 }
   });
   const [loadingStats, setLoadingStats] = useState(false);
-  
+
+  // Form state
+  const [formData, setFormData] = useState({
+    postId: uuidv4(),
+    type: 'general',
+    authorId: user?.id || '',
+    projectId: '',
+    title: '',
+    content: '',
+    skillsNeeded: '',
+    status: 'open',
+    tags: '',
+  });
+
   // Fetch user statistics
   useEffect(() => {
     const fetchUserStats = async () => {
@@ -50,35 +64,44 @@ export default function MyCommunityPosts() {
     
     fetchUserStats();
   }, [user?.id]);
-  
-  const [formData, setFormData] = useState({
-    content: '',
-    type: 'general',
-    title: '',
-    skillsNeeded: '',
-    status: 'open',
-    tags: '',
-    projectId: ''
-  });
 
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    try {
-      await logout();
-      navigate('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
-      navigate('/login');
-    } finally {
-      setIsLoggingOut(false);
+  // Keep authorId updated when user changes
+  useEffect(() => {
+    if (user?.id) {
+      setFormData(prev => ({ ...prev, authorId: user.id }));
     }
-  };
+  }, [user]);
 
+  // Fetch user's projects for dropdown
+  useEffect(() => {
+    const fetchUserProjects = async () => {
+      if (!user?.id) return;
+
+      setLoadingProjects(true);
+      try {
+        const res = await axios.get('/projects/my-projects', {
+          headers: { 'x-auth-token': user.token }
+        });
+        setUserProjects(res.data?.data || []);
+      } catch (err) {
+        console.error('Error fetching projects:', err);
+        setUserProjects([]);
+      } finally {
+        setLoadingProjects(false);
+      }
+    };
+
+    fetchUserProjects();
+  }, [user]);
+
+  // Fetch posts
   const fetchMyPosts = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get('/community-posts/my-posts');
+      const res = await axios.get('/community-posts/my-posts', {
+        headers: { 'x-auth-token': user.token }
+      });
       setPosts(res.data?.data?.posts || []);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to load your community posts');
@@ -89,7 +112,7 @@ export default function MyCommunityPosts() {
 
   useEffect(() => {
     fetchMyPosts();
-  }, []);
+  }, [user]);
 
   // Handle escape key for modals
   useEffect(() => {
@@ -108,74 +131,88 @@ export default function MyCommunityPosts() {
   }, [deletingPost, editingPost]);
 
   const handleChange = (e) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const parseCSV = (str) =>
     str.split(',').map(s => s.trim()).filter(Boolean);
 
+  const isFormValid = () => {
+    if (!formData.content.trim()) return false;
+    if (formData.type === 'collab') {
+      return (
+        formData.title.trim() &&
+        formData.skillsNeeded.trim() &&
+        formData.status.trim()
+      );
+    }
+    return true;
+  };
+
   const handleUpdate = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccess(false);
+
     try {
       const payload = {
-        content: formData.content,
+        postId: editingPost.postId,
         type: formData.type,
-        tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean)
+        authorId: formData.authorId,
+        content: formData.content.trim(),
+        tags: parseCSV(formData.tags),
       };
 
-      // Add optional project ID if provided
-      if (formData.projectId.trim()) {
-        payload.projectId = formData.projectId;
-      }
-
-      // Add optional project ID if provided
       if (formData.projectId.trim()) {
         payload.projectId = formData.projectId;
       }
 
       if (formData.type === 'collab') {
-        payload.title = formData.title;
+        payload.title = formData.title.trim();
         payload.skillsNeeded = parseCSV(formData.skillsNeeded);
         payload.status = formData.status;
       }
 
       const res = await axios.put(`/community-posts/${editingPost.postId}`, payload, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Content-Type': 'application/json',
+          'x-auth-token': user.token
         }
       });
-      console.log('Updated:', res.data);
 
+      setSuccess(true);
       setEditingPost(null);
       setFormData({ 
-        content: '', 
-        type: 'general', 
-        title: '', 
-        skillsNeeded: '', 
+        postId: uuidv4(),
+        type: 'general',
+        authorId: user?.id || '',
+        projectId: '',
+        title: '',
+        content: '',
+        skillsNeeded: '',
         status: 'open',
         tags: '',
-        projectId: ''
       });
       fetchMyPosts();
+      setTimeout(() => setSuccess(false), 300);
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to update post');
+      setError(err.response?.data?.error || 'Failed to update post');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDelete = async (postId) => {
     try {
       await axios.delete(`/community-posts/${postId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+        headers: { 'x-auth-token': user.token }
       });
       setDeletingPost(null);
       fetchMyPosts();
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to delete post');
+      setError(err.response?.data?.error || 'Failed to delete post');
     }
   };
 
@@ -190,13 +227,15 @@ export default function MyCommunityPosts() {
   const startEditing = (post) => {
     setEditingPost(post);
     setFormData({
-      content: post.content || '',
+      postId: post.postId,
       type: post.type || 'general',
+      authorId: post.authorId || user?.id || '',
+      projectId: post.projectId || '',
       title: post.title || '',
+      content: post.content || '',
       skillsNeeded: (post.skillsNeeded || []).join(', '),
       status: post.status || 'open',
       tags: (post.tags || []).join(', '),
-      projectId: post.projectId || ''
     });
   };
 
@@ -204,14 +243,29 @@ export default function MyCommunityPosts() {
     setEditingPost(null);
     setDeletingPost(null);
     setFormData({ 
-      content: '', 
-      type: 'general', 
-      title: '', 
-      skillsNeeded: '', 
+      postId: uuidv4(),
+      type: 'general',
+      authorId: user?.id || '',
+      projectId: '',
+      title: '',
+      content: '',
+      skillsNeeded: '',
       status: 'open',
       tags: '',
-      projectId: ''
     });
+  };
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      navigate('/login');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -222,20 +276,14 @@ export default function MyCommunityPosts() {
       </div>
 
       <div className="relative flex h-screen">
-        {/* Sidebar */}
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} projects={[]} userStats={userStats} />
-
-        {/* Main Content */}
         <div className="flex-1 flex flex-col lg:ml-0">
-          {/* Topbar */}
           <Topbar 
             onMenuToggle={() => setSidebarOpen(!sidebarOpen)} 
             user={user}
             onLogout={handleLogout}
             isLoggingOut={isLoggingOut}
           />
-
-          {/* MyCommunityPosts Content */}
           <main className="flex-1 overflow-y-auto p-6">
             <div className="container mx-auto">
               <h1 className="text-4xl font-bold mb-8 text-center">
@@ -243,6 +291,17 @@ export default function MyCommunityPosts() {
                   My Community Posts
                 </span>
               </h1>
+
+              {error && (
+                <div className="rounded-lg p-4 max-w-2xl mx-auto mb-6" style={getStatusStyles('error')}>
+                  <p className="text-sm">{error}</p>
+                </div>
+              )}
+              {success && (
+                <div className="rounded-lg p-4 max-w-2xl mx-auto mb-6" style={getStatusStyles('success')}>
+                  <p className="text-sm font-medium">Post updated successfully!</p>
+                </div>
+              )}
 
               {editingPost && (
                 <form onSubmit={handleUpdate} className="max-w-2xl mx-auto rounded-xl p-8 mb-8 shadow-lg" style={getCardStyles('glass')}>
@@ -255,114 +314,156 @@ export default function MyCommunityPosts() {
                     </button>
                   </div>
 
-                  <div className="space-y-4">
-                    <select 
-                      name="type" 
-                      value={formData.type} 
-                      onChange={handleChange} 
-                      className="w-full p-3 rounded-lg transition-all duration-200"
-                      style={getInputStyles()}
-                      onFocus={(e) => Object.assign(e.target.style, getInputStyles(true))}
-                      onBlur={(e) => Object.assign(e.target.style, getInputStyles(false))}
-                    >
-                      <option value="general">General</option>
-                      <option value="collab">Collaboration</option>
-                    </select>
-                    
-                    <textarea 
-                      name="content" 
-                      value={formData.content} 
-                      onChange={handleChange} 
-                      required 
-                      rows={4} 
-                      placeholder="Post content" 
-                      className="w-full p-3 rounded-lg transition-all duration-200"
-                      style={getInputStyles()}
-                      onFocus={(e) => Object.assign(e.target.style, getInputStyles(true))}
-                      onBlur={(e) => Object.assign(e.target.style, getInputStyles(false))}
-                    />
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>
+                        Post Type *
+                      </label>
+                      <select
+                        name="type"
+                        value={formData.type}
+                        onChange={handleChange}
+                        style={getInputStyles()}
+                        className="w-full p-3 rounded-lg"
+                      >
+                        <option value="general">General</option>
+                        <option value="collab">Collaboration</option>
+                      </select>
+                    </div>
 
-                    <input 
-                      type="text" 
-                      name="tags" 
-                      value={formData.tags} 
-                      onChange={handleChange} 
-                      placeholder="Tags (comma separated)" 
-                      className="w-full p-3 rounded-lg transition-all duration-200"
-                      style={getInputStyles()}
-                      onFocus={(e) => Object.assign(e.target.style, getInputStyles(true))}
-                      onBlur={(e) => Object.assign(e.target.style, getInputStyles(false))}
-                    />
+                    <div>
+                      <label className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>
+                        Content *
+                      </label>
+                      <textarea
+                        name="content"
+                        rows={5}
+                        value={formData.content}
+                        onChange={handleChange}
+                        placeholder="Share your thoughts or collaboration ideas..."
+                        style={getInputStyles()}
+                        className="w-full p-3 rounded-lg resize-none"
+                        required
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>
+                          Related Project
+                        </label>
+                        <select
+                          name="projectId"
+                          value={formData.projectId}
+                          onChange={handleChange}
+                          style={getInputStyles()}
+                          className="w-full p-3 rounded-lg"
+                        >
+                          <option value="">Select a project (optional)</option>
+                          {loadingProjects ? (
+                            <option disabled>Loading...</option>
+                          ) : (
+                            userProjects.map(project => (
+                              <option key={project._id} value={project._id}>{project.title}</option>
+                            ))
+                          )}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>
+                          Tags
+                        </label>
+                        <input
+                          name="tags"
+                          value={formData.tags}
+                          onChange={handleChange}
+                          placeholder="e.g., AI, Web Dev"
+                          style={getInputStyles()}
+                          className="w-full p-3 rounded-lg"
+                        />
+                      </div>
+                    </div>
 
                     {formData.type === 'collab' && (
-                      <>
-                        <input 
-                          type="text" 
-                          name="title" 
-                          value={formData.title} 
-                          onChange={handleChange} 
-                          required 
-                          placeholder="Collaboration title" 
-                          className="w-full p-3 rounded-lg transition-all duration-200"
-                          style={getInputStyles()}
-                          onFocus={(e) => Object.assign(e.target.style, getInputStyles(true))}
-                          onBlur={(e) => Object.assign(e.target.style, getInputStyles(false))}
-                        />
-                        <input 
-                          type="text" 
-                          name="skillsNeeded" 
-                          value={formData.skillsNeeded} 
-                          onChange={handleChange} 
-                          required 
-                          placeholder="Skills needed (comma separated)" 
-                          className="w-full p-3 rounded-lg transition-all duration-200"
-                          style={getInputStyles()}
-                          onFocus={(e) => Object.assign(e.target.style, getInputStyles(true))}
-                          onBlur={(e) => Object.assign(e.target.style, getInputStyles(false))}
-                        />
-                        <select 
-                          name="status" 
-                          value={formData.status} 
-                          onChange={handleChange} 
-                          required 
-                          className="w-full p-3 rounded-lg transition-all duration-200"
-                          style={getInputStyles()}
-                          onFocus={(e) => Object.assign(e.target.style, getInputStyles(true))}
-                          onBlur={(e) => Object.assign(e.target.style, getInputStyles(false))}
-                        >
-                          <option value="open">Open</option>
-                          <option value="in-progress">In Progress</option>
-                          <option value="closed">Closed</option>
-                        </select>
-                      </>
+                      <div className="border rounded-lg p-4" style={{ borderColor: colors.border.secondary }}>
+                        <h3 className="text-lg font-medium mb-4 flex items-center gap-2" style={{ color: colors.text.primary }}>
+                          <MessageSquare size={20} /> Collaboration Details
+                        </h3>
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>
+                              Title *
+                            </label>
+                            <input
+                              name="title"
+                              value={formData.title}
+                              onChange={handleChange}
+                              placeholder="Collaboration Title"
+                              style={getInputStyles()}
+                              className="w-full p-3 rounded-lg"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>
+                              Skills Needed (comma-separated) *
+                            </label>
+                            <input
+                              name="skillsNeeded"
+                              value={formData.skillsNeeded}
+                              onChange={handleChange}
+                              placeholder="e.g., JavaScript, UI/UX"
+                              style={getInputStyles()}
+                              className="w-full p-3 rounded-lg"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>
+                              Status *
+                            </label>
+                            <select
+                              name="status"
+                              value={formData.status}
+                              onChange={handleChange}
+                              style={getInputStyles()}
+                              className="w-full p-3 rounded-lg"
+                              required
+                            >
+                              <option value="open">Open</option>
+                              <option value="in-progress">In Progress</option>
+                              <option value="closed">Closed</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
                     )}
-                  </div>
 
-                  <div className="flex justify-between mt-6">
-                    <button 
-                      type="submit" 
-                      className="px-6 py-3 rounded-lg font-medium transition-all duration-200"
-                      style={getButtonStyles('primary')}
-                      onMouseEnter={(e) => Object.assign(e.target.style, getButtonStyles('primary'), { transform: 'scale(1.02)' })}
-                      onMouseLeave={(e) => Object.assign(e.target.style, getButtonStyles('primary'), { transform: 'scale(1)' })}
-                    >
-                      Update
-                    </button>
-                    <button 
-                      type="button" 
-                      onClick={cancelForm} 
-                      className="px-6 py-3 rounded-lg font-medium transition-all duration-200"
-                      style={getButtonStyles('outline')}
-                      onMouseEnter={(e) => Object.assign(e.target.style, getButtonStyles('outline'), { backgroundColor: colors.button.outline.backgroundHover })}
-                      onMouseLeave={(e) => Object.assign(e.target.style, getButtonStyles('outline'))}
-                    >
-                      Cancel
-                    </button>
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={cancelForm}
+                        style={getButtonStyles('secondary')}
+                        className="flex-1 py-3 px-6 rounded-lg font-medium"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={loading || !isFormValid()}
+                        style={loading || !isFormValid()
+                          ? getButtonStyles('primary', true)
+                          : getButtonStyles('primary')
+                        }
+                        className="flex-1 py-3 px-6 rounded-lg font-medium"
+                      >
+                        {loading ? 'Updating...' : 'Update Post'}
+                      </button>
+                    </div>
                   </div>
                 </form>
               )}
 
-              {/* Delete Confirmation Modal */}
               {deletingPost && (
                 <div 
                   className="fixed inset-0 z-50 flex items-center justify-center p-4" 
@@ -378,15 +479,12 @@ export default function MyCommunityPosts() {
                       <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4" style={{ backgroundColor: colors.status.error.background }}>
                         <Trash2 size={24} style={{ color: colors.status.error.text }} />
                       </div>
-                      
                       <h3 className="text-lg font-medium mb-2" style={{ color: colors.text.primary }}>
                         Delete Community Post
                       </h3>
-                      
                       <p className="text-sm mb-6" style={{ color: colors.text.secondary }}>
                         Are you sure you want to delete this post? This action cannot be undone.
                       </p>
-                      
                       <div className="flex gap-3 justify-center">
                         <button
                           onClick={cancelDelete}
@@ -430,7 +528,8 @@ export default function MyCommunityPosts() {
                         skillsNeeded={post.skillsNeeded}
                         status={post.status}
                         tags={post.tags}
-                        author={post.author?.name || post.authorId}
+                        projectId={post.projectId}
+                        author={post.authorId?.name || post.authorId}
                         createdAt={post.createdAt}
                       />
                       <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
