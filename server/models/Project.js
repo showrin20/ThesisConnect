@@ -42,7 +42,7 @@ const projectSchema = new mongoose.Schema({
           // ✅ Allow both full URLs and relative /uploads/ paths
           return (
             validator.isURL(value, { require_protocol: true }) ||
-            value.startsWith('/uploads/')
+            value.startsWith('/Uploads/')
           );
         },
         message: 'Invalid PDF URL or file path',
@@ -91,6 +91,7 @@ const projectSchema = new mongoose.Schema({
 
 // Indexes for performance
 projectSchema.index({ creator: 1 });
+projectSchema.index({ collaborators: 1 });
 projectSchema.index({ createdAt: -1 });
 
 // Custom validation: Ensure at least one of link, pdfUrl, or externalLink is provided

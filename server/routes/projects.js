@@ -12,7 +12,7 @@ const router = express.Router();
 //////////////////////////
 // 📁 FILE UPLOAD SETUP
 //////////////////////////
-const uploadsDir = path.join(__dirname, '../uploads');
+const uploadsDir = path.join(__dirname, '../Uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 const storage = multer.diskStorage({
@@ -88,7 +88,7 @@ router.post('/', auth, upload.single('thesisPdf'), async (req, res) => {
 
     let thesisDraftData = {};
     if (req.file) thesisDraftData = {
-      pdfUrl: `/uploads/${req.file.filename}`,
+      pdfUrl: `/Uploads/${req.file.filename}`,
       pdfFileName: req.file.originalname,
       pdfSize: req.file.size,
       description: parsedThesisDraft.description || '',
@@ -175,7 +175,12 @@ router.get('/', async (_req, res) => {
 //////////////////////////
 router.get('/my-projects', auth, async (req, res) => {
   try {
-    const projects = await Project.find({ creator: req.user.id })
+    const projects = await Project.find({
+      $or: [
+        { creator: req.user.id },
+        { collaborators: req.user.id }
+      ]
+    })
       .populate('creator', 'name email university')
       .sort({ createdAt: -1 });
     res.json({ success: true, count: projects.length, data: projects });
@@ -196,8 +201,14 @@ router.put('/:id', auth, async (req, res) => {
     const project = await Project.findById(projectId);
     if (!project) return res.status(404).json({ msg: 'Project not found' });
 
-    if (project.creator.toString() !== req.user.id && req.user.role !== "admin")
+    // Allow creator, collaborators, or admin to update
+    if (
+      project.creator.toString() !== req.user.id &&
+      !project.collaborators.includes(req.user.id) &&
+      req.user.role !== 'admin'
+    ) {
       return res.status(403).json({ msg: 'Unauthorized to update this project' });
+    }
 
     let { title, description, link, tags, status, collaborators } = req.body;
 
@@ -209,7 +220,7 @@ router.put('/:id', auth, async (req, res) => {
     if (title !== undefined) project.title = title;
     if (description !== undefined) project.description = description;
     if (link !== undefined) {
-      if (!isValidURL(link)) return res.status(400).json({ msg: 'Invalid project link URL' });
+      if (link && !isValidURL(link)) return res.status(400).json({ msg: 'Invalid project link URL' });
       project.link = link;
     }
     if (tags !== undefined) project.tags = Array.isArray(tags) ? tags : [];
@@ -261,8 +272,13 @@ router.delete('/:id', auth, async (req, res) => {
     const project = await Project.findById(projectId);
     if (!project) return res.status(404).json({ msg: 'Project not found' });
 
-    if (project.creator.toString() !== req.user.id && req.user.role !== "admin")
+    if (project.collaborators.includes(req.user.id)) {
+      return res.status(403).json({ msg: 'Collaborators cannot delete projects, only edit them' });
+    }
+
+    if (project.creator.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({ msg: 'Unauthorized to delete this project' });
+    }
 
     const deleteResult = await Project.deleteOne({ _id: projectId });
     if (deleteResult.deletedCount === 0) return res.status(500).json({ msg: 'Failed to delete project' });
