@@ -261,12 +261,19 @@ export default function AdminDashboard() {
         />
         
         <div className="flex-1 flex flex-col">
-          <DashboardTopbar 
-            user={user}
-            onLogout={logout}
-            isLoggingOut={isLoggingOut}
-            onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
-          />
+  <DashboardTopbar
+  user={user}
+  onLogout={logout}
+  isLoggingOut={isLoggingOut}
+  onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
+  notificationData={{
+    systemEvents: dashboardData.systemEvents,
+    formatTimeAgo,
+    getEventIcon,
+    getEventColor,
+    colors,
+  }}
+/>
           
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
