@@ -310,23 +310,31 @@ export default function AdminDashboard() {
                     System Administration & Platform Management
                   </p>
                 </div>
-                <div className="flex items-center space-x-4">
-                  <AdminNotifications />
-                  <div className="text-right">
-                    <p className="text-sm" style={{ color: colors.text?.secondary }}>
-                      Last updated: {new Date().toLocaleTimeString()}
-                    </p>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <div 
-                        className="w-2 h-2 rounded-full animate-pulse"
-                        style={{ backgroundColor: colors.accent?.green?.[500] }}
-                      ></div>
-                      <span className="text-xs" style={{ color: colors.accent?.green?.[500] }}>
-                        System Online
-                      </span>
-                    </div>
-                  </div>
-                </div>
+              <div className="flex items-center space-x-4">
+  <AdminNotifications 
+    systemEvents={dashboardData.systemEvents}
+    formatTimeAgo={formatTimeAgo}
+    getEventIcon={getEventIcon}
+    getEventColor={getEventColor}
+    colors={colors}
+  />
+  <div className="text-right">
+    <p className="text-sm" style={{ color: colors.text?.secondary }}>
+      Last updated: {new Date().toLocaleTimeString()}
+    </p>
+    <div className="flex items-center space-x-2 mt-1">
+      <div 
+        className="w-2 h-2 rounded-full animate-pulse"
+        style={{ backgroundColor: colors.accent?.green?.[500] }}
+      ></div>
+      <span className="text-xs" style={{ color: colors.accent?.green?.[500] }}>
+        System Online
+      </span>
+    </div>
+  </div>
+</div>
+              
+              
               </div>
             </div>
 
