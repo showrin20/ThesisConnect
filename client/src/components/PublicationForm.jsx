@@ -492,30 +492,32 @@ export default function PublicationForm({ onPublicationCreated }) {
             }
             className="flex-1 py-3 px-6 rounded-lg font-medium transition-all duration-200"
             style={{
-              backgroundColor: loading ||
-              !formData.title.trim() ||
-              !formData.authors.trim() ||
-              !formData.year.trim() ||
-              !formData.venue.trim() ||
-              !formData.type.trim()
-                ? colors.button.disabled.background
-                : colors.button.primary.background,
-              color: loading ||
-              !formData.title.trim() ||
-              !formData.authors.trim() ||
-              !formData.year.trim() ||
-              !formData.venue.trim() ||
-              !formData.type.trim()
-                ? colors.button.disabled.text
-                : colors.button.primary.text,
-              cursor: loading ||
-              !formData.title.trim() ||
-              !formData.authors.trim() ||
-              !formData.year.trim() ||
-              !formData.venue.trim() ||
-              !formData.type.trim()
-                ? 'not-allowed'
-                : 'pointer'
+              // backgroundColor: loading ||
+              // !formData.title.trim() ||
+              // !formData.authors.trim() ||
+              // !formData.year.trim() ||
+              // !formData.venue.trim() ||
+              // !formData.type.trim()
+              //   ? colors.button.disabled.background
+              //   : colors.button.primary.background,
+              // color: loading ||
+              // !formData.title.trim() ||
+              // !formData.authors.trim() ||
+              // !formData.year.trim() ||
+              // !formData.venue.trim() ||
+              // !formData.type.trim()
+              //   ? colors.button.disabled.text
+              //   : colors.button.primary.text,
+              // cursor: loading ||
+              // !formData.title.trim() ||
+              // !formData.authors.trim() ||
+              // !formData.year.trim() ||
+              // !formData.venue.trim() ||
+              // !formData.type.trim()
+              //   ? 'not-allowed'
+              //   : 'pointer'
+              backgroundColor: colors.background.primary,
+              color: colors.text.primary,
             }}
             onMouseEnter={(e) => {
               if (!e.target.disabled) {
@@ -536,7 +538,8 @@ export default function PublicationForm({ onPublicationCreated }) {
                   className="w-4 h-4 border-2 rounded-full animate-spin"
                   style={{
                     borderColor: `${colors.button.primary.text}4D`,
-                    borderTopColor: colors.button.primary.text
+                    borderTopColor: colors.button.primary.text,
+
                   }}
                 ></div>
                 Adding Publication...

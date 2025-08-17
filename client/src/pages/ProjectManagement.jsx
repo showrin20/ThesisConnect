@@ -12,7 +12,7 @@ import {
 import { useAlert } from "../context/AlertContext";
 import Sidebar from "../components/DashboardSidebar";
 import Topbar from "../components/DashboardTopbar";
-import ProjectForm from "../components/ProjectForm"; // Import the ProjectForm component
+import ProjectForm from "../components/ProjectForm";
 
 export default function ProjectManagement() {
   const { user, logout, token } = useAuth();
@@ -96,6 +96,24 @@ export default function ProjectManagement() {
     fetchProjects();
   };
 
+  // Helper function to render collaborators
+  const renderCollaborators = (collaborators) => {
+    if (!collaborators || collaborators.length === 0) {
+      return "No collaborators";
+    }
+    if (Array.isArray(collaborators)) {
+      return collaborators
+        .map((collaborator, index) =>
+          typeof collaborator === "object" && collaborator?.name
+            ? collaborator.name
+            : collaborator
+        )
+        .filter((name) => name)
+        .join(", ") || "No collaborators";
+    }
+    return collaborators;
+  };
+
   return (
     <div className="min-h-screen" style={{ background: colors.background.radial }}>
       <div className="absolute inset-0" style={{ opacity: 0.3, pointerEvents: "none" }}>
@@ -107,7 +125,7 @@ export default function ProjectManagement() {
         <div className="flex-1 flex flex-col lg:ml-0">
           <Topbar
             onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
-            user={user}
+            user={user || {}} // Pass empty object as fallback to avoid undefined
             onLogout={handleLogout}
             isLoggingOut={isLoggingOut}
           />
@@ -164,7 +182,7 @@ export default function ProjectManagement() {
                       Delete Project
                     </h3>
                     <p style={{ color: colors.text.secondary }}>
-                      Are you sure you want to delete <strong>{deletingProject.title}</strong>?
+                      Are you sure you want to delete <strong>{deletingProject.title || "this project"}</strong>?
                     </p>
                     <div className="flex justify-center gap-3">
                       <button
@@ -213,7 +231,7 @@ export default function ProjectManagement() {
                           <tr key={p._id} style={{ borderBottom: `1px solid ${colors.border.muted}` }}>
                             <td className="px-6 py-4">
                               {(() => {
-                                if (!p.title) return null;
+                                if (!p.title) return "Untitled";
                                 const words = p.title.split(' ');
                                 const lines = [];
                                 for (let i = 0; i < words.length; i += 7) {
@@ -225,7 +243,7 @@ export default function ProjectManagement() {
                               })()}
                             </td>
                             <td className="px-6 py-4">{p.creator?.name || "Unknown"}</td>
-                            <td className="px-6 py-4">{p.collaborators || "No collaborators"}</td>
+                            <td className="px-6 py-4">{renderCollaborators(p.collaborators)}</td>
                             <td className="px-6 py-4 text-right">
                               <button
                                 className="px-3 py-1 rounded-full text-sm font-medium"

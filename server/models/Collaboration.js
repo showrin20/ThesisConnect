@@ -11,6 +11,11 @@ const collaborationSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  projectId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Project',
+    required: false // Optional for general collaboration requests
+  },
   message: {
     type: String,
     default: 'Would like to collaborate with you!'
@@ -33,7 +38,7 @@ const collaborationSchema = new mongoose.Schema({
   }
 });
 
-// Ensure unique collaboration requests
-collaborationSchema.index({ requester: 1, recipient: 1 }, { unique: true });
+// Ensure unique collaboration requests per project
+collaborationSchema.index({ requester: 1, recipient: 1, projectId: 1 }, { unique: true });
 
 module.exports = mongoose.model('Collaboration', collaborationSchema);

@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { X, Check, X as XIcon, MessageCircle, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from '../axios';
 
 const CollaborationResponseModal = ({ 
   isOpen, 
   onClose, 
   request, 
   onRespond, 
-  loading = false 
+  loading = false,
+  projectId = null
 }) => {
   const { colors } = useTheme();
   const [responseType, setResponseType] = useState('accepted'); // 'accepted' or 'declined'
@@ -39,7 +41,7 @@ Best regards!`
     }
   }, [isOpen, request, responseType]);
 
-  const handleRespond = () => {
+  const handleRespond = async () => {
     const trimmedMessage = message.trim();
     
     if (!trimmedMessage) {
@@ -58,7 +60,26 @@ Best regards!`
     }
     
     setMessageError('');
-    onRespond(responseType, trimmedMessage);
+    
+    try {
+      // If accepted and we have a projectId, add the user as a collaborator
+      if (responseType === 'accepted' && projectId) {
+        try {
+          await axios.post(`/projects/${projectId}/collaborators`, {
+            collaboratorId: request.requester._id
+          });
+          console.log('Successfully added collaborator to project');
+        } catch (collabErr) {
+          console.error('Error adding collaborator to project:', collabErr);
+          // Don't fail the whole operation if adding collaborator fails
+        }
+      }
+      
+      // Call the parent onRespond function
+      onRespond(responseType, trimmedMessage);
+    } catch (error) {
+      console.error('Error in handleRespond:', error);
+    }
   };
 
   const handleResponseTypeChange = (type) => {

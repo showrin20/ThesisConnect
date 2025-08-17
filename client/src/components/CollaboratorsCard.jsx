@@ -31,7 +31,8 @@ const CollaboratorsCard = ({
   showProjects = true, 
   showPublications = false, 
   compact = false,
-  onRequestSent = () => {}
+  onRequestSent = () => {},
+  projectId = null
 }) => {
   const { colors } = useTheme();
   const {showSuccess, showError, showWarning, showInfo } = useAlert();
@@ -98,10 +99,17 @@ const sendCollaborationRequest = async (customMessage) => {
   try {
     setRequestLoading(true);
 
-    const response = await axios.post('/collaborations/request', {
+    const requestData = {
       recipientId: student._id,
       message: customMessage || `Hi ${student.name}, I'd like to collaborate with you on academic projects. Let's connect!`
-    });
+    };
+
+    // If we have a projectId, include it in the request
+    if (projectId) {
+      requestData.projectId = projectId;
+    }
+
+    const response = await axios.post('/collaborations/request', requestData);
 
     if (response.data.success) {
       setCollaborationStatus('sent');
@@ -129,10 +137,12 @@ const sendCollaborationRequest = async (customMessage) => {
   
 
   const getCollaborationButtonConfig = () => {
+    const isProjectCollaboration = !!projectId;
+    
     switch (collaborationStatus) {
       case 'sent':
         return {
-          text: 'Request Sent',
+          text: isProjectCollaboration ? 'Project Request Sent' : 'Request Sent',
           icon: Clock,
           disabled: true,
           color: colors.accent?.orange?.[500] || '#f59e0b',
@@ -140,11 +150,11 @@ const sendCollaborationRequest = async (customMessage) => {
         };
       case 'accepted':
         return {
-          text: 'Collaborating',
+          text: isProjectCollaboration ? 'Project Collaborator' : 'Collaborating',
           icon: Check,
           disabled: true,
           color: colors.accent?.green?.[500] || '#22c55e',
-          bg: `${colors.accent?.green?.[500] || '#22c55e'}20`
+          bg: `${colors.accent?.green?.[500] || '#22c82f6'}20`
         };
       case 'pending':
         return {
@@ -156,7 +166,7 @@ const sendCollaborationRequest = async (customMessage) => {
         };
       default:
         return {
-          text: 'Send Request',
+          text: isProjectCollaboration ? 'Request Project Collaboration' : 'Send Request',
           icon: Send,
           disabled: false,
           color: colors.primary?.blue?.[500] || '#3b82f6',

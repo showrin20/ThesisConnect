@@ -6,6 +6,15 @@ const User = require('../models/User');
 
 const router = express.Router();
 
+// Test endpoint to check if collaboration routes are working
+router.get('/test', (req, res) => {
+  res.json({ 
+    success: true, 
+    message: 'Collaboration routes are working!',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Auth middleware
 const auth = (req, res, next) => {
   let token = req.header('x-auth-token') || '';
@@ -37,7 +46,10 @@ const auth = (req, res, next) => {
 // Send collaboration request
 router.post('/request', auth, async (req, res) => {
   try {
-    const { recipientId, message } = req.body;
+    console.log('Collaboration request received:', req.body);
+    console.log('User making request:', req.user);
+    
+    const { recipientId, message, projectId } = req.body;
     
     if (!recipientId) {
       return res.status(400).json({ 
@@ -53,6 +65,17 @@ router.post('/request', auth, async (req, res) => {
         message: 'Invalid recipient ID' 
       });
     }
+
+    // Validate projectId if provided
+    if (projectId && !mongoose.Types.ObjectId.isValid(projectId)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid project ID' 
+      });
+    }
+
+    // Ensure projectId is either a valid ObjectId or null (not undefined)
+    const finalProjectId = projectId || null;
 
     // Check if recipient exists
     const recipient = await User.findById(recipientId);
@@ -71,18 +94,31 @@ router.post('/request', auth, async (req, res) => {
       });
     }
 
-    // Check if request already exists
+    // Check if request already exists (for the same project or general)
     const existingRequest = await Collaboration.findOne({
-      $or: [
-        { requester: req.user.id, recipient: recipientId },
-        { requester: recipientId, recipient: req.user.id }
-      ]
+      requester: req.user.id,
+      recipient: recipientId,
+      projectId: finalProjectId
     });
 
     if (existingRequest) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Collaboration request already exists' 
+        message: finalProjectId ? 'Collaboration request for this project already exists' : 'Collaboration request already exists' 
+      });
+    }
+
+    // Also check for any existing collaboration between these users (regardless of project)
+    // This prevents spam and ensures clean collaboration history
+    const anyExistingCollaboration = await Collaboration.findOne({
+      requester: req.user.id,
+      recipient: recipientId
+    });
+
+    if (anyExistingCollaboration && anyExistingCollaboration.status === 'pending') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'You already have a pending collaboration request with this user' 
       });
     }
 
@@ -90,6 +126,7 @@ router.post('/request', auth, async (req, res) => {
     const collaboration = new Collaboration({
       requester: req.user.id,
       recipient: recipientId,
+      projectId: finalProjectId,
       message: message || 'Would like to collaborate with you!',
       status: 'pending'
     });
@@ -108,10 +145,18 @@ router.post('/request', auth, async (req, res) => {
       data: collaboration 
     });
   } catch (error) {
-    console.error('Send collaboration request error:', error);
+    // Handle MongoDB duplicate key errors specifically
+    if (error.code === 11000) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'A collaboration request already exists between these users for this project' 
+      });
+    }
+    
     res.status(500).json({ 
       success: false, 
-      message: 'Server error while sending collaboration request' 
+      message: 'Server error while sending collaboration request',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
 });
@@ -158,7 +203,6 @@ router.get('/status/:userId', auth, async (req, res) => {
       data 
     });
   } catch (error) {
-    console.error('Check collaboration status error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Server error while checking collaboration status' 
@@ -189,6 +233,7 @@ router.get('/requests', auth, async (req, res) => {
     const collaborations = await Collaboration.find(query)
       .populate('requester', 'name email university profileImage')
       .populate('recipient', 'name email university profileImage')
+      .populate('projectId', 'title description')
       .sort({ createdAt: -1 });
 
     res.json({ 
@@ -197,10 +242,39 @@ router.get('/requests', auth, async (req, res) => {
       data: collaborations 
     });
   } catch (error) {
-    console.error('Get collaboration requests error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Server error while fetching collaboration requests' 
+    });
+  }
+});
+
+// Get collaboration requests for a specific project
+router.get('/project/:projectId/requests', auth, async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(projectId)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid project ID' 
+      });
+    }
+
+    const collaborations = await Collaboration.find({ projectId })
+      .populate('requester', 'name email university profileImage')
+      .populate('recipient', 'name email university profileImage')
+      .sort({ createdAt: -1 });
+
+    res.json({ 
+      success: true, 
+      count: collaborations.length,
+      data: collaborations 
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error while fetching project collaboration requests' 
     });
   }
 });
@@ -249,6 +323,21 @@ router.put('/respond/:collaborationId', auth, async (req, res) => {
     collaboration.respondedAt = new Date();
     await collaboration.save();
 
+    // If accepted and has projectId, add collaborator to project
+    if (status === 'accepted' && collaboration.projectId) {
+      try {
+        const Project = require('../models/Project');
+        const project = await Project.findById(collaboration.projectId);
+        
+        if (project && !project.collaborators.includes(collaboration.recipient)) {
+          project.collaborators.push(collaboration.recipient);
+          await project.save();
+        }
+      } catch (projectError) {
+        // Don't fail the collaboration response if project update fails
+      }
+    }
+
     await collaboration.populate([
       { path: 'requester', select: 'name email university' },
       { path: 'recipient', select: 'name email university' }
@@ -260,7 +349,6 @@ router.put('/respond/:collaborationId', auth, async (req, res) => {
       data: collaboration 
     });
   } catch (error) {
-    console.error('Respond to collaboration error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Server error while responding to collaboration request' 
@@ -308,7 +396,6 @@ router.delete('/cancel/:collaborationId', auth, async (req, res) => {
       message: 'Collaboration request deleted successfully' 
     });
   } catch (error) {
-    console.error('Delete collaboration error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Server error while deleting collaboration request' 

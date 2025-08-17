@@ -339,9 +339,12 @@ export default function AdminDashboard() {
                     <p className="text-2xl font-bold" style={{ color: colors.primary?.blue?.[500] }}>
                       {dashboardData.stats.totalUsers.toLocaleString()}
                     </p>
-                    <p className="text-xs mt-1" style={{ color: colors.accent?.green?.[500] }}>
+                    {/* <p className="text-xs mt-1" style={{ color: colors.accent?.green?.[500] }}>
                       {formatPercentage(dashboardData.analytics.userGrowth)} this month
-                    </p>
+                    </p> */}
+
+
+                    
                   </div>
                   <div className="w-12 h-12 rounded-full flex items-center justify-center" 
                        style={{ backgroundColor: `${colors.primary?.blue?.[500]}20` }}>
@@ -357,9 +360,9 @@ export default function AdminDashboard() {
                     <p className="text-2xl font-bold" style={{ color: colors.accent?.green?.[500] }}>
                       {dashboardData.stats.activeProjects.toLocaleString()}
                     </p>
-                    <p className="text-xs mt-1" style={{ color: colors.accent?.green?.[500] }}>
+                    {/* <p className="text-xs mt-1" style={{ color: colors.accent?.green?.[500] }}>
                       {formatPercentage(dashboardData.analytics.projectGrowth)} this month
-                    </p>
+                    </p> */}
                   </div>
                   <div className="w-12 h-12 rounded-full flex items-center justify-center" 
                        style={{ backgroundColor: `${colors.accent?.green?.[500]}20` }}>
@@ -375,9 +378,9 @@ export default function AdminDashboard() {
                     <p className="text-2xl font-bold" style={{ color: colors.primary?.purple?.[500] }}>
                       {dashboardData.stats.totalPublications.toLocaleString()}
                     </p>
-                    <p className="text-xs mt-1" style={{ color: colors.accent?.green?.[500] }}>
+                    {/* <p className="text-xs mt-1" style={{ color: colors.accent?.green?.[500] }}>
                       {formatPercentage(dashboardData.analytics.publicationGrowth)} this month
-                    </p>
+                    </p> */}
                   </div>
                   <div className="w-12 h-12 rounded-full flex items-center justify-center" 
                        style={{ backgroundColor: `${colors.primary?.purple?.[500]}20` }}>

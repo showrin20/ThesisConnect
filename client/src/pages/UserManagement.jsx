@@ -60,21 +60,22 @@ export default function UserManagement() {
   };
 
   const fetchUsers = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await axios.get("/users");
-      setUsers(res.data?.data || []);
-      setCurrentPage(1); 
-      showAlert("success", "Users loaded successfully");
-    } catch (err) {
-      const msg = err.response?.data?.msg || "Failed to load users";
-      setError(msg);
-      showAlert("error", msg);
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  setError(null);
+  try {
+    const res = await axios.get("/users");
+    const filteredUsers = (res.data?.data || []).filter(user => user.role !== "admin");
+    setUsers(filteredUsers);
+    setCurrentPage(1);
+    showAlert("success", "Users loaded successfully");
+  } catch (err) {
+    const msg = err.response?.data?.msg || "Failed to load users";
+    setError(msg);
+    showAlert("error", msg);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchUsers();

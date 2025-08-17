@@ -73,7 +73,7 @@ router.post('/', auth, upload.single('thesisPdf'), async (req, res) => {
     let parsedThesisDraft = {};
     if (thesisDraft) {
       try { parsedThesisDraft = typeof thesisDraft === 'string' ? JSON.parse(thesisDraft) : thesisDraft; }
-      catch (error) { console.error('Failed to parse thesisDraft:', error); }
+      catch (error) { /* Failed to parse thesisDraft */ }
     }
 
     const hasLink = link?.trim();
@@ -100,12 +100,17 @@ router.post('/', auth, upload.single('thesisPdf'), async (req, res) => {
       uploadedAt: new Date(),
     };
 
-    // Ensure collaborators are valid registered users
-    let validCollaborators = [];
-    if (collaborators && Array.isArray(collaborators)) {
-      validCollaborators = await User.find({ _id: { $in: collaborators } }).select('_id');
-      validCollaborators = validCollaborators.map(u => u._id);
-    }
+    // Collaborators are now added through collaboration requests, not instantly
+    // const project = new Project({
+    //   title,
+    //   description,
+    //   link: link || '',
+    //   tags: Array.isArray(tags) ? tags : (tags ? tags.split(',').map(t => t.trim()) : []),
+    //   status: status || 'Planned',
+    //   collaborators: [], // Start with no collaborators
+    //   creator: req.user.id,
+    //   thesisDraft: Object.keys(thesisDraftData).length ? thesisDraftData : undefined,
+    // });
 
     const project = new Project({
       title,
@@ -113,7 +118,7 @@ router.post('/', auth, upload.single('thesisPdf'), async (req, res) => {
       link: link || '',
       tags: Array.isArray(tags) ? tags : (tags ? tags.split(',').map(t => t.trim()) : []),
       status: status || 'Planned',
-      collaborators: validCollaborators,
+      collaborators: [], // Start with no collaborators
       creator: req.user.id,
       thesisDraft: Object.keys(thesisDraftData).length ? thesisDraftData : undefined,
     });
@@ -123,9 +128,8 @@ router.post('/', auth, upload.single('thesisPdf'), async (req, res) => {
 
     res.status(201).json({ success: true, data: project });
   } catch (error) {
-    console.error('Create project error:', error);
     if (req.file) {
-      try { fs.unlinkSync(req.file.path); } catch (unlinkError) { console.error('Failed to cleanup uploaded file:', unlinkError); }
+      try { fs.unlinkSync(req.file.path); } catch (unlinkError) { /* Failed to cleanup uploaded file */ }
     }
     if (error.code === 'LIMIT_FILE_SIZE') return res.status(400).json({ msg: 'File size too large. Max 10MB.' });
     res.status(500).json({ msg: 'Server error while creating project', error: error.message });
@@ -148,7 +152,6 @@ router.get('/search-collaborators', auth, async (req, res) => {
 
     res.json({ success: true, data: users });
   } catch (error) {
-    console.error('Search collaborators error:', error);
     res.status(500).json({ msg: 'Server error while searching collaborators', error: error.message });
   }
 });
@@ -159,13 +162,12 @@ router.get('/search-collaborators', auth, async (req, res) => {
 router.get('/', async (_req, res) => {
   try {
     const [projects, total] = await Promise.all([
-      Project.find().populate('creator', 'name email university').sort({ createdAt: -1 }),
+      Project.find().populate('creator', 'name email university').populate('collaborators', 'name email role').sort({ createdAt: -1 }),
       Project.countDocuments()
     ]);
 
     res.json({ success: true, total, count: projects.length, data: projects });
   } catch (error) {
-    console.error('Get projects error:', error);
     res.status(500).json({ msg: 'Server error while fetching projects', error: error.message });
   }
 });
@@ -182,10 +184,10 @@ router.get('/my-projects', auth, async (req, res) => {
       ]
     })
       .populate('creator', 'name email university')
+      .populate('collaborators', 'name email role')
       .sort({ createdAt: -1 });
     res.json({ success: true, count: projects.length, data: projects });
   } catch (error) {
-    console.error('Get my projects error:', error);
     res.status(500).json({ msg: 'Server error while fetching your projects', error: error.message });
   }
 });
@@ -226,18 +228,37 @@ router.put('/:id', auth, async (req, res) => {
     if (tags !== undefined) project.tags = Array.isArray(tags) ? tags : [];
     if (status !== undefined) project.status = status;
 
-    // Ensure collaborators are valid registered users
-    if (collaborators !== undefined && Array.isArray(collaborators)) {
-      const validCollaborators = await User.find({ _id: { $in: collaborators } }).select('_id');
-      project.collaborators = validCollaborators.map(u => u._id);
-    }
+    // Collaborators are now managed through collaboration requests, not direct updates
+    // if (collaborators !== undefined && Array.isArray(collaborators)) {
+    //   const validCollaborators = await User.find({ _id: { $in: collaborators } }).select('_id');
+    //   project.collaborators = validCollaborators.map(u => u._id);
+    // }
 
     await project.save();
     await project.populate('creator', 'name email university');
     res.json({ success: true, msg: 'Project updated', data: project });
   } catch (error) {
-    console.error('Update project error:', error);
     res.status(500).json({ msg: 'Server error while updating project', error: error.message });
+  }
+});
+
+//////////////////////////
+// 📌 GET PROJECT COLLABORATORS
+//////////////////////////
+router.get('/:id/collaborators', auth, async (req, res) => {
+  const projectId = req.params.id;
+  try {
+    if (!mongoose.Types.ObjectId.isValid(projectId)) return res.status(400).json({ msg: 'Invalid project ID format' });
+
+    const project = await Project.findById(projectId)
+      .populate('collaborators', 'name email role')
+      .select('collaborators');
+
+    if (!project) return res.status(404).json({ msg: 'Project not found' });
+
+    res.json({ success: true, data: project.collaborators });
+  } catch (error) {
+    res.status(500).json({ msg: 'Server error while fetching project collaborators', error: error.message });
   }
 });
 
@@ -251,13 +272,87 @@ router.get('/user/:userId', async (req, res) => {
 
     const projects = await Project.find({ creator: userId })
       .populate('creator', 'name email university')
+      .populate('collaborators', 'name email role')
       .sort({ createdAt: -1 })
       .limit(10);
 
     res.json({ success: true, count: projects.length, data: projects });
   } catch (error) {
-    console.error('Get user projects error:', error);
     res.status(500).json({ msg: 'Server error while fetching user projects', error: error.message });
+  }
+});
+
+//////////////////////////
+// 📌 ADD COLLABORATOR (when collaboration request is accepted)
+//////////////////////////
+router.post('/:id/collaborators', auth, async (req, res) => {
+  const projectId = req.params.id;
+  try {
+    if (!mongoose.Types.ObjectId.isValid(projectId)) return res.status(400).json({ msg: 'Invalid project ID format' });
+
+    const project = await Project.findById(projectId);
+    if (!project) return res.status(404).json({ msg: 'Project not found' });
+
+    // Only project creator can add collaborators
+    if (project.creator.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ msg: 'Only project creator can add collaborators' });
+    }
+
+    const { collaboratorId } = req.body;
+    if (!collaboratorId || !mongoose.Types.ObjectId.isValid(collaboratorId)) {
+      return res.status(400).json({ msg: 'Valid collaborator ID is required' });
+    }
+
+    // Check if user exists and is a valid collaborator
+    const user = await User.findById(collaboratorId);
+    if (!user) return res.status(404).json({ msg: 'User not found' });
+
+    // Check if already a collaborator
+    if (project.collaborators.includes(collaboratorId)) {
+      return res.status(400).json({ msg: 'User is already a collaborator' });
+    }
+
+    // Add collaborator
+    project.collaborators.push(collaboratorId);
+    await project.save();
+
+    await project.populate('creator', 'name email university');
+    await project.populate('collaborators', 'name email role');
+
+    res.json({ success: true, msg: 'Collaborator added successfully', data: project });
+  } catch (error) {
+    res.status(500).json({ msg: 'Server error while adding collaborator', error: error.message });
+  }
+});
+
+//////////////////////////
+// 📌 REMOVE COLLABORATOR
+//////////////////////////
+router.delete('/:id/collaborators/:collaboratorId', auth, async (req, res) => {
+  const { id: projectId, collaboratorId } = req.params;
+  try {
+    if (!mongoose.Types.ObjectId.isValid(projectId) || !mongoose.Types.ObjectId.isValid(collaboratorId)) {
+      return res.status(400).json({ msg: 'Invalid ID format' });
+    }
+
+    const project = await Project.findById(projectId);
+    if (!project) return res.status(404).json({ msg: 'Project not found' });
+
+    // Only project creator can remove collaborators
+    if (project.creator.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ msg: 'Only project creator can remove collaborators' });
+    }
+
+    // Remove collaborator
+    project.collaborators = project.collaborators.filter(id => id.toString() !== collaboratorId);
+    await project.save();
+
+    await project.populate('creator', 'name email university');
+    await project.populate('collaborators', 'name email role');
+
+    res.json({ success: true, msg: 'Collaborator removed successfully', data: project });
+  } catch (error) {
+    res.status(500).json({ msg: 'Server error while removing collaborator', error: error.message });
   }
 });
 
@@ -285,7 +380,6 @@ router.delete('/:id', auth, async (req, res) => {
 
     res.json({ success: true, msg: 'Project deleted successfully' });
   } catch (error) {
-    console.error('Delete project error:', error);
     res.status(500).json({ msg: 'Server error while deleting project', error: error.message });
   }
 });

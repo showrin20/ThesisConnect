@@ -168,7 +168,7 @@ export default function MyProjects() {
                   WebkitTextFillColor: 'transparent'
                 }}
               >
-                My Research Projects
+                Research Projects
               </span>
             </h1>
             <p className="text-lg max-w-2xl mx-auto" style={{ color: colors.text.primary }}>

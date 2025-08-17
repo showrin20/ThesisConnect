@@ -247,11 +247,7 @@ router.get('/system/events', auth, requireAdmin, async (req, res) => {
       });
     });
 
-    events.push(
-      { id: `health_${Date.now()}_1`, type: 'success', message: 'System backup completed successfully', timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), icon: 'shield' },
-      { id: `health_${Date.now()}_2`, type: 'info', message: 'Database optimization completed', timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000), icon: 'database' }
-    );
-
+    // ✅ Only real DB events now
     events.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
     res.json({ success: true, data: events.slice(0, 10) });
@@ -260,6 +256,9 @@ router.get('/system/events', auth, requireAdmin, async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to fetch system events', error: error.message });
   }
 });
+
+
+
 
 /**
  * ANALYTICS OVERVIEW

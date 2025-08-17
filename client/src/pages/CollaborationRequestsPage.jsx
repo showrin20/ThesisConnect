@@ -21,10 +21,12 @@ export default function CollaborationRequestsPage() {
   const [loading, setLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  // Pagination states
+  // Display limit for grid layout
+  const maxDisplayRequests = 2; // 2 rows × 2 columns per page
+  
+  // Pagination state
   const [receivedPage, setReceivedPage] = useState(1);
   const [sentPage, setSentPage] = useState(1);
-  const pageSize = 5;
 
   const [confirmData, setConfirmData] = useState({ open: false, id: null, type: null });
   const [responseModal, setResponseModal] = useState({ 
@@ -32,6 +34,7 @@ export default function CollaborationRequestsPage() {
     request: null 
   });
   const [responding, setResponding] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -39,7 +42,6 @@ export default function CollaborationRequestsPage() {
       await logout();
       navigate("/login");
     } catch (error) {
-      console.error("Logout error:", error);
       navigate("/login");
     } finally {
       setIsLoggingOut(false);
@@ -59,7 +61,7 @@ export default function CollaborationRequestsPage() {
         setSentRequests((prev) => prev.filter((req) => req._id !== confirmData.id));
       }
     } catch (err) {
-      console.error("Error deletling request:", err);
+      // Error deleting request
     }
   };
 
@@ -81,8 +83,11 @@ export default function CollaborationRequestsPage() {
       );
       
       setResponseModal({ open: false, request: null });
+      
+      // Refresh the data to show updated status
+      setRefreshKey(prev => prev + 1);
     } catch (err) {
-      console.error("Error responding to request:", err);
+      // Error responding to request
     } finally {
       setResponding(false);
     }
@@ -101,17 +106,36 @@ export default function CollaborationRequestsPage() {
 
         setReceivedRequests(receivedRes.data.data || []);
         setSentRequests(sentRes.data.data || []);
+        // Reset page numbers when data refreshes
+        setReceivedPage(1);
+        setSentPage(1);
       } catch (err) {
-        console.error("Error fetching collaboration requests:", err);
+        // Error fetching collaboration requests
       } finally {
         setLoading(false);
       }
     };
     fetchRequests();
-  }, []);
+  }, [refreshKey]);
 
-  // Pagination helper
-  const paginate = (data, page) => data.slice((page - 1) * pageSize, page * pageSize);
+  // Helper to paginate requests for grid layout
+  const paginateRequests = (data, page, pageSize) => {
+    const startIndex = (page - 1) * pageSize;
+    return data.slice(startIndex, startIndex + pageSize);
+  };
+  
+  // Calculate total pages
+  const totalReceivedPages = Math.ceil(receivedRequests.length / maxDisplayRequests);
+  const totalSentPages = Math.ceil(sentRequests.length / maxDisplayRequests);
+  
+  // Pagination navigation functions
+  const goToReceivedPage = (page) => {
+    setReceivedPage(Math.max(1, Math.min(page, totalReceivedPages)));
+  };
+  
+  const goToSentPage = (page) => {
+    setSentPage(Math.max(1, Math.min(page, totalSentPages)));
+  };
 
   return (
     <div className="flex" style={{ backgroundColor: colors.background.main }}>
@@ -130,6 +154,7 @@ export default function CollaborationRequestsPage() {
         request={responseModal.request}
         onRespond={handleRespond}
         loading={responding}
+        projectId={responseModal.request?.projectId}
       />
 
       <div className="flex-1 flex flex-col">
@@ -170,11 +195,11 @@ export default function CollaborationRequestsPage() {
                   <p style={{ color: colors.text.secondary }}>No requests received.</p>
                 ) : (
                   <>
-                    <ul className="space-y-3">
-                      {paginate(receivedRequests, receivedPage).map((req) => (
-                        <li
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {paginateRequests(receivedRequests, receivedPage, maxDisplayRequests).map((req) => (
+                        <div
                           key={req._id}
-                          className="p-4 rounded-lg shadow flex flex-col gap-4"
+                          className="p-4 rounded-lg shadow flex flex-col gap-3"
                           style={{ backgroundColor: colors.background.card }}
                         >
                           {/* Sender details without profile picture */}
@@ -182,7 +207,6 @@ export default function CollaborationRequestsPage() {
                             student={{ ...req.requester, profileImage: null }}
                             showProjects={true}
                             showPublications={false}
-                            
                             compact={true}
                           />
 
@@ -195,6 +219,17 @@ export default function CollaborationRequestsPage() {
                               <p style={{ color: colors.text.primary }}>
                                 <strong>Status:</strong> {req.status}
                               </p>
+                              {req.projectId && (
+                                <div className="mt-2 p-2 rounded-lg" style={{ 
+                                  backgroundColor: colors.primary?.blue?.[500] || '#3b82f6',
+                                  color: 'white'
+                                }}>
+                                  <p className="text-xs font-medium">Project Collaboration Request</p>
+                                  <p className="text-xs opacity-80">
+                                    {req.projectId.title ? `Project: ${req.projectId.title}` : 'This request is for a specific project'}
+                                  </p>
+                                </div>
+                              )}
                             </div>
                             
                             {/* Action buttons based on status */}
@@ -238,42 +273,65 @@ export default function CollaborationRequestsPage() {
                               </button>
                             </div>
                           </div>
-                        </li>
+                        </div>
                       ))}
-                    </ul>             
-                    
-                           {/* Pagination controls */}
-                    <div className="flex justify-between mt-4">
-                      <button
-                        disabled={receivedPage === 1}
-                        onClick={() => setReceivedPage((p) => p - 1)}
-                        style={{
-                          backgroundColor: "green",
-                          color: "white",
-                          padding: "6px 12px",
-                          borderRadius: "6px",
-                          opacity: receivedPage === 1 ? 0.5 : 1,
-                        }}
-                      >
-                        Previous
-                      </button>
-                      <button
-                        disabled={receivedPage * pageSize >= receivedRequests.length}
-                        onClick={() => setReceivedPage((p) => p + 1)}
-                        style={{
-                          backgroundColor: "green",
-                          color: "white",
-                          padding: "6px 12px",
-                          borderRadius: "6px",
-                          opacity:
-                            receivedPage * pageSize >= receivedRequests.length
-                              ? 0.5
-                              : 1,
-                        }}
-                      >
-                        Next
-                      </button>
                     </div>
+                    {totalReceivedPages > 1 && (
+                      <div className="text-center mt-4 space-y-2">
+                        <p className="text-sm" style={{ color: colors.text.muted }}>
+                          Page {receivedPage} of {totalReceivedPages} • Showing {paginateRequests(receivedRequests, receivedPage, maxDisplayRequests).length} of {receivedRequests.length} received requests
+                        </p>
+                        <div className="flex justify-center items-center space-x-2">
+                          <button
+                            onClick={() => goToReceivedPage(1)}
+                            disabled={receivedPage === 1}
+                            className="px-3 py-1 rounded text-sm font-medium transition-colors disabled:opacity-50"
+                            style={{
+                              backgroundColor: receivedPage === 1 ? colors.text.muted : colors.primary?.blue?.[500] || '#3b82f6',
+                              color: 'white'
+                            }}
+                          >
+                            First
+                          </button>
+                          <button
+                            onClick={() => goToReceivedPage(receivedPage - 1)}
+                            disabled={receivedPage === 1}
+                            className="px-3 py-1 rounded text-sm font-medium transition-colors disabled:opacity-50"
+                            style={{
+                              backgroundColor: receivedPage === 1 ? colors.text.muted : colors.primary?.blue?.[500] || '#3b82f6',
+                              color: 'white'
+                            }}
+                          >
+                            Previous
+                          </button>
+                          <span className="px-3 py-1 rounded text-sm font-medium" style={{ backgroundColor: colors.background.secondary, color: colors.text.primary }}>
+                            {receivedPage}
+                          </span>
+                          <button
+                            onClick={() => goToReceivedPage(receivedPage + 1)}
+                            disabled={receivedPage === totalReceivedPages}
+                            className="px-3 py-1 rounded text-sm font-medium transition-colors disabled:opacity-50"
+                            style={{
+                              backgroundColor: receivedPage === totalReceivedPages ? colors.text.muted : colors.primary?.blue?.[500] || '#3b82f6',
+                              color: 'white'
+                            }}
+                          >
+                            Next
+                          </button>
+                          <button
+                            onClick={() => goToReceivedPage(totalReceivedPages)}
+                            disabled={receivedPage === totalReceivedPages}
+                            className="px-3 py-1 rounded text-sm font-medium transition-colors disabled:opacity-50"
+                            style={{
+                              backgroundColor: receivedPage === totalReceivedPages ? colors.text.muted : colors.primary?.blue?.[500] || '#3b82f6',
+                              color: 'white'
+                            }}
+                          >
+                            Last
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
               </section>
@@ -290,11 +348,11 @@ export default function CollaborationRequestsPage() {
                   <p style={{ color: colors.text.secondary }}>No requests sent.</p>
                 ) : (
                   <>
-                    <ul className="space-y-3">
-                      {paginate(sentRequests, sentPage).map((req) => (
-                        <li
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {paginateRequests(sentRequests, sentPage, maxDisplayRequests).map((req) => (
+                        <div
                           key={req._id}
-                          className="p-4 rounded-lg shadow flex flex-col gap-4"
+                          className="p-4 rounded-lg shadow flex flex-col gap-3"
                           style={{ backgroundColor: colors.background.card }}
                         >
                           {/* Receiver details without profile picture */}
@@ -306,8 +364,8 @@ export default function CollaborationRequestsPage() {
                           />
 
                           {/* Message & Actions */}
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
+                          <div className="flex flex-col gap-3">
+                            <div>
                               <p style={{ color: colors.text.secondary }}>
                                 <strong>Your Message:</strong> {req.message}
                               </p>
@@ -346,42 +404,65 @@ export default function CollaborationRequestsPage() {
                               <Trash2 size={16} />
                             </button>
                           </div>
-                        </li>
+                        </div>
                       ))}
-                    </ul>
-
-                    {/* Pagination controls */}
-                    <div className="flex justify-between mt-4">
-                      <button
-                        disabled={sentPage === 1}
-                        onClick={() => setSentPage((p) => p - 1)}
-                        style={{
-                          backgroundColor: "green",
-                          color: "white",
-                          padding: "6px 12px",
-                          borderRadius: "6px",
-                          opacity: sentPage === 1 ? 0.5 : 1,
-                        }}
-                      >
-                        Previous
-                      </button>
-                      <button
-                        disabled={sentPage * pageSize >= sentRequests.length}
-                        onClick={() => setSentPage((p) => p + 1)}
-                        style={{
-                          backgroundColor: "green",
-                          color: "white",
-                          padding: "6px 12px",
-                          borderRadius: "6px",
-                          opacity:
-                            sentPage * pageSize >= sentRequests.length
-                              ? 0.5
-                              : 1,
-                        }}
-                      >
-                        Next
-                      </button>
                     </div>
+                    {totalSentPages > 1 && (
+                      <div className="text-center mt-4 space-y-2">
+                        <p className="text-sm" style={{ color: colors.text.muted }}>
+                          Page {sentPage} of {totalSentPages} • Showing {paginateRequests(sentRequests, sentPage, maxDisplayRequests).length} of {sentRequests.length} sent requests
+                        </p>
+                        <div className="flex justify-center items-center space-x-2">
+                          <button
+                            onClick={() => goToSentPage(1)}
+                            disabled={sentPage === 1}
+                            className="px-3 py-1 rounded text-sm font-medium transition-colors disabled:opacity-50"
+                            style={{
+                              backgroundColor: sentPage === 1 ? colors.text.muted : colors.primary?.blue?.[500] || '#3b82f6',
+                              color: 'white'
+                            }}
+                          >
+                            First
+                          </button>
+                          <button
+                            onClick={() => goToSentPage(sentPage - 1)}
+                            disabled={sentPage === 1}
+                            className="px-3 py-1 rounded text-sm font-medium transition-colors disabled:opacity-50"
+                            style={{
+                              backgroundColor: sentPage === 1 ? colors.text.muted : colors.primary?.blue?.[500] || '#3b82f6',
+                              color: 'white'
+                            }}
+                          >
+                            Previous
+                          </button>
+                          <span className="px-3 py-1 rounded text-sm font-medium" style={{ backgroundColor: colors.background.secondary, color: colors.text.primary }}>
+                            {sentPage}
+                          </span>
+                          <button
+                            onClick={() => goToSentPage(sentPage + 1)}
+                            disabled={sentPage === totalSentPages}
+                            className="px-3 py-1 rounded text-sm font-medium transition-colors disabled:opacity-50"
+                            style={{
+                              backgroundColor: sentPage === totalSentPages ? colors.text.muted : colors.primary?.blue?.[500] || '#3b82f6',
+                              color: 'white'
+                            }}
+                          >
+                            Next
+                          </button>
+                          <button
+                            onClick={() => goToSentPage(totalSentPages)}
+                            disabled={sentPage === totalSentPages}
+                            className="px-3 py-1 rounded text-sm font-medium transition-colors disabled:opacity-50"
+                            style={{
+                              backgroundColor: sentPage === totalSentPages ? colors.text.muted : colors.primary?.blue?.[500] || '#3b82f6',
+                              color: 'white'
+                            }}
+                          >
+                            Last
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
               </section>
