@@ -65,7 +65,7 @@ const protectedRoutes = require('./routes/protectedRoutes');
 const blogRoutes = require('./routes/blogRoutes');
 const bookmarkRoutes = require('./routes/bookmark_api_routes');
 const forumRoutes = require('./routes/forum_api_routes');
-const collaborationRoutes = require('./routes/collaborationRoutes');
+const collaborationRoutes = require('./routes/CollaborationRoutes');
 const adminRoutes = require('./routes/admin');
 
 
