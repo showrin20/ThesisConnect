@@ -110,17 +110,17 @@ router.post('/request', auth, async (req, res) => {
 
     // Also check for any existing collaboration between these users (regardless of project)
     // This prevents spam and ensures clean collaboration history
-    const anyExistingCollaboration = await Collaboration.findOne({
-      requester: req.user.id,
-      recipient: recipientId
-    });
+    // const anyExistingCollaboration = await Collaboration.findOne({
+    //   requester: req.user.id,
+    //   recipient: recipientId
+    // });
 
-    if (anyExistingCollaboration && anyExistingCollaboration.status === 'pending') {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'You already have a pending collaboration request with this user' 
-      });
-    }
+    // if (anyExistingCollaboration && anyExistingCollaboration.status === 'pending') {
+    //   return res.status(400).json({ 
+    //     success: false, 
+    //     message: 'You already have a pending collaboration request with this user' 
+    //   });
+    // }
 
     // Create new collaboration request
     const collaboration = new Collaboration({
