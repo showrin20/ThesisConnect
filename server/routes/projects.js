@@ -357,6 +357,162 @@ router.delete('/:id/collaborators/:collaboratorId', auth, async (req, res) => {
 });
 
 //////////////////////////
+// 📝 ADD PROJECT REVIEW
+//////////////////////////
+router.post('/:id/reviews', auth, async (req, res) => {
+  const projectId = req.params.id;
+  try {
+    if (!mongoose.Types.ObjectId.isValid(projectId))
+      return res.status(400).json({ msg: 'Invalid project ID format' });
+
+    // Check if user is a mentor
+    const user = await User.findById(req.user.id);
+    if (!user || user.role !== 'mentor')
+      return res.status(403).json({ msg: 'Only mentors can add reviews' });
+
+    const { comment, rating } = req.body;
+    if (!comment)
+      return res.status(400).json({ msg: 'Review comment is required' });
+
+    const project = await Project.findById(projectId);
+    if (!project)
+      return res.status(404).json({ msg: 'Project not found' });
+
+    // Add review using the model method
+    await project.addReview(req.user.id, comment, rating);
+
+    // Return updated project with populated fields
+    const updatedProject = await Project.findById(projectId)
+      .populate('creator', 'name email university')
+      .populate('collaborators', 'name email role')
+      .populate('reviews.reviewer', 'name email role');
+
+    res.json({ 
+      success: true, 
+      msg: 'Review added successfully', 
+      data: updatedProject 
+    });
+  } catch (error) {
+    res.status(500).json({ msg: 'Server error while adding review', error: error.message });
+  }
+});
+
+//////////////////////////
+// 📝 GET PROJECT REVIEWS
+//////////////////////////
+  router.get('/:id/reviews', async (req, res) => {
+    const projectId = req.params.id;
+    try {
+      if (!mongoose.Types.ObjectId.isValid(projectId))
+        return res.status(400).json({ msg: 'Invalid project ID format' });
+
+      const project = await Project.findById(projectId)
+        .populate('reviews.reviewer', 'name email role')
+        .select('reviews');
+
+      if (!project)
+        return res.status(404).json({ msg: 'Project not found' });
+
+      res.json({ 
+        success: true, 
+        data: project.reviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      });
+    } catch (error) {
+      res.status(500).json({ msg: 'Server error while fetching reviews', error: error.message });
+    }
+  });
+
+
+//////////////////////////
+// 📝 DELETE PROJECT REVIEWS
+//////////////////////////
+
+router.delete('/:id/reviews/:reviewId', auth, async (req, res) => {
+  const projectId = req.params.id;
+  const reviewId = req.params.reviewId;
+
+  try {
+    if (!mongoose.Types.ObjectId.isValid(projectId))
+      return res.status(400).json({ msg: 'Invalid project ID format' });
+
+    if (!mongoose.Types.ObjectId.isValid(reviewId))
+      return res.status(400).json({ msg: 'Invalid review ID format' });
+
+    const project = await Project.findById(projectId);
+    if (!project) return res.status(404).json({ msg: 'Project not found' });
+
+    // Check if user is the reviewer
+    const review = project.reviews.find(r => r.id === reviewId);
+    if (!review) return res.status(404).json({ msg: 'Review not found' });
+
+    if (review.reviewer.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ msg: 'Unauthorized to delete this review' });
+    }
+
+    project.reviews = project.reviews.filter(r => r.id !== reviewId);
+    await project.save();
+
+    res.json({ success: true, msg: 'Review deleted successfully', data: project });
+  } catch (error) {
+    res.status(500).json({ msg: 'Server error while deleting review', error: error.message });
+  }
+});
+
+//////////////////////////
+// 📝 UPDATE PROJECT REVIEWS
+//////////////////////////
+router.put('/:id/reviews/:reviewId', auth, async (req, res) => {
+  const projectId = req.params.id;
+  const reviewId = req.params.reviewId;
+
+  try {
+    if (!mongoose.Types.ObjectId.isValid(projectId))
+      return res.status(400).json({ msg: 'Invalid project ID format' });
+
+    if (!mongoose.Types.ObjectId.isValid(reviewId))
+      return res.status(400).json({ msg: 'Invalid review ID format' });
+
+    const project = await Project.findById(projectId);
+    if (!project) return res.status(404).json({ msg: 'Project not found' });
+
+    // Check if user is the reviewer
+    const review = project.reviews.find(r => r.id === reviewId);
+    if (!review) return res.status(404).json({ msg: 'Review not found' });
+
+    if (review.reviewer.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ msg: 'Unauthorized to update this review' });
+    }
+
+    const { comment, rating } = req.body;
+    if (!comment) return res.status(400).json({ msg: 'Review comment is required' });
+
+    // Update review
+    review.comment = comment;
+    if (rating !== undefined) review.rating = rating;
+
+    await project.save();
+
+    // Return updated project with populated fields
+    await project.populate('reviews.reviewer', 'name email role');
+    
+    res.json({ success: true, msg: 'Review updated successfully', data: project });
+  } catch (error) {
+    res.status(500).json({ msg: 'Server error while updating review', error: error.message });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+//////////////////////////
 // 📌 DELETE PROJECT
 //////////////////////////
 router.delete('/:id', auth, async (req, res) => {

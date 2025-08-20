@@ -128,10 +128,24 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
     mentor: [
       { 
         icon: Users, 
-        label: 'Find Students', 
-        path: '/find-students', 
+        label: 'Explore Students', 
+        path: '/find-collaborators', 
         color: colors.primary?.blue?.[500] || '#3b82f6',
         description: 'Mentor new students'
+      },
+      { 
+        icon: UserPlus, 
+        label: 'Explore Mentors', 
+        path: '/find-mentors', 
+        color: colors.primary?.purple?.[500] || '#9333ea',
+        description: 'Connect with experienced mentors'
+      },
+      { 
+        icon: UserCheck, 
+        label: 'Mentorship Requests', 
+        path: '/collaboration-requests', 
+        color: colors.accent?.yellow?.[500] || '#f59e0b',
+        description: 'Review applications'
       },
       { 
         icon: TrendingUp, 
@@ -140,20 +154,21 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
         color: colors.accent?.green?.[500] || '#22c55e',
         description: 'Student communications'
       },
-      { 
-        icon: UserCheck, 
-        label: 'Mentorship Requests', 
-        path: '/mentorship-requests', 
-        color: colors.accent?.yellow?.[500] || '#f59e0b',
-        description: 'Review applications'
-      },
+    
       { 
         icon: Star, 
         label: 'Project Reviews', 
         path: '/project-reviews', 
-        color: colors.accent?.red?.[500] || '#ef4444',
+        color: colors.accent?.purple?.[500] || '#9333ea',
         description: 'Review student work'
       },
+         { 
+        icon: Bookmark, 
+        label: 'Bookmarks', 
+        path: '/bookmarks', 
+        color: colors.accent?.red?.[500] || '#ef4444',
+        description: 'Manage your bookmarks'
+      }
     ],
     admin: [
       { 

@@ -117,7 +117,7 @@ const ProfileCard = ({ userStats = null, loadingStats = false }) => {
             <div className="flex items-center gap-1 mt-1">
               <span
                 className="px-2 py-1 rounded-full text-xs font-medium"
-                style={getRoleBadgeStyle(user?.role)}
+                style={{ ...getRoleBadgeStyle(user?.role), color: colors.text.primary }}
               >
                 {displayRole}
               </span>

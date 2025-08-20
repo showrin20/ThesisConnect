@@ -1,8 +1,46 @@
-import React from 'react';
-import { ExternalLink } from 'lucide-react';
+import React, { useState } from 'react';
+import { ExternalLink, MessageCircle, ChevronDown, ChevronUp, Star, Trash2 } from 'lucide-react';
 import { colors } from '../styles/colors';
+import axios from '../axios';
+import { formatDistanceToNow } from 'date-fns';
+import ConfirmModal from './ConfirmModal';
 
-const ProjectCard = ({ title, description, link, tags, status, category, creator, collaborators, currentUserId, onEdit, onDelete }) => {
+const ProjectCard = ({ 
+  _id,
+  title, 
+  description, 
+  link, 
+  tags, 
+  status, 
+  category, 
+  creator, 
+  collaborators, 
+  currentUserId, 
+  userRole,
+  reviews = [],
+  onEdit, 
+  onDelete,
+  onReviewAdded,
+  onReviewDeleted
+}) => {
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewRating, setReviewRating] = useState(5);
+  const [showAllReviews, setShowAllReviews] = useState(false);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    reviewId: null,
+  });
+
+  // Sort reviews by date, newest first
+  const sortedReviews = [...reviews].sort(
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+  );
+  
+  const latestReview = sortedReviews.length > 0 ? sortedReviews[0] : null;
+  const olderReviews = sortedReviews.slice(1);
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'Active':
@@ -30,6 +68,68 @@ const ProjectCard = ({ title, description, link, tags, status, category, creator
           borderColor: `${colors.text.disabled}4D`
         };
     }
+  };
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    if (!reviewComment.trim()) return;
+    
+    setIsSubmittingReview(true);
+    try {
+      const response = await axios.post(`/projects/${_id}/reviews`, {
+        comment: reviewComment,
+        rating: reviewRating
+      });
+      
+      setReviewComment('');
+      setReviewRating(5);
+      setShowReviewForm(false);
+      
+      if (onReviewAdded) {
+        onReviewAdded(response.data.data);
+      }
+    } catch (error) {
+      console.error("Failed to submit review:", error);
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+  
+  const openDeleteConfirmModal = (reviewId) => {
+    setConfirmModal({
+      isOpen: true,
+      reviewId: reviewId,
+    });
+  };
+  
+  const closeConfirmModal = () => {
+    setConfirmModal({
+      isOpen: false,
+      reviewId: null,
+    });
+  };
+  
+  const handleDeleteReview = async (reviewId) => {
+    try {
+      const response = await axios.delete(`/projects/${_id}/reviews/${reviewId}`);
+      
+      if (response.data.success && onReviewDeleted) {
+        onReviewDeleted(response.data.data);
+      }
+    } catch (error) {
+      console.error("Failed to delete review:", error);
+    }
+  };
+
+  const renderStars = (rating) => {
+    return Array.from({ length: 5 }, (_, i) => (
+      <Star 
+        key={i} 
+        size={14} 
+        fill={i < rating ? colors.accent.yellow[400] : 'transparent'} 
+        stroke={colors.accent.yellow[400]}
+      />
+    ));
   };
 
   const trimmedLink = link?.trim();
@@ -88,9 +188,96 @@ const ProjectCard = ({ title, description, link, tags, status, category, creator
             >
               {tag}
             </span>
-            
           ))}
         </div>
+        
+        {/* Reviews Section */}
+        {latestReview && (
+          <div className="mt-4 mb-4 p-3 rounded-lg border" style={{ borderColor: colors.border.secondary, backgroundColor: `${colors.background.card}80` }}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold" style={{ color: colors.text.primary }}>
+                  Latest Review
+                </span>
+                <div className="flex items-center">
+                  {renderStars(latestReview.rating)}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs" style={{ color: colors.text.muted }}>
+                  {formatDistanceToNow(new Date(latestReview.createdAt), { addSuffix: true })}
+                </span>
+                {(userRole === 'admin' || latestReview.reviewer?._id === currentUserId) && (
+                  <button
+                    onClick={() => openDeleteConfirmModal(latestReview._id)}
+                    className="p-1 rounded-full hover:bg-red-100 transition-colors duration-200"
+                    title="Delete review"
+                    style={{ color: colors.accent.red[500] }}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
+              </div>
+            </div>
+            <p className="text-xs" style={{ color: colors.text.secondary }}>
+              {latestReview.comment}
+            </p>
+            <p className="text-xs mt-1" style={{ color: colors.text.muted }}>
+              By: {latestReview.reviewer?.name || 'A mentor'}
+            </p>
+            
+            {olderReviews.length > 0 && (
+              <div className="mt-2 pt-2 border-t" style={{ borderColor: colors.border.secondary }}>
+                <button 
+                  onClick={() => setShowAllReviews(!showAllReviews)}
+                  className="flex items-center gap-1 text-xs font-medium"
+                  style={{ color: colors.primary.blue[400] }}
+                >
+                  {showAllReviews ? (
+                    <>Hide {olderReviews.length} older reviews <ChevronUp size={14} /></>
+                  ) : (
+                    <>Show {olderReviews.length} older reviews <ChevronDown size={14} /></>
+                  )}
+                </button>
+                
+                {showAllReviews && (
+                  <div className="mt-2 space-y-3 max-h-40 overflow-y-auto scrollbar-thin">
+                    {olderReviews.map((review, index) => (
+                      <div key={index} className="p-2 rounded" style={{ backgroundColor: colors.background.subtle }}>
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center">
+                            {renderStars(review.rating)}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs" style={{ color: colors.text.muted }}>
+                              {formatDistanceToNow(new Date(review.createdAt), { addSuffix: true })}
+                            </span>
+                            {(userRole === 'admin' || review.reviewer?._id === currentUserId) && (
+                              <button
+                                onClick={() => openDeleteConfirmModal(review._id)}
+                                className="p-1 rounded-full hover:bg-red-100 transition-colors duration-200"
+                                title="Delete review"
+                                style={{ color: colors.accent.red[500] }}
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-xs" style={{ color: colors.text.secondary }}>
+                          {review.comment}
+                        </p>
+                        <p className="text-xs mt-1" style={{ color: colors.text.muted }}>
+                          By: {review.reviewer?.name || 'A mentor'}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
         
         <div className="flex items-center justify-between">
           <div className="text-xs" style={{ color: `${colors.text.secondary}80` }}>
@@ -117,6 +304,97 @@ const ProjectCard = ({ title, description, link, tags, status, category, creator
             <span className="text-xs italic" style={{ color: colors.text.disabled }}>No project link available</span>
           )}
         </div>
+
+        {/* Review Form for Mentors */}
+        {userRole === 'mentor' && (
+          <div className="mt-4 pt-4 border-t" style={{ borderColor: colors.border.secondary }}>
+            {showReviewForm ? (
+              <form onSubmit={handleSubmitReview} className="space-y-3">
+                <div>
+                  <label className="block text-xs mb-1" style={{ color: colors.text.secondary }}>
+                    Rating
+                  </label>
+                  <div className="flex gap-2">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setReviewRating(star)}
+                        className="focus:outline-none"
+                      >
+                        <Star 
+                          size={18} 
+                          fill={star <= reviewRating ? colors.accent.yellow[400] : 'transparent'} 
+                          stroke={colors.accent.yellow[400]}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs mb-1" style={{ color: colors.text.secondary }}>
+                    Review Comment
+                  </label>
+                  <textarea
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    placeholder="Write your review..."
+                    className="w-full p-2 rounded-lg text-sm border"
+                    style={{
+                      backgroundColor: colors.background.input,
+                      color: colors.text.primary,
+                      borderColor: colors.border.primary,
+                      minHeight: '80px',
+                      resize: 'vertical'
+                    }}
+                    required
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowReviewForm(false)}
+                    className="px-3 py-1 rounded-lg text-xs font-medium"
+                    style={{
+                      backgroundColor: 'transparent',
+                      color: colors.text.secondary,
+                      border: `1px solid ${colors.border.secondary}`
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingReview}
+                    className="px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200"
+                    style={{
+                      backgroundColor: colors.primary.purple[500],
+                      color: colors.text.inverse,
+                      opacity: isSubmittingReview ? 0.7 : 1
+                    }}
+                  >
+                    {isSubmittingReview ? 'Submitting...' : 'Submit Review'}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <button
+                onClick={() => setShowReviewForm(true)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg w-full justify-center text-xs font-medium transition-all duration-200"
+                style={{
+                  backgroundColor: `${colors.primary.purple[500]}33`,
+                  color: colors.text.primary,
+                  borderColor: `${colors.primary.purple[500]}4D`
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.primary.purple[500]}4D`}
+                onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.primary.purple[500]}33`}
+              >
+                <MessageCircle size={14} />
+                <span>Add Review</span>
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Action Buttons */}
         {(onEdit || onDelete) && (
@@ -174,6 +452,21 @@ const ProjectCard = ({ title, description, link, tags, status, category, creator
           </div>
         )}
       </div>
+      
+      {/* Confirmation Modal for Review Deletion */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={closeConfirmModal}
+        onConfirm={() => {
+          if (confirmModal.reviewId) {
+            handleDeleteReview(confirmModal.reviewId);
+          }
+          closeConfirmModal();
+        }}
+        title="Delete Review"
+        message="Are you sure you want to delete this review? This action cannot be undone."
+        colors={colors}
+      />
     </div>
   );
 };

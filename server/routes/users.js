@@ -150,7 +150,13 @@ router.get('/stats/:userId', auth, async (req, res) => {
   try {
     const userId = req.params.userId;
 
-    const projects = await Project.find({ creator: userId });
+    // Fetch both created projects and projects where the user is a collaborator
+    const projects = await Project.find({
+      $or: [
+        { creator: userId },
+        { collaborators: userId }
+      ]
+    });
     const publications = await Publication.find({ creator: userId });
 
     const projectStats = projects.reduce((acc, project) => {

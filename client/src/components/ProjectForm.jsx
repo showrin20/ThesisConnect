@@ -1,31 +1,47 @@
 import React, { useState, useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
 import axios from '../axios';
-import { Upload, FileText, X, Search } from 'lucide-react';
+import { Upload, FileText, X, Search, User } from 'lucide-react';
 import { colors } from '../styles/colors';
 import { getInputStyles, getButtonStyles, getStatusStyles } from '../styles/styleUtils';
+import { useAuth } from '../context/AuthContext';
 
-export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCancel, isEditMode = false, initialData = {}, projectId }) {
+const ProjectForm = ({
+  onProjectCreated,
+  onProjectUpdated,
+  onCancel,
+  isEditMode = false,
+  initialData = {},
+  projectId,
+}) => {
+  const { user } = useAuth();
+
   const [formData, setFormData] = useState({
     title: initialData.title || '',
     description: initialData.description || '',
     link: initialData.link || '',
     tags: Array.isArray(initialData.tags) ? initialData.tags.join(', ') : '',
     status: initialData.status || 'Planned',
-    collaborators: [], // Collaborators are now managed through collaboration requests
+    collaborators: [],
     thesisDraft: initialData.thesisDraft || { externalLink: '', description: '' },
   });
+
+  const [creatorData, setCreatorData] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState(null);
   const [collaboratorSearch, setCollaboratorSearch] = useState('');
   const [collaboratorResults, setCollaboratorResults] = useState([]);
   const [pendingRequests, setPendingRequests] = useState([]);
   const [acceptedCollaborators, setAcceptedCollaborators] = useState([]);
+  const [rejectedRequests, setRejectedRequests] = useState([]);
   const dropdownRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Validate URL
   const isValidURL = (url) => {
+    if (!url) return true; // Allow empty URLs
     try {
       new URL(url);
       return true;
@@ -34,24 +50,62 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
     }
   };
 
-    // Search collaborators (debounced)
+  // Fetch collaboration data
+  const fetchCollaborationData = async () => {
+    if (!isEditMode || !projectId) {
+      setPendingRequests([]);
+      setAcceptedCollaborators([]);
+      setRejectedRequests([]);
+      return;
+    }
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('Authentication token not found');
+
+      const [requestsResponse, collaboratorsResponse] = await Promise.all([
+        axios.get(`/collaborations/project/${projectId}/requests`, {
+          headers: { 'x-auth-token': token },
+        }),
+        axios.get(`/projects/${projectId}/collaborators`, {
+          headers: { 'x-auth-token': token },
+        }),
+      ]);
+      
+      // Filter requests by their status
+      const allRequests = requestsResponse.data.data || [];
+      const onlyPendingRequests = allRequests.filter(request => request.status === 'pending');
+      const onlyRejectedRequests = allRequests.filter(request => request.status === 'declined');
+      
+      setPendingRequests(onlyPendingRequests);
+      setRejectedRequests(onlyRejectedRequests);
+      setAcceptedCollaborators(collaboratorsResponse.data.data || []);
+    } catch (error) {
+      setError('Failed to fetch collaboration data');
+    }
+  };
+
+  // Search collaborators (debounced)
   useEffect(() => {
+    let timeout;
     const searchCollaborators = async () => {
       if (!collaboratorSearch.trim() || !isEditMode || !projectId) {
         setCollaboratorResults([]);
         return;
       }
       try {
-        const response = await axios.get(`/projects/search-collaborators?q=${encodeURIComponent(collaboratorSearch)}`, {
-          headers: { 'x-auth-token': localStorage.getItem('token') },
-        });
+        const response = await axios.get(
+          `/projects/search-collaborators?q=${encodeURIComponent(collaboratorSearch)}`,
+          {
+            headers: { 'x-auth-token': localStorage.getItem('token') },
+          }
+        );
         setCollaboratorResults(response.data.data || []);
       } catch (err) {
-        console.error('Search error:', err);
         setError('Failed to search collaborators');
       }
     };
-    const timeout = setTimeout(searchCollaborators, 300);
+
+    timeout = setTimeout(searchCollaborators, 300);
     return () => clearTimeout(timeout);
   }, [collaboratorSearch, isEditMode, projectId]);
 
@@ -66,44 +120,43 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Fetch collaboration requests and accepted collaborators for this project
+  // Fetch collaboration data on mount
   useEffect(() => {
-    const fetchCollaborationData = async () => {
-      if (isEditMode && projectId) {
-        try {
-          const token = localStorage.getItem('token');
-          
-          // Fetch pending collaboration requests
-          const requestsResponse = await axios.get(`/collaborations/project/${projectId}/requests`, {
-            headers: { 'x-auth-token': token }
-          });
-          setPendingRequests(requestsResponse.data.data || []);
-
-          // Fetch accepted collaborators
-          const collaboratorsResponse = await axios.get(`/projects/${projectId}/collaborators`, {
-            headers: { 'x-auth-token': token }
-          });
-          setAcceptedCollaborators(collaboratorsResponse.data.data || []);
-        } catch (error) {
-          console.error('Error fetching collaboration data:', error);
-        }
-      } else {
-        // If not in edit mode, clear the lists
-        setPendingRequests([]);
-        setAcceptedCollaborators([]);
-      }
-    };
-
     fetchCollaborationData();
   }, [isEditMode, projectId]);
 
-
+  // Get creator data
+  useEffect(() => {
+    let isMounted = true;
+    const fetchCreator = async () => {
+      if (isEditMode && initialData?.creator) {
+        if (typeof initialData.creator === 'object') {
+          if (isMounted) setCreatorData(initialData.creator);
+        } else if (initialData.creator) {
+          try {
+            const response = await axios.get(`/users/${initialData.creator}`);
+            if (isMounted && response.data?.success) {
+              setCreatorData(response.data.data);
+            }
+          } catch (error) {
+            if (isMounted) setError('Failed to fetch creator data');
+          }
+        }
+      } else {
+        if (isMounted) setCreatorData(user);
+      }
+    };
+    fetchCreator();
+    return () => {
+      isMounted = false;
+    };
+  }, [isEditMode, initialData.creator, user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setSuccess(false);
+    setSuccess(null);
 
     try {
       const token = localStorage.getItem('token');
@@ -111,7 +164,7 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
 
       const hasLink = formData.link.trim();
       const hasFile = selectedFile;
-      const hasExternalLink = formData.thesisDraft && formData.thesisDraft.externalLink ? formData.thesisDraft.externalLink.trim() : '';
+      const hasExternalLink = formData.thesisDraft?.externalLink?.trim();
 
       if (!formData.title.trim() || !formData.description.trim()) {
         throw new Error('Title and description are required');
@@ -124,7 +177,7 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
       if (hasLink && !isValidURL(formData.link)) {
         throw new Error('Invalid project link URL');
       }
-      if (hasExternalLink && formData.thesisDraft && formData.thesisDraft.externalLink && !isValidURL(formData.thesisDraft.externalLink)) {
+      if (hasExternalLink && !isValidURL(formData.thesisDraft.externalLink)) {
         throw new Error('Invalid thesis draft external link URL');
       }
 
@@ -134,19 +187,20 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
       submitData.append('status', formData.status);
       if (hasLink) submitData.append('link', formData.link);
       if (formData.tags) {
-        const tags = formData.tags.split(',').map(t => t.trim()).filter(Boolean);
+        const tags = formData.tags.split(',').map((t) => t.trim()).filter(Boolean);
         if (tags.length) submitData.append('tags', JSON.stringify([...new Set(tags)]));
       }
-      // Collaborators are now added through collaboration requests, not instantly
-      // submitData.append('collaborators', JSON.stringify([]));
       if (selectedFile) {
         submitData.append('thesisPdf', selectedFile);
       }
-      if (hasExternalLink || (formData.thesisDraft && formData.thesisDraft.description)) {
-        submitData.append('thesisDraft', JSON.stringify({
-          externalLink: formData.thesisDraft && formData.thesisDraft.externalLink ? formData.thesisDraft.externalLink : '',
-          description: formData.thesisDraft && formData.thesisDraft.description ? formData.thesisDraft.description : '',
-        }));
+      if (hasExternalLink || formData.thesisDraft?.description) {
+        submitData.append(
+          'thesisDraft',
+          JSON.stringify({
+            externalLink: formData.thesisDraft?.externalLink || '',
+            description: formData.thesisDraft?.description || '',
+          })
+        );
       }
 
       let response;
@@ -157,7 +211,7 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
             'x-auth-token': token,
           },
         });
-        setSuccess(true);
+        setSuccess('Project updated successfully!');
         if (onProjectUpdated) onProjectUpdated(response.data.data);
       } else {
         response = await axios.post('/projects', submitData, {
@@ -166,7 +220,7 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
             'x-auth-token': token,
           },
         });
-        setSuccess(true);
+        setSuccess('Project created successfully!');
         if (onProjectCreated) onProjectCreated(response.data.data);
       }
 
@@ -182,8 +236,8 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
       setSelectedFile(null);
       setCollaboratorSearch('');
       setCollaboratorResults([]);
-      document.getElementById('thesis-file').value = '';
-      setTimeout(() => setSuccess(false), 3000);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       setError(err.response?.data?.msg || err.message || (isEditMode ? 'Failed to update project' : 'Failed to create project'));
     } finally {
@@ -195,12 +249,12 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
     const { name, value } = e.target;
     if (name.startsWith('thesisDraft.')) {
       const field = name.split('.')[1];
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         thesisDraft: { ...prev.thesisDraft, [field]: value },
       }));
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
     setError(null);
   };
@@ -223,113 +277,99 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
 
   const removeFile = () => {
     setSelectedFile(null);
-    document.getElementById('thesis-file').value = '';
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const addCollaborator = async (user) => {
-    // Check if user can be added
-    const existingRequest = pendingRequests.find(req => req.recipient._id === user._id);
-    const isAccepted = acceptedCollaborators.some(collab => collab._id === user._id);
-    
-    if (isAccepted) {
-      setError('This user is already a collaborator on this project.');
-      return;
-    }
-    
-    if (existingRequest) {
-      setError('A collaboration request has already been sent to this user.');
-      return;
-    }
-    
-    // For new projects, don't allow collaboration requests until project is created
     if (!isEditMode || !projectId) {
       setError('Please create the project first before sending collaboration requests.');
       return;
     }
-    
+
+    const existingRequest = pendingRequests.find((req) => req.recipient._id === user._id);
+    const isAccepted = acceptedCollaborators.some((collab) => collab._id === user._id);
+
+    if (isAccepted) {
+      setError('This user is already a collaborator on this project.');
+      return;
+    }
+
+    if (existingRequest) {
+      setError('A collaboration request has already been sent to this user.');
+      return;
+    }
+
     try {
-      // Send collaboration request instead of adding instantly
       const token = localStorage.getItem('token');
-      if (!token) {
-        setError('Authentication token not found. Please log in again.');
-        return;
-      }
+      if (!token) throw new Error('Authentication token not found');
 
       const requestData = {
         recipientId: user._id || user.id,
-        projectId: projectId,
-        message: `Hi ${user.name || user.email}, I'd like to collaborate with you on this project. Looking forward to working together!`
+        projectId,
+        message: `Hi ${user.name || user.email}, I'd like to collaborate with you on this project. Looking forward to working together!`,
       };
-
-      console.log('Sending collaboration request:', requestData);
-      console.log('Project ID type:', typeof projectId, 'Value:', projectId);
-      console.log('Recipient ID type:', typeof requestData.recipientId, 'Value:', requestData.recipientId);
 
       const response = await axios.post('/collaborations/request', requestData, {
-        headers: { 'x-auth-token': token }
+        headers: { 'x-auth-token': token },
       });
-      
-      console.log('Collaboration request response:', response.data);
-      
-      // Add to pending requests list
-      const newRequest = {
-        _id: response.data.data?._id || Date.now().toString(), // Use real ID if available
-        recipient: user,
-        message: requestData.message,
-        status: 'pending',
-        createdAt: new Date().toISOString()
-      };
-      setPendingRequests(prev => [...prev, newRequest]);
-      
-      // Show success message
+
+      setPendingRequests((prev) => [
+        ...prev,
+        {
+          _id: response.data.data?._id || Date.now().toString(),
+          recipient: user,
+          message: requestData.message,
+          status: 'pending',
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+
       setSuccess('Collaboration request sent successfully!');
       setCollaboratorSearch('');
       setCollaboratorResults([]);
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(false), 3000);
+      setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
-      console.error('Collaboration request error:', error);
-      console.error('Error response:', error.response?.data);
-      console.error('Error status:', error.response?.status);
-      
+      const status = error.response?.status;
       let errorMessage = 'Failed to send collaboration request. Please try again.';
-      
-      if (error.response?.status === 400) {
-        errorMessage = error.response.data?.message || 'Invalid request data';
-      } else if (error.response?.status === 401) {
-        errorMessage = 'Authentication failed. Please log in again.';
-      } else if (error.response?.status === 404) {
-        errorMessage = 'User not found.';
-      } else if (error.response?.status === 500) {
-        errorMessage = 'Server error. Please try again later.';
-      }
-      
+      if (status === 400) errorMessage = error.response.data?.message || 'Invalid request data';
+      else if (status === 401) errorMessage = 'Authentication failed. Please log in again.';
+      else if (status === 404) errorMessage = 'User not found.';
       setError(errorMessage);
     }
   };
 
-
-
   const isFormValid = () => {
-    const hasLink = formData.link && formData.link.trim();
-    const hasThesisDraft = selectedFile || (formData.thesisDraft && formData.thesisDraft.externalLink && formData.thesisDraft.externalLink.trim());
-    return formData.title && formData.title.trim() && formData.description && formData.description.trim() && (hasLink || hasThesisDraft);
+    const hasLink = formData.link?.trim();
+    const hasThesisDraft = selectedFile || (formData.thesisDraft?.externalLink?.trim());
+    return formData.title?.trim() && formData.description?.trim() && (hasLink || hasThesisDraft);
   };
 
   return (
-    <div className="space-y-6" role="region" aria-label={isEditMode ? "Project update form" : "Project creation form"}>
+    <div
+      className="space-y-6"
+      role="region"
+      aria-label={isEditMode ? 'Project update form' : 'Project creation form'}
+    >
       {error && (
-        <div className="rounded-lg p-4" style={getStatusStyles('error')}>
+        <div className="rounded-lg p-4" style={getStatusStyles('error')} role="alert">
           <p className="text-sm">{error}</p>
         </div>
       )}
       {success && (
         <div className="rounded-lg p-4" style={getStatusStyles('success')} role="alert">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: colors.status.success.border }}>
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: colors.text.primary }}>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4L19 7" />
+            <div
+              className="w-5 h-5 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: colors.status.success.border }}
+            >
+              <svg
+                className="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                style={{ color: colors.text.primary }}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 9m0 0l4-9m-4 9V3" />
               </svg>
             </div>
             <p className="text-sm font-medium">{success}</p>
@@ -338,9 +378,63 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Project Creator Information */}
+        <div
+          className="p-4 rounded-lg"
+          style={{ backgroundColor: colors.background.tertiary }}
+          aria-label="Project creator information"
+        >
+          <h3
+            className="text-sm font-medium mb-3 flex items-center gap-2"
+            style={{ color: colors.text.primary }}
+          >
+            <User size={16} />
+            Project Creator
+          </h3>
+          <div className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center"
+              style={{
+                backgroundColor: colors.primary.blue[500],
+                color: colors.text.inverse,
+              }}
+            >
+              {creatorData?.name?.charAt(0) || creatorData?.email?.charAt(0) || 'U'}
+            </div>
+            <div>
+              <p className="font-medium" style={{ color: colors.text.primary }}>
+                {creatorData?.name || 'Loading...'}
+              </p>
+              <p className="text-xs" style={{ color: colors.text.secondary }}>
+                {creatorData?.email || ''}
+                {creatorData?.role && (
+                  <span
+                    className="ml-2 px-2 py-0.5 text-[10px] rounded-full"
+                    style={{
+                      backgroundColor: colors.primary.purple[500] + '33',
+                      color: colors.primary.purple[400],
+                    }}
+                  >
+                    {creatorData.role.charAt(0).toUpperCase() + creatorData.role.slice(1)}
+                  </span>
+                )}
+              </p>
+              {creatorData?.university && (
+                <p className="text-xs" style={{ color: colors.text.muted }}>
+                  {creatorData.university}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Title */}
         <div>
-          <label htmlFor="title" className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>
+          <label
+            htmlFor="title"
+            className="block text-sm font-medium mb-2"
+            style={{ color: colors.text.secondary }}
+          >
             Project Title *
           </label>
           <input
@@ -352,12 +446,17 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
             required
             className="w-full p-3 rounded-lg transition-all duration-200"
             style={getInputStyles()}
+            aria-required="true"
           />
         </div>
 
         {/* Description */}
         <div>
-          <label htmlFor="description" className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>
+          <label
+            htmlFor="description"
+            className="block text-sm font-medium mb-2"
+            style={{ color: colors.text.secondary }}
+          >
             Project Description *
           </label>
           <textarea
@@ -370,12 +469,17 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
             rows={5}
             className="w-full p-3 rounded-lg transition-all duration-200 resize-none"
             style={getInputStyles()}
+            aria-required="true"
           />
         </div>
 
         {/* Link */}
         <div>
-          <label htmlFor="link" className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>
+          <label
+            htmlFor="link"
+            className="block text-sm font-medium mb-2"
+            style={{ color: colors.text.secondary }}
+          >
             Project Link
           </label>
           <input
@@ -392,7 +496,11 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
 
         {/* Status */}
         <div>
-          <label htmlFor="status" className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>
+          <label
+            htmlFor="status"
+            className="block text-sm font-medium mb-2"
+            style={{ color: colors.text.secondary }}
+          >
             Status
           </label>
           <select
@@ -412,41 +520,29 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
         </div>
 
         {/* Collaborators Section */}
-        <div className="relative border rounded-lg p-4" style={{ borderColor: colors.border.secondary, backgroundColor: colors.background.card }} ref={dropdownRef}>
+        <div
+          className="relative border rounded-lg p-4"
+          style={{ borderColor: colors.border.secondary, backgroundColor: colors.background.card }}
+          ref={dropdownRef}
+          aria-label="Collaborators section"
+        >
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium flex items-center gap-2" style={{ color: colors.text.primary }}>
-            <Search size={20} />
-            Collaborators
-          </h3>
+            <h3
+              className="text-lg font-medium flex items-center gap-2"
+              style={{ color: colors.text.primary }}
+            >
+              <Search size={20} />
+              Collaborators
+            </h3>
             {isEditMode && projectId && (
               <button
                 type="button"
-                onClick={() => {
-                  const fetchCollaborationData = async () => {
-                    try {
-                      const token = localStorage.getItem('token');
-                      
-                      // Fetch pending collaboration requests
-                      const requestsResponse = await axios.get(`/collaborations/project/${projectId}/requests`, {
-                        headers: { 'x-auth-token': token }
-                      });
-                      setPendingRequests(requestsResponse.data.data || []);
-
-                      // Fetch accepted collaborators
-                      const collaboratorsResponse = await axios.get(`/projects/${projectId}/collaborators`, {
-                        headers: { 'x-auth-token': token }
-                      });
-                      setAcceptedCollaborators(collaboratorsResponse.data.data || []);
-                    } catch (error) {
-                      // Silently handle error
-                    }
-                  };
-                  fetchCollaborationData();
-                }}
+                onClick={fetchCollaborationData}
                 className="text-xs px-3 py-1 rounded border transition-colors"
                 style={getStatusStyles('info')}
-                onMouseEnter={(e) => e.target.style.opacity = '0.8'}
-                onMouseLeave={(e) => e.target.style.opacity = '1'}
+                onMouseEnter={(e) => (e.target.style.opacity = '0.8')}
+                onMouseLeave={(e) => (e.target.style.opacity = '1')}
+                aria-label="Refresh collaborator status"
               >
                 🔄 Refresh Status
               </button>
@@ -454,7 +550,11 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
           </div>
 
           <div className="relative">
-            <label htmlFor="collaboratorSearch" className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>
+            <label
+              htmlFor="collaboratorSearch"
+              className="block text-sm font-medium mb-2"
+              style={{ color: colors.text.secondary }}
+            >
               Search Collaborators (Mentors or Students)
               {(!isEditMode || !projectId) && (
                 <span className="ml-2 text-xs px-2 py-1 rounded" style={getStatusStyles('warning')}>
@@ -463,31 +563,42 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
               )}
             </label>
             <div className="relative">
-            <input
-              id="collaboratorSearch"
-              value={collaboratorSearch}
-              onChange={(e) => setCollaboratorSearch(e.target.value)}
-              placeholder={(!isEditMode || !projectId) ? "Create project first to add collaborators..." : "Search by name or email..."}
-              disabled={!isEditMode || !projectId}
-              className={`w-full p-3 rounded-lg transition-all duration-200 pr-10 ${(!isEditMode || !projectId) ? 'opacity-50 cursor-not-allowed' : ''}`}
-              style={getInputStyles()}
-              onFocus={(e) => Object.assign(e.target.style, getInputStyles(true))}
-              onBlur={(e) => Object.assign(e.target.style, getInputStyles(false))}
-            />
+              <input
+                id="collaboratorSearch"
+                value={collaboratorSearch}
+                onChange={(e) => setCollaboratorSearch(e.target.value)}
+                placeholder={
+                  !isEditMode || !projectId
+                    ? 'Create project to add collaborators'
+                    : 'Search by name or email...'
+                }
+                disabled={!isEditMode || !projectId}
+                className={`w-full p-3 rounded-lg transition-all duration-200 pr-10 ${
+                  !isEditMode || !projectId ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+                style={getInputStyles()}
+                onFocus={(e) => Object.assign(e.target.style, getInputStyles(true))}
+                onBlur={(e) => Object.assign(e.target.style, getInputStyles(false))}
+                aria-describedby="collaboratorSearchHelp"
+              />
               {collaboratorSearch && (
                 <button
                   type="button"
                   onClick={() => setCollaboratorSearch('')}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full transition-colors"
                   style={getStatusStyles('info')}
-                  onMouseEnter={(e) => e.target.style.opacity = '0.8'}
-                  onMouseLeave={(e) => e.target.style.opacity = '1'}
+                  onMouseEnter={(e) => (e.target.style.opacity = '0.8')}
+                  onMouseLeave={(e) => (e.target.style.opacity = '1')}
+                  aria-label="Clear search"
                 >
                   ✕
                 </button>
               )}
             </div>
-            
+            <span id="collaboratorSearchHelp" className="sr-only">
+              Search for collaborators by name or email. Project must be created first to enable this feature.
+            </span>
+
             {!collaboratorSearch && (
               <div className="mt-2 p-2 text-center text-sm" style={{ color: colors.text.muted }}>
                 💡 Start typing to search for potential collaborators
@@ -496,59 +607,60 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
 
             {collaboratorSearch && collaboratorResults.length === 0 && (
               <div className="mt-2 p-2 text-center text-sm" style={{ color: colors.text.muted }}>
-                {collaboratorSearch.length > 0 ? '🔍 Searching for collaborators...' : 'No users found. Try searching by name or email.'}
+                No users found. Try searching by name or email.
               </div>
             )}
 
             {collaboratorResults.length > 0 && (
-              <ul className="absolute z-50 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto" style={{ borderColor: colors.border.secondary }}>
-                {collaboratorResults.map(user => {
-                  // Check if user already has a pending request
-                  const existingRequest = pendingRequests.find(req => req.recipient._id === user._id);
-                  // Check if user is already an accepted collaborator
-                  const isAccepted = acceptedCollaborators.some(collab => collab._id === user._id);
-                  
-                  let statusText = '';
-                  let statusStyle = '';
-                  let isDisabled = false;
-                  
-                  if (isAccepted) {
-                    statusText = '✓ Already Collaborator';
-                    statusStyle = getStatusStyles('success');
-                    isDisabled = true;
-                  } else if (existingRequest) {
-                    statusText = '⏳ Request Pending';
-                    statusStyle = getStatusStyles('warning');
-                    isDisabled = true;
-                  } else {
-                    statusText = 'Click to Send Request';
-                    statusStyle = getStatusStyles('info');
-                    isDisabled = false;
-                  }
-                  
+              <ul
+                className="absolute z-50 mt-1 w-full border rounded-lg shadow-lg max-h-48 overflow-y-auto"
+                style={{
+                  borderColor: colors.border.secondary,
+                  backgroundColor: colors.background.card,
+                }}
+                role="listbox"
+                aria-label="Collaborator search results"
+              >
+                {collaboratorResults.map((user) => {
+                  const existingRequest = pendingRequests.find(
+                    (req) => req.recipient._id === user._id
+                  );
+                  const isAccepted = acceptedCollaborators.some(
+                    (collab) => collab._id === user._id
+                  );
+
+                  const statusText = isAccepted
+                    ? '✓ Already Collaborator'
+                    : existingRequest
+                    ? '⏳ Request Pending'
+                    : 'Send Request';
+                  const statusStyle = isAccepted
+                    ? getStatusStyles('success')
+                    : existingRequest
+                    ? getStatusStyles('warning')
+                    : getStatusStyles('info');
+                  const isDisabled = isAccepted || existingRequest;
+
                   return (
-                  <li
-                    key={user._id}
+                    <li
+                      key={user._id}
                       className={`p-3 border-b last:border-b-0 transition-colors ${
-                        isDisabled ? 'opacity-60 cursor-not-allowed' : 'hover:bg-gray-100 cursor-pointer active:bg-gray-200'
+                        isDisabled ? 'opacity-60 cursor-not-allowed' : 'hover:bg-gray-100 cursor-pointer'
                       }`}
-                      onClick={isDisabled ? undefined : (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        addCollaborator(user);
-                      }}
-                      onTouchStart={isDisabled ? undefined : (e) => {
-                        e.preventDefault();
-                      }}
-                      onMouseDown={isDisabled ? undefined : (e) => {
-                        if (!isDisabled) {
+                      onClick={isDisabled ? undefined : () => addCollaborator(user)}
+                      onKeyDown={(e) => {
+                        if (!isDisabled && (e.key === 'Enter' || e.key === ' ')) {
                           e.preventDefault();
+                          addCollaborator(user);
                         }
                       }}
-                      style={{ 
-                        color: colors.text.primary, 
+                      role="option"
+                      aria-selected={false}
+                      tabIndex={isDisabled ? -1 : 0}
+                      style={{
+                        color: colors.text.primary,
                         backgroundColor: colors.background.card,
-                        borderColor: colors.border.secondary
+                        borderColor: colors.border.secondary,
                       }}
                     >
                       <div className="flex items-center justify-between">
@@ -559,20 +671,23 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
                           </div>
                         </div>
                         <div className="text-right">
-                          <div 
+                          <div
                             className="text-xs font-medium px-2 py-1 rounded-full"
                             style={statusStyle}
                           >
                             {statusText}
                           </div>
                           {!isDisabled && (
-                            <div className="text-xs mt-1 opacity-70" style={{ color: colors.text.muted }}>
+                            <div
+                              className="text-xs mt-1 opacity-70"
+                              style={{ color: colors.text.muted }}
+                            >
                               👆 Click to send request
                             </div>
                           )}
                         </div>
                       </div>
-                  </li>
+                    </li>
                   );
                 })}
               </ul>
@@ -588,52 +703,36 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
                 </p>
                 <button
                   type="button"
-                  onClick={() => {
-                    // Refresh collaboration data
-                    if (isEditMode && projectId) {
-                      const fetchCollaborationData = async () => {
-                        try {
-                          const token = localStorage.getItem('token');
-                          
-                          // Fetch pending collaboration requests
-                          const requestsResponse = await axios.get(`/collaborations/project/${projectId}/requests`, {
-                            headers: { 'x-auth-token': token }
-                          });
-                          setPendingRequests(requestsResponse.data.data || []);
-
-                          // Fetch accepted collaborators
-                          const collaboratorsResponse = await axios.get(`/projects/${projectId}/collaborators`, {
-                            headers: { 'x-auth-token': token }
-                          });
-                          setAcceptedCollaborators(collaboratorsResponse.data.data || []);
-                        } catch (error) {
-                          // Silently handle error
-                        }
-                      };
-                      fetchCollaborationData();
-                    }
-                  }}
+                  onClick={fetchCollaborationData}
                   className="text-xs px-2 py-1 rounded border transition-colors"
                   style={getStatusStyles('info')}
-                  onMouseEnter={(e) => e.target.style.opacity = '0.8'}
-                  onMouseLeave={(e) => e.target.style.opacity = '1'}
+                  onMouseEnter={(e) => (e.target.style.opacity = '0.8')}
+                  onMouseLeave={(e) => (e.target.style.opacity = '1')}
+                  aria-label="Refresh pending requests"
                 >
                   🔄 Refresh
                 </button>
               </div>
               <div className="space-y-3">
                 {pendingRequests.map((request) => (
-                  <div key={request._id} className="p-3 rounded-lg border" style={{ 
-                    backgroundColor: colors.background.tertiary,
-                    borderColor: colors.border.secondary 
-                  }}>
+                  <div
+                    key={request._id}
+                    className="p-3 rounded-lg border"
+                    style={{
+                      backgroundColor: colors.background.tertiary,
+                      borderColor: colors.border.secondary,
+                    }}
+                  >
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ 
-                          backgroundColor: colors.primary?.blue?.[500] || '#3b82f6' 
-                        }}>
+                        <div
+                          className="w-8 h-8 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: colors.primary.blue[500] }}
+                        >
                           <span className="text-xs text-white font-medium">
-                            {request.recipient?.name?.charAt(0) || request.recipient?.email?.charAt(0) || 'U'}
+                            {request.recipient?.name?.charAt(0) ||
+                              request.recipient?.email?.charAt(0) ||
+                              'U'}
                           </span>
                         </div>
                         <div>
@@ -645,7 +744,10 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
                           </p>
                         </div>
                       </div>
-                      <span className="px-2 py-1 rounded-full text-xs font-medium" style={getStatusStyles('warning')}>
+                      <span
+                        className="px-2 py-1 rounded-full text-xs font-medium"
+                        style={getStatusStyles('warning')}
+                      >
                         Pending
                       </span>
                     </div>
@@ -656,20 +758,109 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
                       <p className="text-xs" style={{ color: colors.text.muted }}>
                         Sent {new Date(request.createdAt).toLocaleDateString()}
                       </p>
-                                              <button
-                          type="button"
-                          onClick={() => {
-                            // Remove pending request
-                            setPendingRequests(prev => prev.filter(req => req._id !== request._id));
-                          }}
-                          className="text-xs px-2 py-1 rounded border transition-colors"
-                          style={getStatusStyles('error')}
-                          onMouseEnter={(e) => e.target.style.opacity = '0.8'}
-                          onMouseLeave={(e) => e.target.style.opacity = '1'}
-                          title="Remove this pending request"
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPendingRequests((prev) => prev.filter((req) => req._id !== request._id));
+                        }}
+                        className="text-xs px-2 py-1 rounded border transition-colors"
+                        style={getStatusStyles('error')}
+                        onMouseEnter={(e) => (e.target.style.opacity = '0.8')}
+                        onMouseLeave={(e) => (e.target.style.opacity = '1')}
+                        aria-label={`Remove pending request for ${request.recipient?.name || 'user'}`}
+                      >
+                        ✕ Remove
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Rejected Collaboration Requests */}
+          {rejectedRequests.length > 0 && (
+            <div className="mt-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-medium" style={{ color: colors.text.secondary }}>
+                  Rejected Collaboration Requests ({rejectedRequests.length})
+                </p>
+                <button
+                  type="button"
+                  onClick={fetchCollaborationData}
+                  className="text-xs px-2 py-1 rounded border transition-colors"
+                  style={getStatusStyles('info')}
+                  onMouseEnter={(e) => (e.target.style.opacity = '0.8')}
+                  onMouseLeave={(e) => (e.target.style.opacity = '1')}
+                  aria-label="Refresh rejected requests"
+                >
+                  🔄 Refresh
+                </button>
+              </div>
+              <div className="space-y-3">
+                {rejectedRequests.map((request) => (
+                  <div
+                    key={request._id}
+                    className="p-3 rounded-lg border"
+                    style={{
+                      backgroundColor: colors.background.tertiary,
+                      borderColor: colors.border.secondary,
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-8 h-8 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: colors.primary.blue[500] }}
                         >
-                          ✕ Remove
-                        </button>
+                          <span className="text-xs text-white font-medium">
+                            {request.recipient?.name?.charAt(0) ||
+                              request.recipient?.email?.charAt(0) ||
+                              'U'}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium" style={{ color: colors.text.primary }}>
+                            {request.recipient?.name || request.recipient?.email || 'Unknown User'}
+                          </p>
+                          <p className="text-xs" style={{ color: colors.text.secondary }}>
+                            {request.recipient?.email}
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        className="px-2 py-1 rounded-full text-xs font-medium"
+                        style={getStatusStyles('error')}
+                      >
+                        Rejected
+                      </span>
+                    </div>
+                    <p className="text-sm mb-2" style={{ color: colors.text.secondary }}>
+                      "{request.message}"
+                    </p>
+                    {request.responseMessage && (
+                      <p className="text-xs p-2 rounded" style={{ backgroundColor: colors.background.subtle, color: colors.text.secondary }}>
+                        Response: "{request.responseMessage}"
+                      </p>
+                    )}
+                    <div className="flex items-center justify-between mt-2">
+                      <p className="text-xs" style={{ color: colors.text.muted }}>
+                        Sent {new Date(request.createdAt).toLocaleDateString()}
+                        {request.respondedAt && `, Rejected ${new Date(request.respondedAt).toLocaleDateString()}`}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRejectedRequests((prev) => prev.filter((req) => req._id !== request._id));
+                        }}
+                        className="text-xs px-2 py-1 rounded border transition-colors"
+                        style={getStatusStyles('error')}
+                        onMouseEnter={(e) => (e.target.style.opacity = '0.8')}
+                        onMouseLeave={(e) => (e.target.style.opacity = '1')}
+                        aria-label={`Remove rejected request for ${request.recipient?.name || 'user'}`}
+                      >
+                        ✕ Remove
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -681,64 +872,53 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
           {acceptedCollaborators.length > 0 && (
             <div className="mt-4">
               <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-medium" style={{ color: colors.text.secondary }}>
+                <p className="text-sm font-medium" style={{ color: colors.text.secondary }}>
                   Accepted Collaborators ({acceptedCollaborators.length})
                 </p>
                 <button
                   type="button"
-                  onClick={() => {
-                    // Refresh collaboration data
-                    if (isEditMode && projectId) {
-                      const fetchCollaborationData = async () => {
-                        try {
-                          const token = localStorage.getItem('token');
-                          
-                          // Fetch pending collaboration requests
-                          const requestsResponse = await axios.get(`/collaborations/project/${projectId}/requests`, {
-                            headers: { 'x-auth-token': token }
-                          });
-                          setPendingRequests(requestsResponse.data.data || []);
-
-                          // Fetch accepted collaborators
-                          const collaboratorsResponse = await axios.get(`/projects/${projectId}/collaborators`, {
-                            headers: { 'x-auth-token': token }
-                          });
-                          setAcceptedCollaborators(collaboratorsResponse.data.data || []);
-                        } catch (error) {
-                          // Silently handle error
-                        }
-                      };
-                      fetchCollaborationData();
-                    }
-                  }}
+                  onClick={fetchCollaborationData}
                   className="text-xs px-2 py-1 rounded border transition-colors"
                   style={getStatusStyles('success')}
-                  onMouseEnter={(e) => e.target.style.opacity = '0.8'}
-                  onMouseLeave={(e) => e.target.style.opacity = '1'}
+                  onMouseEnter={(e) => (e.target.style.opacity = '0.8')}
+                  onMouseLeave={(e) => (e.target.style.opacity = '1')}
+                  aria-label="Refresh accepted collaborators"
                 >
                   🔄 Refresh
                 </button>
               </div>
               <div className="space-y-2">
                 {acceptedCollaborators.map((collaborator) => (
-                  <div key={collaborator._id} className="flex items-center justify-between p-3 rounded-lg" style={{ 
-                    backgroundColor: colors.background.card,
-                    color: colors.text.primary
-                    
-                   
-                  }}>
+                  <div
+                    key={collaborator._id}
+                    className="flex items-center justify-between p-3 rounded-lg"
+                    style={{
+                      backgroundColor: colors.background.card,
+                      color: colors.text.primary,
+                    }}
+                  >
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center bg-white bg-opacity-20">
-                        <span className="text-xs font-medium">
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center"
+                        style={{ backgroundColor: colors.primary.blue[500] }}
+                      >
+                        <span className="text-xs font-medium text-white">
                           {collaborator.name?.charAt(0) || collaborator.email?.charAt(0) || 'U'}
                         </span>
                       </div>
                       <div>
-                        <p className="text-sm font-medium">{collaborator.name || collaborator.email}</p>
-                        <p className="text-xs opacity-80">{collaborator.role || 'Collaborator'}</p>
+                        <p className="text-sm font-medium">
+                          {collaborator.name || collaborator.email}
+                        </p>
+                        <p className="text-xs opacity-80">
+                          {collaborator.role || 'Collaborator'}
+                        </p>
                       </div>
                     </div>
-                    <span className="px-2 py-1 rounded-full text-xs font-medium" style={getStatusStyles('success')}>
+                    <span
+                      className="px-2 py-1 rounded-full text-xs font-medium"
+                      style={getStatusStyles('success')}
+                    >
                       ✓ Active
                     </span>
                   </div>
@@ -749,7 +929,11 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
 
           {/* Instructions */}
           <div className="mt-4">
-            <div className="p-3 rounded-lg" style={{ backgroundColor: colors.background.tertiary }}>
+            <div
+              className="p-3 rounded-lg"
+              style={{ backgroundColor: colors.background.tertiary }}
+              aria-label="Collaboration instructions"
+            >
               <p className="text-xs font-medium mb-2" style={{ color: colors.text.primary }}>
                 💡 <strong>How Collaboration Works:</strong>
               </p>
@@ -771,11 +955,14 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
           </div>
 
           {/* No Requests or Collaborators Message */}
-          {pendingRequests.length === 0 && acceptedCollaborators.length === 0 && (
-            <div className="mt-4 p-4 rounded-lg border-2 border-dashed text-center" style={{ 
-              borderColor: colors.border.secondary,
-              backgroundColor: colors.background.tertiary
-            }}>
+          {pendingRequests.length === 0 && rejectedRequests.length === 0 && acceptedCollaborators.length === 0 && (
+            <div
+              className="mt-4 p-4 rounded-lg border-2 border-dashed text-center"
+              style={{
+                borderColor: colors.border.secondary,
+                backgroundColor: colors.background.tertiary,
+              }}
+            >
               <p className="text-sm" style={{ color: colors.text.secondary }}>
                 📝 <strong>No collaboration requests or collaborators yet.</strong>
               </p>
@@ -785,41 +972,81 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
               <div className="mt-2 text-xs" style={{ color: colors.text.muted }}>
                 <p>• Search by name or email</p>
                 <p>• Click on users to send collaboration requests</p>
-                <p>• Requests will show as pending until accepted</p>
+                <p>• Requests will show as pending until accepted or rejected</p>
               </div>
             </div>
           )}
         </div>
 
         {/* Thesis Draft Section */}
-        <div className="border rounded-lg p-4" style={{ borderColor: colors.border.secondary, backgroundColor: colors.background.card, color: colors.text.primary }}>
-          <h3 className="text-lg font-medium mb-4 flex items-center gap-2" style={{ color: colors.text.primary }}>
+        <div
+          className="border rounded-lg p-4"
+          style={{
+            borderColor: colors.border.secondary,
+            backgroundColor: colors.background.card,
+            color: colors.text.primary,
+          }}
+          aria-label="Thesis draft section"
+        >
+          <h3
+            className="text-lg font-medium mb-4 flex items-center gap-2"
+            style={{ color: colors.text.primary }}
+          >
             <FileText size={20} />
             Project Report
           </h3>
           <div>
-            <input type="file" accept=".pdf" onChange={handleFileChange} className="hidden" id="thesis-file" />
-            <label htmlFor="thesis-file" className="cursor-pointer block p-3 border rounded-lg text-center">
+            <input
+              type="file"
+              accept=".pdf"
+              onChange={handleFileChange}
+              className="hidden"
+              id="thesis-file"
+              ref={fileInputRef}
+            />
+            <label
+              htmlFor="thesis-file"
+              className="cursor-pointer block p-3 border rounded-lg text-center"
+              style={{
+                borderColor: colors.border.secondary,
+                backgroundColor: colors.background.tertiary,
+                color: colors.text.primary,
+              }}
+            >
               {selectedFile ? `Change file: ${selectedFile.name}` : 'Upload PDF Draft'}
             </label>
           </div>
           {selectedFile && (
-            <div className="mt-2 flex items-center justify-between p-2 rounded" style={{ backgroundColor: colors.background.tertiary }}>
-              <span className="text-sm flex items-center gap-2">{selectedFile.name} ({(selectedFile.size / (1024 * 1024)).toFixed(2)} MB)</span>
-              <button type="button" onClick={removeFile} style={getStatusStyles('error')}>
+            <div
+              className="mt-2 flex items-center justify-between p-2 rounded"
+              style={{ backgroundColor: colors.background.tertiary }}
+            >
+              <span className="text-sm flex items-center gap-2">
+                {selectedFile.name} ({(selectedFile.size / (1024 * 1024)).toFixed(2)} MB)
+              </span>
+              <button
+                type="button"
+                onClick={removeFile}
+                style={getStatusStyles('error')}
+                aria-label="Remove uploaded file"
+              >
                 <X size={16} />
               </button>
             </div>
           )}
           <div className="mt-4">
-            <label htmlFor="thesisDraft.externalLink" className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>
+            <label
+              htmlFor="thesisDraft.externalLink"
+              className="block text-sm font-medium mb-2"
+              style={{ color: colors.text.secondary }}
+            >
               Thesis Draft External Link
             </label>
             <input
               id="thesisDraft.externalLink"
               name="thesisDraft.externalLink"
               type="url"
-              value={formData.thesisDraft && formData.thesisDraft.externalLink ? formData.thesisDraft.externalLink : ''}
+              value={formData.thesisDraft?.externalLink || ''}
               onChange={handleChange}
               placeholder="https://example.com/thesis-draft"
               className="w-full p-3 rounded-lg transition-all duration-200"
@@ -827,13 +1054,17 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
             />
           </div>
           <div className="mt-4">
-            <label htmlFor="thesisDraft.description" className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>
+            <label
+              htmlFor="thesisDraft.description"
+              className="block text-sm font-medium mb-2"
+              style={{ color: colors.text.secondary }}
+            >
               Thesis Draft Description
             </label>
             <textarea
               id="thesisDraft.description"
               name="thesisDraft.description"
-              value={formData.thesisDraft && formData.thesisDraft.description ? formData.thesisDraft.description : ''}
+              value={formData.thesisDraft?.description || ''}
               onChange={handleChange}
               placeholder="Describe your thesis draft..."
               rows={3}
@@ -845,7 +1076,11 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
 
         {/* Tags */}
         <div>
-          <label htmlFor="tags" className="block text-sm font-medium mb-2" style={{ color: colors.text.secondary }}>
+          <label
+            htmlFor="tags"
+            className="block text-sm font-medium mb-2"
+            style={{ color: colors.text.secondary }}
+          >
             Research Tags
           </label>
           <input
@@ -866,8 +1101,13 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
             onClick={onCancel}
             className="flex-1 py-3 px-6 rounded-lg font-medium transition-all duration-200"
             style={getButtonStyles('outline')}
-            onMouseEnter={(e) => Object.assign(e.target.style, getButtonStyles('outline'), { backgroundColor: colors.button.outline.backgroundHover })}
+            onMouseEnter={(e) =>
+              Object.assign(e.target.style, getButtonStyles('outline'), {
+                backgroundColor: colors.button.outline.backgroundHover,
+              })
+            }
             onMouseLeave={(e) => Object.assign(e.target.style, getButtonStyles('outline'))}
+            aria-label="Cancel project creation or update"
           >
             Cancel
           </button>
@@ -876,14 +1116,54 @@ export default function ProjectForm({ onProjectCreated, onProjectUpdated, onCanc
             disabled={loading || !isFormValid()}
             className="flex-1 py-3 px-6 rounded-lg font-medium transition-all duration-200"
             style={loading || !isFormValid() ? getButtonStyles('primary', true) : getButtonStyles('primary')}
-            onMouseEnter={(e) => Object.assign(e.target.style, getButtonStyles('primary'), { transform: 'scale(1.02)' })}
-            onMouseLeave={(e) => Object.assign(e.target.style, getButtonStyles('primary'), { transform: 'scale(1)' })}
+            onMouseEnter={(e) =>
+              Object.assign(e.target.style, getButtonStyles('primary'), { transform: 'scale(1.02)' })
+            }
+            onMouseLeave={(e) =>
+              Object.assign(e.target.style, getButtonStyles('primary'), { transform: 'scale(1)' })
+            }
+            aria-label={isEditMode ? 'Update project' : 'Create project'}
           >
             {loading ? (isEditMode ? 'Updating Project...' : 'Creating Project...') : (isEditMode ? 'Update Project' : 'Create Project')}
           </button>
-          
         </div>
       </form>
     </div>
   );
-}
+};
+
+ProjectForm.propTypes = {
+  onProjectCreated: PropTypes.func,
+  onProjectUpdated: PropTypes.func,
+  onCancel: PropTypes.func.isRequired,
+  isEditMode: PropTypes.bool,
+  initialData: PropTypes.shape({
+    title: PropTypes.string,
+    description: PropTypes.string,
+    link: PropTypes.string,
+    tags: PropTypes.arrayOf(PropTypes.string),
+    status: PropTypes.oneOf(['Planned', 'In Progress', 'Completed']),
+    creator: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.shape({
+        _id: PropTypes.string,
+        name: PropTypes.string,
+        email: PropTypes.string,
+        role: PropTypes.string,
+        university: PropTypes.string,
+      }),
+    ]),
+    thesisDraft: PropTypes.shape({
+      externalLink: PropTypes.string,
+      description: PropTypes.string,
+    }),
+  }),
+  projectId: PropTypes.string,
+};
+
+ProjectForm.defaultProps = {
+  isEditMode: false,
+  initialData: {},
+};
+
+export default ProjectForm;

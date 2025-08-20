@@ -274,7 +274,7 @@ export default function ProjectManagement() {
                         onMouseEnter={(e) => {
                           if (currentPage !== 1) {
                             e.target.style.backgroundColor = colors.button.primary.backgroundHover;
-                          }
+                          } 
                         }}
                         onMouseLeave={(e) => {
                           if (currentPage !== 1) {

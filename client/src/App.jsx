@@ -14,7 +14,7 @@ import Dashboard from './pages/Dashboard';
 import MentorDashboard from './pages/MentorDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Settings from './pages/Settings';
-import Auth from './components/Auth';
+import Auth from './components/auth';
 import MyProjects from './pages/MyProjects';
 import MyPublications from './pages/MyPublications';
 import MyCommunityPosts from './pages/MyCommunityPosts';
@@ -32,6 +32,9 @@ import BlogManagement from './pages/BlogManagement';
 import CommunityFeed from './pages/CommunityFeed';
 import FindMentors from './pages/FindMentors'; 
 import CommunityManagement from './pages/CommunityManagement';
+import MyMentees from './pages/MyMentees';
+import ProjectReviews from './pages/ProjectReviews'; // Import the new ProjectReviews page
+
 
 
 // Component to conditionally render navbar
@@ -58,7 +61,9 @@ function AppContent() {
     '/blog-management',
     '/community-feed',
     '/find-mentors',
-    '/community-management'
+    '/community-management',
+    '/my-mentees',
+    '/project-reviews'
   ].includes(location.pathname) || location.pathname.startsWith('/profile/'); // ✅ Added dynamic profile routes
 
   return (
@@ -90,6 +95,24 @@ function AppContent() {
             element={
               <ProtectedRoute requiredRole="admin">
                 <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+
+           <Route
+            path="/my-mentees"
+            element={
+              <ProtectedRoute requiredRole="mentor">
+                <MyMentees />
+              </ProtectedRoute>
+            }
+          />
+             <Route
+            path="/project-reviews"
+            element={
+              <ProtectedRoute requiredRole="mentor">
+                <ProjectReviews />
               </ProtectedRoute>
             }
           />

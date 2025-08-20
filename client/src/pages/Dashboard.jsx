@@ -104,7 +104,8 @@ export default function Dashboard() {
       setLoadingProjects(true);
       setProjectsError(null);
       try {
-        const response = await axios.get('/projects');
+        // Use the my-projects endpoint which fetches both created and collaborated projects
+        const response = await axios.get('/projects/my-projects');
         setRecentProjects(response.data?.data || []);
       } catch (error) {
         console.error('Failed to fetch projects:', error);
@@ -244,14 +245,20 @@ export default function Dashboard() {
       setShowProjectForm(false);
       showSuccess('Project created successfully!');
       
-      // Refresh user stats
+      // Refresh user stats and projects list to ensure collaboration projects are included
       if (user?.id) {
-        statsService.getUserStats(user.id)
-          .then(stats => setUserStats(stats))
-          .catch(error => {
-            console.error('Failed to refresh stats:', error);
-            showWarning('Project created but failed to refresh statistics. Please refresh the page.');
-          });
+        Promise.all([
+          statsService.getUserStats(user.id),
+          axios.get('/projects/my-projects')
+        ])
+        .then(([stats, projectsRes]) => {
+          setUserStats(stats);
+          setRecentProjects(projectsRes.data?.data || []);
+        })
+        .catch(error => {
+          console.error('Failed to refresh data:', error);
+          showWarning('Project created but failed to refresh dashboard data. Please refresh the page.');
+        });
       }
     } catch (error) {
       console.error('Error handling project creation:', error);
@@ -1083,71 +1090,7 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  {/* Recent Community Posts */}
-                  <div 
-                    className="backdrop-blur-lg rounded-xl p-6 border"
-                    style={{
-                      backgroundColor: colors.background.glass,
-                      borderColor: colors.border.secondary
-                    }}
-                  >
-                    <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-xl font-semibold" style={{ color: colors.text.primary }}>Recent Community Posts</h2>
-                      <button 
-                        className="flex items-center gap-2 text-sm font-medium transition-colors"
-                        style={{ color: colors.primary.purple[400] }}
-                        onMouseEnter={(e) => e.target.style.color = colors.primary.purple[300]}
-                        onMouseLeave={(e) => e.target.style.color = colors.primary.purple[400]}
-                      >
-                        <span>View All</span>
-                        <ExternalLink size={14} />
-                      </button>
-                    </div>
-                    <div className="space-y-4">
-                      {loadingCommunityPosts ? (
-                        <div className="flex items-center justify-center py-8">
-                          <div 
-                            className="w-6 h-6 border-2 rounded-full animate-spin"
-                            style={{
-                              borderColor: `${colors.primary.purple[400]}4D`,
-                              borderTopColor: colors.primary.purple[400]
-                            }}
-                          ></div>
-                          <span className="ml-2" style={{ color: `${colors.text.secondary}99` }}>Loading community posts...</span>
-                        </div>
-                      ) : (!Array.isArray(recentCommunityPosts) || recentCommunityPosts.length === 0) ? (
-                        <div className="text-center py-8">
-                          <p className="text-sm italic mb-4" style={{ color: `${colors.text.secondary}99` }}>No community posts yet.</p>
-                          <button
-                            onClick={() => setShowCommunityPostForm(true)}
-                            className="text-sm underline transition-colors"
-                            style={{ color: colors.primary.purple[400] }}
-                            onMouseEnter={(e) => e.target.style.color = colors.primary.purple[300]}
-                            onMouseLeave={(e) => e.target.style.color = colors.primary.purple[400]}
-                          >
-                            Create your first community post
-                          </button>
-                        </div>
-                      ) : (
-                        (Array.isArray(recentCommunityPosts) ? recentCommunityPosts : []).slice(0, 3).map((post, idx) => (
-                          <CommunityPostCard
-                            key={post._id || idx}
-                            postId={post.postId}
-                            type={post.type}
-                            title={post.title}
-                            content={post.content}
-                            author={post.author?.name || post.authorId}
-                            tags={post.tags}
-                            skillsNeeded={post.skillsNeeded}
-                            status={post.status}
-                            createdAt={post.createdAt}
-                            likes={post.likes}
-                            comments={post.comments}
-                          />
-                        ))
-                      )}
-                    </div>
-                  </div>
+               
                 </div>
 
                 {/* Right Column - Profile and Quick Info */}
@@ -1178,42 +1121,7 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  <div 
-                    className="backdrop-blur-lg rounded-xl p-6 border"
-                    style={{
-                      backgroundColor: colors.background.glass,
-                      borderColor: colors.border.secondary
-                    }}
-                  >
-                    <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-xl font-semibold" style={{ color: colors.text.primary }}>Recent Forum Activity</h2>
-                      <button 
-                        className="flex items-center gap-2 text-sm font-medium transition-colors"
-                        style={{ color: colors.primary.blue[400] }}
-                        onMouseEnter={(e) => e.target.style.color = colors.primary.blue[300]}
-                        onMouseLeave={(e) => e.target.style.color = colors.primary.blue[400]}
-                      >
-                        <span>View All</span>
-                        <ExternalLink size={14} />
-                      </button>
-                    </div>
-                    <div className="space-y-4">
-                      {forumActivity.length === 0 ? (
-                        <p className="text-sm italic" style={{ color: `${colors.text.secondary}99` }}>No recent forum activity to show.</p>
-                      ) : (
-                        forumActivity.map((activity, index) => (
-                          <ForumActivityCard
-                            key={index}
-                            title={activity.title}
-                            snippet={activity.snippet}
-                            tags={activity.tags}
-                            time={activity.time}
-                            category={activity.category}
-                          />
-                        ))
-                      )}
-                    </div>
-                  </div>
+         
                 </div>
               </div>
             </div>

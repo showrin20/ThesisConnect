@@ -71,7 +71,22 @@ export default function MyProjects() {
     setError(null);
     try {
       const res = await axios.get('/projects/my-projects');
-      setProjects(res.data.data || []);
+      // Get projects with reviews data
+      const projectsData = res.data.data || [];
+      
+      // Fetch reviews for each project
+      const projectsWithReviews = await Promise.all(
+        projectsData.map(async (project) => {
+          try {
+            const reviewsRes = await axios.get(`/projects/${project._id}/reviews`);
+            return { ...project, reviews: reviewsRes.data.data || [] };
+          } catch (err) {
+            return { ...project, reviews: [] };
+          }
+        })
+      );
+      
+      setProjects(projectsWithReviews);
     } catch (err) {
       setError(err.response?.data?.msg || 'Failed to load your projects');
     } finally {
@@ -185,6 +200,24 @@ export default function MyProjects() {
     );
     setEditingProject(null);
     setError(null);
+  };
+
+  const handleReviewAdded = (updatedProject) => {
+    // Update the projects list with the updated project including new review
+    setProjects(prevProjects => 
+      prevProjects.map(project => 
+        project._id === updatedProject._id ? updatedProject : project
+      )
+    );
+  };
+  
+  const handleReviewDeleted = (updatedProject) => {
+    // Update the projects list with the updated project after review deletion
+    setProjects(prevProjects => 
+      prevProjects.map(project => 
+        project._id === updatedProject._id ? updatedProject : project
+      )
+    );
   };
 
   return (
@@ -330,8 +363,11 @@ export default function MyProjects() {
                         creator={project.creator?._id || project.creator}
                         collaborators={project.collaborators}
                         currentUserId={user?.id}
+                        userRole={user?.role}
                         onEdit={() => startEditing(project)}
                         onDelete={() => confirmDelete(project)}
+                        onReviewAdded={handleReviewAdded}
+                        onReviewDeleted={handleReviewDeleted}
                       />
                     </div>
                   ))}
