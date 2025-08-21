@@ -34,6 +34,7 @@ import FindMentors from './pages/FindMentors';
 import CommunityManagement from './pages/CommunityManagement';
 import MyMentees from './pages/MyMentees';
 import ProjectReviews from './pages/ProjectReviews'; // Import the new ProjectReviews page
+import Bookmark from './pages/Bookmark'; // Import the Bookmark page
 
 
 
@@ -63,7 +64,8 @@ function AppContent() {
     '/find-mentors',
     '/community-management',
     '/my-mentees',
-    '/project-reviews'
+    '/project-reviews',
+    '/bookmarks'
   ].includes(location.pathname) || location.pathname.startsWith('/profile/'); // ✅ Added dynamic profile routes
 
   return (
@@ -238,12 +240,12 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
-
-                 <Route
-            path="/my-blogs"
+          
+          <Route
+            path="/bookmarks"
             element={
               <ProtectedRoute>
-                <MyBlogs />
+                <Bookmark />
               </ProtectedRoute>
             }
           />

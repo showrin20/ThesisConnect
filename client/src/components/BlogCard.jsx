@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
-import { Calendar, Clock, User, Eye, Heart, MessageCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Calendar, Clock, User, Eye, Heart, MessageCircle, Bookmark } from 'lucide-react';
 import { colors } from '../styles/colors';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import axios from '../axios';
 
 const BlogCard = ({ 
+  blog,
   _id, 
   title, 
   excerpt, 
@@ -17,11 +20,81 @@ const BlogCard = ({
   views = 0,
   likes = 0,
   comments = 0,
-  featuredImage
+  featuredImage,
+  isBookmarked: initialIsBookmarked = false,
+  onBookmarkToggle,
+  onEdit,
+  onDelete
 }) => {
   const navigate = useNavigate();
   const [hovered, setHovered] = useState(false);
   const [readMoreHover, setReadMoreHover] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
+  const { user } = useAuth();
+  
+  // Get actual blog id - it might be in blog._id or directly in _id
+  const blogId = blog?._id || _id;
+  
+  // Check bookmark status on mount
+  useEffect(() => {
+    const checkBookmarkStatus = async () => {
+      if (!blogId || !user?.token) return;
+      
+      try {
+        const response = await axios.get(`/api/bookmarks/check/${blogId}`, {
+          headers: { 'x-auth-token': user.token }
+        });
+        
+        if (response.data.success) {
+          setIsBookmarked(response.data.bookmarked);
+        }
+      } catch (error) {
+        console.error('Error checking bookmark status:', error);
+      }
+    };
+    
+    if (!initialIsBookmarked) {
+      checkBookmarkStatus();
+    }
+  }, [blogId, user?.token, initialIsBookmarked]);
+  
+  // Handle bookmark toggle
+  const handleBookmarkToggle = async (e) => {
+    e.stopPropagation();
+    if (!user?.token || bookmarkLoading) return;
+    
+    setBookmarkLoading(true);
+    
+    try {
+      if (isBookmarked) {
+        // If already bookmarked, remove the bookmark
+        await axios.delete(`/api/bookmarks/content/${blogId}?type=blog`, {
+          headers: { 'x-auth-token': user.token }
+        });
+      } else {
+        // If not bookmarked, add a bookmark
+        await axios.post('/api/bookmarks', {
+          projectId: blogId,
+          type: 'blog'
+        }, {
+          headers: { 'x-auth-token': user.token }
+        });
+      }
+      
+      // Toggle bookmark state
+      setIsBookmarked(!isBookmarked);
+      
+      // Call parent callback if provided
+      if (onBookmarkToggle) {
+        onBookmarkToggle();
+      }
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+    } finally {
+      setBookmarkLoading(false);
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
@@ -110,24 +183,39 @@ const BlogCard = ({
               <span 
                 className="px-2 py-1 text-xs font-medium rounded-full"
                 style={{
-                  backgroundColor: `${getCategoryColor(category)}33`,
-                  color: getCategoryColor(category)
+                  backgroundColor: `${getCategoryColor(blog?.category || category)}33`,
+                  color: getCategoryColor(blog?.category || category)
                 }}
               >
-                {category}
+                {blog?.category || category}
               </span>
-              {status && (
+              {(blog?.status || status) && (
                 <span 
                   className="px-2 py-1 text-xs font-medium rounded-full border"
-                  style={getStatusColor(status)}
+                  style={getStatusColor(blog?.status || status)}
                 >
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                  {(blog?.status || status).charAt(0).toUpperCase() + (blog?.status || status).slice(1)}
                 </span>
+              )}
+              
+              {user && (
+                <button
+                  onClick={handleBookmarkToggle}
+                  disabled={bookmarkLoading}
+                  className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 ml-auto"
+                  title={isBookmarked ? "Remove from bookmarks" : "Add to bookmarks"}
+                >
+                  <Bookmark 
+                    size={16} 
+                    fill={isBookmarked ? colors.primary.blue[400] : 'none'} 
+                    color={isBookmarked ? colors.primary.blue[400] : colors.text.secondary} 
+                  />
+                </button>
               )}
             </div>
             
             <h3 className="text-lg font-semibold mb-2 line-clamp-2" style={{ color: colors.text.primary }}>
-              {title}
+              {blog?.title || title}
             </h3>
             
             <p className="text-sm line-clamp-3 mb-3" style={{ color: colors.text.secondary }}>
@@ -238,6 +326,51 @@ const BlogCard = ({
             <span>Read More</span>
           </button>
         </div>
+        
+        {/* Edit and Delete Buttons */}
+        {(onEdit || onDelete) && (
+          <div className="flex gap-2 mt-4 pt-4 border-t" style={{ borderColor: colors.border.secondary }}>
+            {onEdit && (
+              <button
+                onClick={onEdit}
+                title="Edit Blog"
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200"
+                style={{
+                  backgroundColor: `${colors.accent.yellow[500]}33`,
+                  color: colors.text.primary,
+                  borderColor: `${colors.accent.yellow[500]}4D`
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.accent.yellow[500]}4D`}
+                onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.accent.yellow[500]}33`}
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Edit
+              </button>
+            )}
+            
+            {onDelete && (
+              <button
+                onClick={onDelete}
+                title="Delete Blog"
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200"
+                style={{
+                  backgroundColor: `${colors.accent.red[500]}33`,
+                  color: colors.text.primary,
+                  borderColor: `${colors.accent.red[500]}4D`
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.accent.red[500]}4D`}
+                onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.accent.red[500]}33`}
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Delete
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

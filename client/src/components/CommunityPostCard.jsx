@@ -1,10 +1,92 @@
-import React from 'react';
-import { ExternalLink } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ExternalLink, Bookmark } from 'lucide-react';
 import { colors } from '../styles/colors';
 import { useAuth } from '../context/AuthContext';
+import axios from '../axios';
 
-const CommunityPostCard = ({ postId, type, content, title, skillsNeeded, status, createdAt, tags, author, projectId }) => {
+const CommunityPostCard = ({ 
+  post,
+  postId, 
+  type, 
+  content, 
+  title, 
+  skillsNeeded, 
+  status, 
+  createdAt, 
+  tags, 
+  author, 
+  projectId,
+  isBookmarked: initialIsBookmarked = false,
+  onBookmarkToggle,
+  onEdit,
+  onDelete
+}) => {
   const { user } = useAuth();
+  const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
+  
+  // Get actual post id
+  const communityPostId = post?._id || postId;
+  
+  // Check bookmark status on mount
+  useEffect(() => {
+    const checkBookmarkStatus = async () => {
+      if (!communityPostId || !user?.token) return;
+      
+      try {
+        const response = await axios.get(`/api/bookmarks/check/${communityPostId}`, {
+          headers: { 'x-auth-token': user.token }
+        });
+        
+        if (response.data.success) {
+          setIsBookmarked(response.data.bookmarked);
+        }
+      } catch (error) {
+        console.error('Error checking bookmark status:', error);
+      }
+    };
+    
+    if (!initialIsBookmarked && communityPostId) {
+      checkBookmarkStatus();
+    }
+  }, [communityPostId, user?.token, initialIsBookmarked]);
+  
+  // Handle bookmark toggle
+  const handleBookmarkToggle = async (e) => {
+    e.stopPropagation();
+    if (!user?.token || bookmarkLoading || !communityPostId) return;
+    
+    setBookmarkLoading(true);
+    
+    try {
+      if (isBookmarked) {
+        // If already bookmarked, remove the bookmark
+        await axios.delete(`/api/bookmarks/content/${communityPostId}?type=community`, {
+          headers: { 'x-auth-token': user.token }
+        });
+      } else {
+        // If not bookmarked, add a bookmark
+        await axios.post('/api/bookmarks', {
+          projectId: communityPostId,
+          type: 'community'
+        }, {
+          headers: { 'x-auth-token': user.token }
+        });
+      }
+      
+      // Toggle bookmark state
+      setIsBookmarked(!isBookmarked);
+      
+      // Call parent callback if provided
+      if (onBookmarkToggle) {
+        onBookmarkToggle();
+      }
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+    } finally {
+      setBookmarkLoading(false);
+    }
+  };
 
   const getStatusColor = (status) => {
     if (!status) return {};
@@ -59,9 +141,9 @@ const CommunityPostCard = ({ postId, type, content, title, skillsNeeded, status,
                 className="font-semibold text-lg transition-colors duration-300 hover:text-blue-400"
                 style={{ color: colors.text.primary }}
               >
-                {type === 'collab' ? title : truncateText(content)}
+                {(post?.type || type) === 'collab' ? (post?.title || title) : truncateText(post?.content || content)}
               </h3>
-              {projectId && (
+              {(post?.projectId || projectId) && (
                 <span
                   className="text-xs px-2 py-1 rounded-full border"
                   style={{
@@ -73,6 +155,21 @@ const CommunityPostCard = ({ postId, type, content, title, skillsNeeded, status,
                 >
                   📎
                 </span>
+              )}
+              
+              {user && (
+                <button
+                  onClick={handleBookmarkToggle}
+                  disabled={bookmarkLoading}
+                  className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 ml-auto"
+                  title={isBookmarked ? "Remove from bookmarks" : "Add to bookmarks"}
+                >
+                  <Bookmark 
+                    size={16} 
+                    fill={isBookmarked ? colors.primary.blue[400] : 'none'} 
+                    color={isBookmarked ? colors.primary.blue[400] : colors.text.secondary} 
+                  />
+                </button>
               )}
             </div>
 
@@ -98,7 +195,7 @@ const CommunityPostCard = ({ postId, type, content, title, skillsNeeded, status,
         </div>
 
         <p className="text-sm mb-4 line-clamp-2" style={{ color: `${colors.text.secondary}B3` }}>
-          {content}
+          {post?.content || content}
         </p>
 
         {type === 'collab' && skillsNeeded?.length > 0 && (

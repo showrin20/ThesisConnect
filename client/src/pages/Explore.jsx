@@ -9,9 +9,12 @@ import {
   Download,
   ChevronLeft,
   ChevronRight,
+  Bookmark,
 } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import axios from '../axios';
+import { useAuth } from '../context/AuthContext';
+import { useAlert } from '../context/AlertContext';
 import { colors } from '../styles/colors';
 import { getButtonStyles } from '../styles/styleUtils';
 
@@ -23,6 +26,12 @@ export default function MyProjects() {
   const [projects, setProjects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [projectsError, setProjectsError] = useState(null);
+  const [bookmarkedProjects, setBookmarkedProjects] = useState({}); // Track bookmarked projects
+  const [bookmarkLoading, setBookmarkLoading] = useState({});  // Track bookmark operations by projectId
+
+  // Get auth context and alerts
+  const { user } = useAuth();
+  const { showSuccess, showError } = useAlert();
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -37,6 +46,11 @@ export default function MyProjects() {
         const fetchedProjects = response.data?.data || [];
         console.log('Fetched Projects:', fetchedProjects);
         setProjects(fetchedProjects);
+        
+        // Check bookmark status for each project if user is logged in
+        if (user?.token) {
+          checkBookmarkStatus(fetchedProjects);
+        }
       } catch (error) {
         console.error('Failed to fetch projects:', error);
         setProjectsError('Failed to load projects');
@@ -46,7 +60,98 @@ export default function MyProjects() {
       }
     };
     fetchProjects();
-  }, []);
+  }, [user]);
+  
+  // Function to check bookmark status for projects
+  const checkBookmarkStatus = async (projectsList) => {
+    if (!user?.token || !projectsList?.length) return;
+    
+    try {
+      // Create a new bookmark status object
+      const bookmarkStatus = {};
+      
+      // Check each project's bookmark status
+      for (const project of projectsList) {
+        try {
+          const response = await axios.get(`/bookmarks/check/${project._id}`, {
+            params: { type: 'project' },
+            headers: { 'x-auth-token': user.token }
+          });
+          
+          if (response.data.success) {
+            bookmarkStatus[project._id] = {
+              isBookmarked: response.data.bookmarked,
+              bookmarkId: response.data.bookmarkId
+            };
+          }
+        } catch (err) {
+          console.error(`Error checking bookmark for project ${project._id}:`, err);
+        }
+      }
+      
+      // Update the bookmark status state
+      setBookmarkedProjects(bookmarkStatus);
+      
+    } catch (error) {
+      console.error('Error checking bookmark statuses:', error);
+    }
+  };
+  
+  // Handle bookmark toggle
+  const handleBookmarkToggle = async (projectId) => {
+    // Don't proceed if user not logged in or operation in progress
+    if (!user?.token || bookmarkLoading[projectId]) return;
+    
+    // Mark this project's bookmark operation as loading
+    setBookmarkLoading(prev => ({ ...prev, [projectId]: true }));
+    
+    try {
+      const isCurrentlyBookmarked = bookmarkedProjects[projectId]?.isBookmarked;
+      
+      if (isCurrentlyBookmarked) {
+        // Remove bookmark
+        const bookmarkId = bookmarkedProjects[projectId].bookmarkId;
+        await axios.delete(`/bookmarks/${bookmarkId}`, {
+          headers: { 'x-auth-token': user.token }
+        });
+        
+        // Update state
+        setBookmarkedProjects(prev => ({
+          ...prev,
+          [projectId]: { isBookmarked: false, bookmarkId: null }
+        }));
+        
+        showSuccess('Project removed from bookmarks');
+      } else {
+        // Add bookmark
+        const response = await axios.post('/bookmarks', {
+          projectId: projectId,
+          type: 'project'
+        }, {
+          headers: { 'x-auth-token': user.token }
+        });
+        
+        // Update state with new bookmark info
+        if (response.data.success) {
+          setBookmarkedProjects(prev => ({
+            ...prev,
+            [projectId]: { 
+              isBookmarked: true, 
+              bookmarkId: response.data.data._id 
+            }
+          }));
+          
+          showSuccess('Project added to bookmarks');
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+      showError(error.response?.data?.msg || 'Failed to update bookmark');
+    } finally {
+      // Clear loading state for this project
+      setBookmarkLoading(prev => ({ ...prev, [projectId]: false }));
+    }
+  };
 
   // Adjust items per page based on screen size
   useEffect(() => {
@@ -387,19 +492,45 @@ export default function MyProjects() {
                   }}
                 >
                   <div className="mb-4">
-                    <h2 className="text-xl font-bold mb-3 leading-tight">
-                      <span 
-                        className="bg-clip-text text-transparent"
-                        style={{
-                          background: colors.gradients.brand.primary,
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                          overflowWrap: 'anywhere'
-                        }}
-                      >
-                        {project.title}
-                      </span>
-                    </h2>
+                    <div className="flex justify-between items-start">
+                      <h2 className="text-xl font-bold mb-3 leading-tight">
+                        <span 
+                          className="bg-clip-text text-transparent"
+                          style={{
+                            background: colors.gradients.brand.primary,
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            overflowWrap: 'anywhere'
+                          }}
+                        >
+                          {project.title}
+                        </span>
+                      </h2>
+                      
+                      {/* Bookmark Button */}
+                      {user && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleBookmarkToggle(project._id);
+                          }}
+                          disabled={bookmarkLoading[project._id]}
+                          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 transform hover:scale-110"
+                          title={bookmarkedProjects[project._id]?.isBookmarked ? "Remove from bookmarks" : "Add to bookmarks"}
+                          style={{ 
+                            marginTop: '4px',
+                            opacity: bookmarkLoading[project._id] ? 0.7 : 1 
+                          }}
+                        >
+                          <Bookmark 
+                            size={18} 
+                            fill={bookmarkedProjects[project._id]?.isBookmarked ? '#FFD700' : 'transparent'} 
+                            color={bookmarkedProjects[project._id]?.isBookmarked ? '#FFD700' : colors.text.secondary} 
+                          />
+                        </button>
+                      )}
+                    </div>
+                    
                     <div className="flex items-center gap-2 mb-3">
                       <div
                         className="flex items-center gap-1 px-3 py-1 rounded-full border text-xs font-medium"

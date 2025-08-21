@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from '../axios';
 import CommunityPostCard from '../components/CommunityPostCard';
-import { MessageSquare, Edit, Trash2 } from 'lucide-react';
+import { MessageSquare, ExternalLink } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import statsService from '../services/statsService';
 import { colors } from '../styles/colors';
@@ -25,7 +25,6 @@ export default function MyCommunityPosts() {
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // User statistics state
   const [userStats, setUserStats] = useState({
     projects: { total: 0, planned: 0, inProgress: 0, completed: 0 },
     publications: { total: 0, byType: {}, totalCitations: 0 },
@@ -33,7 +32,6 @@ export default function MyCommunityPosts() {
   });
   const [loadingStats, setLoadingStats] = useState(false);
 
-  // Form state
   const [formData, setFormData] = useState({
     postId: uuidv4(),
     type: 'general',
@@ -46,7 +44,6 @@ export default function MyCommunityPosts() {
     tags: '',
   });
 
-  // Fetch user statistics
   useEffect(() => {
     const fetchUserStats = async () => {
       if (!user?.id) return;
@@ -65,14 +62,12 @@ export default function MyCommunityPosts() {
     fetchUserStats();
   }, [user?.id]);
 
-  // Keep authorId updated when user changes
   useEffect(() => {
     if (user?.id) {
       setFormData(prev => ({ ...prev, authorId: user.id }));
     }
   }, [user]);
 
-  // Fetch user's projects for dropdown
   useEffect(() => {
     const fetchUserProjects = async () => {
       if (!user?.id) return;
@@ -94,7 +89,6 @@ export default function MyCommunityPosts() {
     fetchUserProjects();
   }, [user]);
 
-  // Fetch posts
   const fetchMyPosts = async () => {
     setLoading(true);
     setError(null);
@@ -114,7 +108,6 @@ export default function MyCommunityPosts() {
     fetchMyPosts();
   }, [user]);
 
-  // Handle escape key for modals
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
@@ -270,7 +263,6 @@ export default function MyCommunityPosts() {
 
   return (
     <div className="min-h-screen" style={{ background: colors.gradients.background.page }}>
-      {/* Background Pattern */}
       <div className="absolute inset-0" style={{ opacity: 0.3 }}>
         <div className="h-full w-full" style={{ background: colors.gradients.background.radial }}></div>
       </div>
@@ -476,9 +468,9 @@ export default function MyCommunityPosts() {
                 >
                   <div className="relative w-full max-w-md rounded-xl p-6 shadow-2xl" style={getCardStyles('glass')}>
                     <div className="text-center">
-                      <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4" style={{ backgroundColor: colors.status.error.background }}>
-                        <Trash2 size={24} style={{ color: colors.status.error.text }} />
-                      </div>
+                      {/* <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4" style={{ backgroundColor: colors.status.error.background }}>
+                        <Trash2 size={24} style={{ color: colors.text.primary }} />
+                      </div> */}
                       <h3 className="text-lg font-medium mb-2" style={{ color: colors.text.primary }}>
                         Delete Community Post
                       </h3>
@@ -519,7 +511,7 @@ export default function MyCommunityPosts() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {posts.map((post) => (
-                    <div key={post.postId} className="relative group">
+                    <div key={post.postId} className="relative group p-4 rounded-xl shadow-md hover:shadow-lg transition-all duration-200" style={getCardStyles()}>
                       <CommunityPostCard 
                         postId={post.postId}
                         type={post.type}
@@ -532,27 +524,38 @@ export default function MyCommunityPosts() {
                         author={post.authorId?.name || post.authorId}
                         createdAt={post.createdAt}
                       />
-                      <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
-                          onClick={() => startEditing(post)} 
-                          title="Edit" 
-                          className="p-2 rounded-lg transition-colors"
-                          style={{ backgroundColor: `${colors.status.warning.background}`, color: colors.status.warning.text }}
-                          onMouseEnter={(e) => e.target.style.backgroundColor = colors.primary.blue[600]}
-                          onMouseLeave={(e) => e.target.style.backgroundColor = colors.status.warning.background}
+                 
+                      <div className="flex gap-2 pt-4 border-t" style={{ borderColor: colors.border.secondary }}>
+                        <button
+                          onClick={() => startEditing(post)}
+                          className="flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                          style={{
+                            backgroundColor: `${colors.accent.green[500]}33`,
+                            color: colors.text.primary,
+                            border: `1px solid ${colors.accent.green[500]}4D`
+                          }}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.accent.green[500]}4D`}
+                          onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.accent.green[500]}33`}
                         >
-                          <Edit size={16} />
+                          Edit Post
                         </button>
-                        <button 
-                          onClick={() => confirmDelete(post)} 
-                          title="Delete" 
-                          className="p-2 rounded-lg transition-colors"
-                          style={{ backgroundColor: `${colors.status.error.background}`, color: colors.status.error.text }}
-                          onMouseEnter={(e) => e.target.style.backgroundColor = colors.button.danger.background}
-                          onMouseLeave={(e) => e.target.style.backgroundColor = colors.status.error.background}
+
+
+
+                        <button
+                          onClick={() => confirmDelete(post)}
+                          className="flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                          style={{
+                            backgroundColor: `${colors.accent.red[500]}33`,
+                            color: colors.text.primary,
+                            border: `1px solid ${colors.accent.red[500]}4D`
+                          }}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.accent.red[500]}4D`}
+                          onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.accent.red[500]}33`}
                         >
-                          <Trash2 size={16} />
-                        </button>
+                          Delete Post
+                     
+                 </button>
                       </div>
                     </div>
                   ))}

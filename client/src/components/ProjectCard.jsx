@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { ExternalLink, MessageCircle, ChevronDown, ChevronUp, Star, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ExternalLink, MessageCircle, ChevronDown, ChevronUp, Star, Trash2, Bookmark, BookmarkX } from 'lucide-react';
 import { colors } from '../styles/colors';
 import axios from '../axios';
 import { formatDistanceToNow } from 'date-fns';
 import ConfirmModal from './ConfirmModal';
+import { useAuth } from '../context/AuthContext';
 
 const ProjectCard = ({ 
+  project,
   _id,
   title, 
   description, 
@@ -18,6 +20,8 @@ const ProjectCard = ({
   currentUserId, 
   userRole,
   reviews = [],
+  isBookmarked: initialIsBookmarked = false,
+  onBookmarkToggle,
   onEdit, 
   onDelete,
   onReviewAdded,
@@ -32,6 +36,35 @@ const ProjectCard = ({
     isOpen: false,
     reviewId: null,
   });
+  const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
+  const { user } = useAuth();
+  
+  // Get actual project id - it might be in project._id or directly in _id
+  const projectId = project?._id || _id;
+  
+  // Check bookmark status on mount
+  useEffect(() => {
+    const checkBookmarkStatus = async () => {
+      if (!projectId || !user?.token) return;
+      
+      try {
+        const response = await axios.get(`/bookmarks/check/${projectId}`, {
+          headers: { 'x-auth-token': user.token }
+        });
+        
+        if (response.data.success) {
+          setIsBookmarked(response.data.bookmarked);
+        }
+      } catch (error) {
+        console.error('Error checking bookmark status:', error);
+      }
+    };
+    
+    if (!initialIsBookmarked) {
+      checkBookmarkStatus();
+    }
+  }, [projectId, user?.token, initialIsBookmarked]);
 
   // Sort reviews by date, newest first
   const sortedReviews = [...reviews].sort(
@@ -134,6 +167,42 @@ const ProjectCard = ({
 
   const trimmedLink = link?.trim();
 
+  // Handle bookmark toggle
+  const handleBookmarkToggle = async () => {
+    if (!user?.token || bookmarkLoading) return;
+    
+    setBookmarkLoading(true);
+    
+    try {
+      if (isBookmarked) {
+        // If already bookmarked, remove the bookmark
+        await axios.delete(`/api/bookmarks/content/${projectId}?type=project`, {
+          headers: { 'x-auth-token': user.token }
+        });
+      } else {
+        // If not bookmarked, add a bookmark
+        await axios.post('/api/bookmarks', {
+          projectId: projectId,
+          type: 'project'  // You can adjust this based on the content type
+        }, {
+          headers: { 'x-auth-token': user.token }
+        });
+      }
+      
+      // Toggle bookmark state
+      setIsBookmarked(!isBookmarked);
+      
+      // Call parent callback if provided
+      if (onBookmarkToggle) {
+        onBookmarkToggle();
+      }
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+    } finally {
+      setBookmarkLoading(false);
+    }
+  };
+
   return (
     <div className="relative group">
       <div 
@@ -152,31 +221,47 @@ const ProjectCard = ({
         onMouseLeave={(e) => e.target.style.backgroundColor = colors.background.glass}
       >
         <div className="flex justify-between items-start mb-4">
-         <h3 
-            className="font-semibold text-lg transition-colors duration-300"
-            style={{ 
-              color: colors.text.primary,
-              overflowWrap: 'anywhere' // Ensure long titles wrap
-            }}
-            onMouseEnter={(e) => e.target.style.color = colors.primary.blue[400]}
-            onMouseLeave={(e) => e.target.style.color = colors.text.primary}
-          >
-            {title}
-          </h3>
+          <div className="flex items-start gap-2">
+            <h3 
+              className="font-semibold text-lg transition-colors duration-300"
+              style={{ 
+                color: colors.text.primary,
+                overflowWrap: 'anywhere' // Ensure long titles wrap
+              }}
+              onMouseEnter={(e) => e.target.style.color = colors.primary.blue[400]}
+              onMouseLeave={(e) => e.target.style.color = colors.text.primary}
+            >
+              {project?.title || title}
+            </h3>
+            {user && (
+              <button
+                onClick={handleBookmarkToggle}
+                disabled={bookmarkLoading}
+                className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                title={isBookmarked ? "Remove from bookmarks" : "Add to bookmarks"}
+              >
+                {isBookmarked ? (
+                  <Bookmark size={18} fill={colors.primary.blue[400]} color={colors.primary.blue[400]} />
+                ) : (
+                  <Bookmark size={18} color={colors.text.secondary} />
+                )}
+              </button>
+            )}
+          </div>
           <span 
             className="px-3 py-1 rounded-full text-xs font-medium border"
-            style={getStatusColor(status)}
+            style={getStatusColor(project?.status || status)}
           >
-            {status}
+            {project?.status || status}
           </span>
         </div>
         
         <p className="text-sm mb-4 line-clamp-2" style={{ color: `${colors.text.secondary}B3` }}>
-          {description}
+          {project?.description || description}
         </p>
         
         <div className="flex flex-wrap gap-2 mb-4">
-          {tags && tags.map((tag, index) => (
+          {(project?.tags || tags)?.map((tag, index) => (
             <span 
               key={index}
               className="px-2 py-1 rounded-md text-xs font-medium border"

@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import axios from '../axios'; // your axios instance configured with baseURL
+import axios from '../axios';
 import BlogCard from '../components/BlogCard';
 import BlogForm from '../components/BlogForm';
-import { Plus, Edit, Trash2, X } from 'lucide-react';
+import { Plus, ExternalLink, X } from 'lucide-react';
 import { colors } from '../styles/colors';
 import { getInputStyles, getButtonStyles, getStatusStyles, getCardStyles, getGradientTextStyles } from '../styles/styleUtils';
 
-// Import Dashboard components
 import Sidebar from '../components/DashboardSidebar';
 import Topbar from '../components/DashboardTopbar';
 
@@ -25,12 +24,10 @@ export default function MyBlogs() {
   const [deletingBlog, setDeletingBlog] = useState(null);
   const [showBlogForm, setShowBlogForm] = useState(false);
   
-  // Alert/Notification states
   const [alert, setAlert] = useState({ show: false, type: '', title: '', message: '' });
   const [submitLoading, setSubmitLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
   
-  // User statistics state
   const [userStats, setUserStats] = useState({
     projects: { total: 0, planned: 0, inProgress: 0, completed: 0 },
     publications: { total: 0, byType: {}, totalCitations: 0 },
@@ -62,88 +59,76 @@ export default function MyBlogs() {
     }
   };
 
-const fetchMyBlogs = async () => {
-  setLoading(true);
-  setError(null);
-  try {
-    console.log('🔍 Fetching user blogs...');
-    
-    // Make authenticated request
-    const res = await axios.get('/blogs/my-blogs', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}` || `Bearer ${user?.token}`,
-        'x-auth-token': localStorage.getItem('token') || user?.token
+  const fetchMyBlogs = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log('🔍 Fetching user blogs...');
+      
+      const res = await axios.get('/blogs/my-blogs', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}` || `Bearer ${user?.token}`,
+          'x-auth-token': localStorage.getItem('token') || user?.token
+        }
+      });
+      
+      console.log('📥 Blogs API Response:', res.data);
+      
+      const blogsData = res.data?.data || res.data?.blogs || [];
+      setBlogs(blogsData);
+      
+      const blogStats = {
+        total: blogsData.length || 0,
+        published: blogsData.filter(b => b.status === 'published').length || 0,
+        draft: blogsData.filter(b => b.status === 'draft').length || 0,
+        archived: blogsData.filter(b => b.status === 'archived').length || 0
+      };
+      
+      setUserStats(prev => ({ ...prev, blogs: blogStats }));
+      
+      console.log(`✅ Loaded ${blogsData.length} blogs for user`);
+      
+      if (blogsData.length === 0) {
+        showAlert('info', 'No Blogs Found', 'You haven\'t created any blogs yet. Create your first blog post!');
       }
-    });
-    
-    console.log('📥 Blogs API Response:', res.data);
-    
-    // Handle new response structure
-    const blogsData = res.data?.data || res.data?.blogs || [];
-    setBlogs(blogsData);
-    
-    // Update blog stats with proper counts
-    const blogStats = {
-      total: blogsData.length || 0,
-      published: blogsData.filter(b => b.status === 'published').length || 0,
-      draft: blogsData.filter(b => b.status === 'draft').length || 0,
-      archived: blogsData.filter(b => b.status === 'archived').length || 0
-    };
-    
-    setUserStats(prev => ({ ...prev, blogs: blogStats }));
-    
-    console.log(`✅ Loaded ${blogsData.length} blogs for user`);
-    
-    if (blogsData.length === 0) {
-      showAlert('info', 'No Blogs Found', 'You haven\'t created any blogs yet. Create your first blog post!');
+      
+    } catch (err) {
+      console.error('❌ Fetch blogs error:', err);
+      
+      let errorMessage = 'Failed to load your blogs';
+      let alertTitle = 'Loading Failed';
+      
+      if (err.response?.status === 401) {
+        errorMessage = 'Please log in again to view your blogs';
+        alertTitle = 'Authentication Required';
+        setTimeout(() => {
+          logout();
+          navigate('/login');
+        }, 3000);
+      } else if (err.response?.status === 403) {
+        errorMessage = 'Access denied. Please check your permissions.';
+        alertTitle = 'Access Denied';
+      } else if (err.response?.status >= 500) {
+        errorMessage = 'Server is temporarily unavailable. Please try again later.';
+        alertTitle = 'Server Error';
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.code === 'ERR_NETWORK') {
+        errorMessage = 'Network error. Please check your internet connection.';
+        alertTitle = 'Network Error';
+      }
+      
+      setError(errorMessage);
+      showAlert('error', alertTitle, errorMessage);
+    } finally {
+      setLoading(false);
     }
-    
-  } catch (err) {
-    console.error('❌ Fetch blogs error:', err);
-    
-    let errorMessage = 'Failed to load your blogs';
-    let alertTitle = 'Loading Failed';
-    
-    if (err.response?.status === 401) {
-      errorMessage = 'Please log in again to view your blogs';
-      alertTitle = 'Authentication Required';
-      // Redirect to login after showing error
-      setTimeout(() => {
-        logout();
-        navigate('/login');
-      }, 3000);
-    } else if (err.response?.status === 403) {
-      errorMessage = 'Access denied. Please check your permissions.';
-      alertTitle = 'Access Denied';
-    } else if (err.response?.status >= 500) {
-      errorMessage = 'Server is temporarily unavailable. Please try again later.';
-      alertTitle = 'Server Error';
-    } else if (err.response?.data?.message) {
-      errorMessage = err.response.data.message;
-    } else if (err.code === 'ERR_NETWORK') {
-      errorMessage = 'Network error. Please check your internet connection.';
-      alertTitle = 'Network Error';
-    }
-    
-    setError(errorMessage);
-    showAlert('error', alertTitle, errorMessage);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   useEffect(() => {
     fetchMyBlogs();
-    
   }, []);
 
-
-
-
-
-
-  
-  // Auto-hide alerts after 5 seconds
   useEffect(() => {
     if (alert.show) {
       const timer = setTimeout(() => {
@@ -153,12 +138,10 @@ const fetchMyBlogs = async () => {
     }
   }, [alert.show]);
 
-  // Show alert helper function
   const showAlert = (type, title, message) => {
     setAlert({ show: true, type, title, message });
   };
 
-  // Handle escape key for modals
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
@@ -187,135 +170,126 @@ const fetchMyBlogs = async () => {
   const parseCSV = (str) =>
     str.split(',').map(s => s.trim()).filter(Boolean);
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setSubmitLoading(true);
-  
-  try {
-    console.log('🚀 Starting form submission...');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitLoading(true);
     
-    // Validate required fields
-    if (!formData.title.trim()) {
-      showAlert('error', 'Validation Error', 'Blog title is required');
-      return;
-    }
-    if (!formData.content.trim()) {
-      showAlert('error', 'Validation Error', 'Blog content is required');
-      return;
-    }
-    if (!formData.excerpt.trim()) {
-      showAlert('error', 'Validation Error', 'Blog excerpt is required');
-      return;
-    }
-
-    // Check server connectivity first
-    console.log('🔍 Checking server connectivity...');
-    
-    const formDataToSend = new FormData();
-    formDataToSend.append('title', formData.title.trim());
-    formDataToSend.append('content', formData.content.trim());
-    formDataToSend.append('excerpt', formData.excerpt.trim());
-    formDataToSend.append('category', formData.category);
-    formDataToSend.append('status', formData.status);
-    formDataToSend.append('tags', JSON.stringify(parseCSV(formData.tags)));
-    
-    if (formData.featuredImage) {
-      // Validate file size (5MB limit)
-      if (formData.featuredImage.size > 5 * 1024 * 1024) {
-        showAlert('error', 'File Size Error', 'Featured image must be less than 5MB');
+    try {
+      console.log('🚀 Starting form submission...');
+      
+      if (!formData.title.trim()) {
+        showAlert('error', 'Validation Error', 'Blog title is required');
         return;
       }
-      
-      // Validate file type
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-      if (!allowedTypes.includes(formData.featuredImage.type)) {
-        showAlert('error', 'File Type Error', 'Please upload a valid image file (JPEG, PNG, GIF, or WebP)');
+      if (!formData.content.trim()) {
+        showAlert('error', 'Validation Error', 'Blog content is required');
         return;
       }
+      if (!formData.excerpt.trim()) {
+        showAlert('error', 'Validation Error', 'Blog excerpt is required');
+        return;
+      }
+
+      console.log('🔍 Checking server connectivity...');
       
-      formDataToSend.append('featuredImage', formData.featuredImage);
-    }
+      const formDataToSend = new FormData();
+      formDataToSend.append('title', formData.title.trim());
+      formDataToSend.append('content', formData.content.trim());
+      formDataToSend.append('excerpt', formData.excerpt.trim());
+      formDataToSend.append('category', formData.category);
+      formDataToSend.append('status', formData.status);
+      formDataToSend.append('tags', JSON.stringify(parseCSV(formData.tags)));
+      
+      if (formData.featuredImage) {
+        if (formData.featuredImage.size > 5 * 1024 * 1024) {
+          showAlert('error', 'File Size Error', 'Featured image must be less than 5MB');
+          return;
+        }
+        
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(formData.featuredImage.type)) {
+          showAlert('error', 'File Type Error', 'Please upload a valid image file (JPEG, PNG, GIF, or WebP)');
+          return;
+        }
+        
+        formDataToSend.append('featuredImage', formData.featuredImage);
+      }
 
-    // Log FormData contents
-    console.log('📝 Sending FormData:');
-    for (let [key, value] of formDataToSend.entries()) {
-      if (value instanceof File) {
-        console.log(`${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
+      console.log('📝 Sending FormData:');
+      for (let [key, value] of formDataToSend.entries()) {
+        if (value instanceof File) {
+          console.log(`${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
+        } else {
+          console.log(`${key}: ${value}`);
+        }
+      }
+
+      const res = await axios.post('/blogs', formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${localStorage.getItem('token')}` || `Bearer ${user?.token}`,
+          'x-auth-token': localStorage.getItem('token') || user?.token
+        },
+        timeout: 30000,
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          console.log(`📤 Upload Progress: ${percentCompleted}%`);
+        }
+      });
+
+      console.log('✅ Blog Created Successfully:', res.data);
+      
+      if (res.data?.success === true) {
+        showAlert('success', 'Success!', res.data.message || 'Blog post created successfully');
+        setShowBlogForm(false);
+        resetForm();
+        await fetchMyBlogs();
       } else {
-        console.log(`${key}: ${value}`);
+        showAlert('error', 'Unexpected Response', 'Blog creation response was unexpected');
       }
-    }
+      
+    } catch (err) {
+      console.error('❌ Submit Error Details:', {
+        message: err.message,
+        code: err.code,
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data,
+        config: {
+          url: err.config?.url,
+          method: err.config?.method,
+          baseURL: err.config?.baseURL
+        }
+      });
 
-    const res = await axios.post('/blogs', formDataToSend, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        'Authorization': `Bearer ${localStorage.getItem('token')}` || `Bearer ${user?.token}`,
-        'x-auth-token': localStorage.getItem('token') || user?.token
-      },
-      timeout: 30000, // 30 second timeout
-      onUploadProgress: (progressEvent) => {
-        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-        console.log(`📤 Upload Progress: ${percentCompleted}%`);
-      }
-    });
-
-    console.log('✅ Blog Created Successfully:', res.data);
-    
-    // Handle different response structures
-    if (res.data?.success === true) {
-      showAlert('success', 'Success!', res.data.message || 'Blog post created successfully');
-      setShowBlogForm(false);
-      resetForm();
-      await fetchMyBlogs();
-    } else {
-      showAlert('error', 'Unexpected Response', 'Blog creation response was unexpected');
-    }
-    
-  } catch (err) {
-    console.error('❌ Submit Error Details:', {
-      message: err.message,
-      code: err.code,
-      status: err.response?.status,
-      statusText: err.response?.statusText,
-      data: err.response?.data,
-      config: {
-        url: err.config?.url,
-        method: err.config?.method,
-        baseURL: err.config?.baseURL
-      }
-    });
-
-    // Handle different types of errors
-    if (err.code === 'NETWORK_ERROR' || err.code === 'ERR_NETWORK') {
-      showAlert('error', 'Network Error', 'Cannot connect to server. Please check if the server is running and try again.');
-    } else if (err.code === 'ECONNABORTED') {
-      showAlert('error', 'Timeout Error', 'Request timed out. Please try again with a smaller file or check your connection.');
-    } else if (err.response) {
-      // Server responded with error
-      const errorData = err.response.data;
-      if (errorData?.errors && Array.isArray(errorData.errors)) {
-        showAlert('error', 'Validation Error', errorData.errors.join('\n'));
-      } else if (errorData?.message) {
-        showAlert('error', 'Server Error', errorData.message);
+      if (err.code === 'NETWORK_ERROR' || err.code === 'ERR_NETWORK') {
+        showAlert('error', 'Network Error', 'Cannot connect to server. Please check if the server is running and try again.');
+      } else if (err.code === 'ECONNABORTED') {
+        showAlert('error', 'Timeout Error', 'Request timed out. Please try again with a smaller file or check your connection.');
+      } else if (err.response) {
+        const errorData = err.response.data;
+        if (errorData?.errors && Array.isArray(errorData.errors)) {
+          showAlert('error', 'Validation Error', errorData.errors.join('\n'));
+        } else if (errorData?.message) {
+          showAlert('error', 'Server Error', errorData.message);
+        } else {
+          showAlert('error', 'Server Error', `Server returned ${err.response.status}: ${err.response.statusText}`);
+        }
+      } else if (err.request) {
+        showAlert('error', 'Network Error', 'No response from server. Please check your internet connection.');
       } else {
-        showAlert('error', 'Server Error', `Server returned ${err.response.status}: ${err.response.statusText}`);
+        showAlert('error', 'Request Error', `Failed to send request: ${err.message}`);
       }
-    } else if (err.request) {
-      showAlert('error', 'Network Error', 'No response from server. Please check your internet connection.');
-    } else {
-      showAlert('error', 'Request Error', `Failed to send request: ${err.message}`);
+    } finally {
+      setSubmitLoading(false);
     }
-  } finally {
-    setSubmitLoading(false);
-  }
-};
+  };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
     setUpdateLoading(true);
     
     try {
-      // Validate required fields
       if (!formData.title.trim()) {
         showAlert('error', 'Validation Error', 'Blog title is required');
         return;
@@ -348,7 +322,6 @@ const handleSubmit = async (e) => {
       
       console.log('✅ Blog Updated Successfully:', res.data);
       
-      // Handle response
       if (res.data?.success === true) {
         showAlert('success', 'Success!', res.data.message || 'Blog updated successfully');
         setEditingBlog(null);
@@ -424,7 +397,7 @@ const handleSubmit = async (e) => {
       category: blog.category || 'Technology',
       tags: (blog.tags || []).join(', '),
       status: blog.status || 'draft',
-      featuredImage: null, // Don't prefill file input
+      featuredImage: null,
     });
   };
 
@@ -438,7 +411,6 @@ const handleSubmit = async (e) => {
       status: 'draft',
       featuredImage: null,
     });
-    // Clear file input if it exists
     const fileInput = document.getElementById('featuredImage');
     if (fileInput) fileInput.value = '';
   };
@@ -467,7 +439,6 @@ const handleSubmit = async (e) => {
 
   return (
     <div className="min-h-screen" style={{ background: colors.gradients.background.page }}>
-      {/* Custom CSS for animations */}
       <style>{`
         @keyframes slideInRight {
           from {
@@ -492,18 +463,14 @@ const handleSubmit = async (e) => {
         }
       `}</style>
       
-      {/* Background Pattern */}
       <div className="absolute inset-0" style={{ opacity: 0.3 }}>
         <div className="h-full w-full" style={{ background: colors.gradients.background.radial }}></div>
       </div>
 
       <div className="relative flex h-screen">
-        {/* Sidebar */}
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} projects={[]} userStats={userStats} />
 
-        {/* Main Content */}
         <div className="flex-1 flex flex-col lg:ml-0">
-          {/* Topbar */}
           <Topbar 
             onMenuToggle={() => setSidebarOpen(!sidebarOpen)} 
             user={user}
@@ -511,10 +478,8 @@ const handleSubmit = async (e) => {
             isLoggingOut={isLoggingOut}
           />
 
-          {/* MyBlogs Content */}
           <main className="flex-1 overflow-y-auto p-6">
             <div className="container mx-auto">
-              {/* Header with Add Blog Button */}
               <div className="flex items-center justify-between mb-8">
                 <h1 className="text-4xl font-bold">
                   <span style={getGradientTextStyles('secondary')}>
@@ -534,7 +499,6 @@ const handleSubmit = async (e) => {
                 </button>
               </div>
 
-              {/* Custom Alert Component */}
               {alert.show && (
                 <div 
                   className="fixed top-4 right-4 z-50 w-96 rounded-xl shadow-2xl border-l-4 transition-all duration-300 transform"
@@ -557,7 +521,7 @@ const handleSubmit = async (e) => {
                             style={{ backgroundColor: colors.accent.green[400] }}
                           >
                             <svg className="w-4 h-4" style={{ color: colors.background.primary }} fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.4148-8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
                           </div>
                         )}
@@ -604,7 +568,6 @@ const handleSubmit = async (e) => {
                 </div>
               )}
 
-              {/* Blog Statistics */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 {[
                   { label: 'Total Blogs', count: userStats.blogs.total, color: colors.primary.blue[400] },
@@ -625,7 +588,6 @@ const handleSubmit = async (e) => {
                 ))}
               </div>
 
-              {/* Blog Form Modal */}
               {showBlogForm && (
                 <div 
                   className="fixed inset-0 z-50 flex items-center justify-center p-4" 
@@ -670,7 +632,6 @@ const handleSubmit = async (e) => {
                 </div>
               )}
 
-              {/* Edit Blog Form */}
               {editingBlog && (
                 <form onSubmit={handleUpdate} className="max-w-4xl mx-auto rounded-xl p-8 mb-8 shadow-lg" style={getCardStyles('glass')}>
                   <div className="flex items-center justify-between mb-6">
@@ -814,7 +775,6 @@ const handleSubmit = async (e) => {
                 </form>
               )}
 
-              {/* Delete Confirmation Modal */}
               {deletingBlog && (
                 <div 
                   className="fixed inset-0 z-50 flex items-center justify-center p-4" 
@@ -827,9 +787,7 @@ const handleSubmit = async (e) => {
                 >
                   <div className="relative w-full max-w-md rounded-xl p-6 shadow-2xl" style={getCardStyles('glass')}>
                     <div className="text-center">
-                      <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4" style={{ backgroundColor: colors.status.error.background }}>
-                        <Trash2 size={24} style={{ color: colors.text.primary }} />
-                      </div>
+                     
                       
                       <h3 className="text-lg font-medium mb-2" style={{ color: colors.text.primary }}>
                         Delete Blog
@@ -851,11 +809,12 @@ const handleSubmit = async (e) => {
                         </button>
                         <button
                           onClick={() => handleDelete(deletingBlog._id)}
-                          className="px-4 py-2 rounded-lg font-medium transition-all duration-200"
-                          style={getButtonStyles('danger')}
-                          onMouseEnter={(e) => Object.assign(e.target.style, getButtonStyles('danger'), { transform: 'scale(1.02)' })}
-                          onMouseLeave={(e) => Object.assign(e.target.style, getButtonStyles('danger'), { transform: 'scale(1)' })}
-                        >
+                    className="flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                                              style={{
+                                                backgroundColor: `${colors.accent.red[500]}33`,
+                                                color: colors.text.primary,
+                                                border: `1px solid ${colors.accent.red[500]}4D`
+                                              }}>
                           Delete
                         </button>
                       </div>
@@ -864,7 +823,6 @@ const handleSubmit = async (e) => {
                 </div>
               )}
 
-              {/* Blogs Grid */}
               {loading ? (
                 <div className="text-center py-12">
                   <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: colors.primary.blue[400] }}></div>
@@ -894,32 +852,39 @@ const handleSubmit = async (e) => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {blogs.map((blog) => (
-                    <div key={blog._id} className="relative group">
+                    <div key={blog._id} className="relative group p-4 rounded-xl shadow-md hover:shadow-lg transition-all duration-200" style={getCardStyles()}>
                       <BlogCard 
                         {...blog} 
                         author={blog.author?.name || 'Unknown'}
                         createdAt={blog.createdAt}
                       />
-                      <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
-                          onClick={() => startEditing(blog)} 
-                          title="Edit" 
-                          className="p-2 rounded-lg transition-colors"
-                          style={{ backgroundColor: `${colors.status.warning.background}`, color: colors.text.primary  }}
-                          onMouseEnter={(e) => e.target.style.backgroundColor = colors.status.warning.backgroundHover[300]}
-                          onMouseLeave={(e) => e.target.style.backgroundColor = colors.status.warning.background}
+                 
+                      <div className="flex gap-2 pt-4 border-t" style={{ borderColor: colors.border.secondary }}>
+                        <button
+                          onClick={() => startEditing(blog)}
+                          className="flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                          style={{
+                            backgroundColor: `${colors.accent.green[500]}33`,
+                            color: colors.text.primary,
+                            border: `1px solid ${colors.accent.green[500]}4D`
+                          }}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.accent.green[500]}4D`}
+                          onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.accent.green[500]}33`}
                         >
-                          <Edit size={16} />
+                          Edit Blog
                         </button>
-                        <button 
-                          onClick={() => confirmDelete(blog)} 
-                          title="Delete" 
-                          className="p-2 rounded-lg transition-colors"
-                          style={{ backgroundColor: `${colors.status.error.background}`, color: colors.text.primary  }}
-                          onMouseEnter={(e) => e.target.style.backgroundColor = colors.button.danger.backgroundHover[700]}
-                          onMouseLeave={(e) => e.target.style.backgroundColor = colors.status.error.background}
+                        <button
+                          onClick={() => confirmDelete(blog)}
+                          className="flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                          style={{
+                            backgroundColor: `${colors.accent.red[500]}33`,
+                            color: colors.text.primary,
+                            border: `1px solid ${colors.accent.red[500]}4D`
+                          }}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.accent.red[500]}4D`}
+                          onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.accent.red[500]}33`}
                         >
-                          <Trash2 size={16} />
+                          Delete Blog
                         </button>
                       </div>
                     </div>

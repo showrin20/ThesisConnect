@@ -162,7 +162,7 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
         color: colors.accent?.purple?.[500] || '#9333ea',
         description: 'Review student work'
       },
-         { 
+      { 
         icon: Bookmark, 
         label: 'Bookmarks', 
         path: '/bookmarks', 
@@ -191,6 +191,13 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
         path: '/my-blogs', 
         color: colors.accent?.red?.[500] || '#ef4444',
         description: 'Manage your blogs'
+      },
+      { 
+        icon: Bookmark, 
+        label: 'Bookmarks', 
+        path: '/bookmarks', 
+        color: colors.primary?.blue?.[500] || '#3b82f6',
+        description: 'Manage your bookmarks'
       },
     ]
   };
@@ -229,7 +236,7 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
             className="p-6 border-b" 
             style={{ borderColor: colors.border?.secondary || '#e2e8f0' }}
           >
-            <Link to="/dashboard" className="flex items-center space-x-3 group mb-4">
+            <Link to="/" className="flex items-center space-x-3 group mb-4">
               <div className="relative w-12 h-12">
                 <img 
                   src="/1.png" 

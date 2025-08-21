@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from '../axios';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { ExternalLink, Plus } from 'lucide-react';
 import { colors } from '../styles/colors';
 import { getInputStyles, getButtonStyles, getStatusStyles, getCardStyles, getGradientTextStyles } from '../styles/styleUtils';
 import statsService from '../services/statsService';
@@ -315,10 +315,7 @@ export default function MyPublications() {
                 >
                   <div className="relative w-full max-w-md rounded-xl p-6 shadow-2xl" style={getCardStyles('glass')}>
                     <div className="text-center">
-                      <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4" style={{ backgroundColor: colors.status.error.background }}>
-                        <Trash2 size={24} style={{ color: colors.status.error.text }} />
-                      </div>
-                      
+
                       <h3 className="text-lg font-medium mb-2" style={{ color: colors.text.primary }}>
                         Delete Publication
                       </h3>
@@ -359,56 +356,65 @@ export default function MyPublications() {
               ) : publications.length === 0 ? (
                 <p className="text-center" style={{ color: colors.text.primary }}>No publications found.</p>
               ) : (
-
-                
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {publications.map((pub) => (
                     <div key={pub._id} className="relative group p-4 rounded-xl shadow-md hover:shadow-lg transition-all duration-200" style={getCardStyles()}>
-                      <h3 className="text-lg font-semibold mb-1" style={{ color: colors.text.primary,overflowWrap: 'anywhere' }}>{pub.title}</h3>
-                      <p className="text-sm mb-1" style={{ color: colors.text.secondary }}>{pub.authors.join(', ')}</p>
-                      <p className="text-sm italic" style={{ color: colors.text.muted }}>{pub.journal} • {pub.year}</p>
-                      {pub.doi && (
-                      
-                          <a href={pub.doi} target="_blank" rel="noopener noreferrer">
-          <button
-            className="mt-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-            style={{
-              background: colors.button.primary.background,
-              color: colors.button.primary.text,
-              border: `1px solid ${colors.button.primary.border}`,
-            }}
-            onMouseEnter={(e) => (e.target.style.background = colors.button.primary.backgroundHover)}
-            onMouseLeave={(e) => (e.target.style.background = colors.button.primary.background)}
-          >
-            View Publication
-          </button>
-        </a>
-
-                      )}
-
-
-
-
-                      <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
-                          onClick={() => startEditing(pub)} 
-                          title="Edit" 
-                          className="p-2 rounded-lg transition-colors"
-                          style={{ backgroundColor: `${colors.status.warning.background}`, color: colors.text.primary  }}
-                          onMouseEnter={(e) => e.target.style.backgroundColor = colors.status.warning.backgroundHover[300]}
-                          onMouseLeave={(e) => e.target.style.backgroundColor = colors.status.warning.background}
+                      <h3 className="text-lg font-semibold mb-1" style={{ color: colors.text.primary, overflowWrap: 'anywhere' }}>{pub.title}</h3>
+                      <p className="text-sm mb-1" style={{ color: colors.text.secondary, overflowWrap: 'anywhere' }}>{pub.authors.join(', ')}</p>
+                      <p className="text-sm italic" style={{ color: colors.text.muted, overflowWrap: 'anywhere' }}>{pub.journal} • {pub.year}</p>
+                      <div className="flex justify-end mb-4">
+                        {pub.doi ? (
+                          <a
+                            href={pub.doi}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 px-3 py-1 border rounded-lg transition-all duration-200 text-xs font-medium"
+                            style={{
+                              backgroundColor: `${colors.accent.green[500]}33`,
+                              color: colors.text.primary,
+                              borderColor: `${colors.accent.green[500]}4D`
+                            }}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.accent.green[500]}4D`}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.accent.green[500]}33`}
+                          >
+                            <span>View Publication</span>
+                            <ExternalLink size={12} />
+                          </a>
+                        ) : (
+                          <span 
+                            className="text-xs italic" 
+                            style={{ color: colors.text.disabled, overflowWrap: 'anywhere' }}
+                          >
+                            No link available
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex gap-2 pt-4 border-t" style={{ borderColor: colors.border.secondary }}>
+                        <button
+                          onClick={() => startEditing(pub)}
+                          className="flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                          style={{
+                            backgroundColor: `${colors.accent.green[500]}33`,
+                            color: colors.text.primary,
+                            border: `1px solid ${colors.accent.green[500]}4D`
+                          }}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.accent.green[500]}4D`}
+                          onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.accent.green[500]}33`}
                         >
-                          <Edit size={16} />
+                          Edit Publication
                         </button>
-                        <button 
-                          onClick={() => confirmDelete(pub)} 
-                          title="Delete" 
-                          className="p-2 rounded-lg transition-colors"
-                          style={{ backgroundColor: `${colors.status.error.background}`, color: colors.text.primary }}
-                          onMouseEnter={(e) => e.target.style.backgroundColor = colors.status.error.backgroundHover[300]}
-                          onMouseLeave={(e) => e.target.style.backgroundColor = colors.status.error.background}
+                        <button
+                          onClick={() => confirmDelete(pub)}
+                          className="flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                          style={{
+                            backgroundColor: `${colors.accent.red[500]}33`,
+                            color: colors.text.primary,
+                            border: `1px solid ${colors.accent.red[500]}4D`
+                          }}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = `${colors.accent.red[500]}4D`}
+                          onMouseLeave={(e) => e.target.style.backgroundColor = `${colors.accent.red[500]}33`}
                         >
-                          <Trash2 size={16} />
+                          Delete Publication
                         </button>
                       </div>
                     </div>

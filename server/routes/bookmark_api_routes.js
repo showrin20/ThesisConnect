@@ -3,6 +3,9 @@ const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const Bookmark = require('../models/Bookmark');
 const Project = require('../models/Project');
+const Publication = require('../models/publicationSchema');
+const Blog = require('../models/Blog');
+const CommunityPost = require('../models/CommunityPostSchema');
 
 const router = express.Router();
 
@@ -36,17 +39,73 @@ router.post('/', auth, async (req, res) => {
     const { projectId, type = 'project' } = req.body;
 
     if (!projectId) {
-      return res.status(400).json({ msg: 'Project ID is required' });
+      return res.status(400).json({ msg: 'Content ID is required' });
     }
 
     if (!mongoose.Types.ObjectId.isValid(projectId)) {
-      return res.status(400).json({ msg: 'Invalid project ID format' });
+      return res.status(400).json({ msg: 'Invalid content ID format' });
     }
 
-    // Validate that the project exists
-    const project = await Project.findById(projectId);
-    if (!project) {
-      return res.status(404).json({ msg: 'Project not found' });
+    // Validate that the content type is supported
+    if (!['project', 'publication', 'blog', 'community'].includes(type)) {
+      return res.status(400).json({ msg: 'Invalid content type. Must be one of: project, publication, blog, community' });
+    }
+
+    // Validate the content exists based on type
+    let content;
+    let contentTitle;
+    let contentDescription;
+    let contentModel;
+
+    // Import the appropriate model based on content type
+    let Model;
+    try {
+      switch (type) {
+        case 'project':
+          Model = require('../models/Project');
+          contentModel = 'Project';
+          break;
+        case 'publication':
+          Model = require('../models/publicationSchema');
+          contentModel = 'Publication';
+          break;
+        case 'blog':
+          Model = require('../models/Blog');
+          contentModel = 'Blog';
+          break;
+        case 'community':
+          Model = require('../models/CommunityPostSchema');
+          contentModel = 'CommunityPost';
+          break;
+      }
+    } catch (error) {
+      console.error(`Error importing model for type ${type}:`, error);
+      return res.status(500).json({ msg: `Error loading ${type} model. Please contact support.` });
+    }
+
+    content = await Model.findById(projectId);
+    if (!content) {
+      return res.status(404).json({ msg: `${type.charAt(0).toUpperCase() + type.slice(1)} not found` });
+    }
+
+    // Set appropriate title and description fields based on content type
+    switch (type) {
+      case 'project':
+        contentTitle = content.title;
+        contentDescription = content.description || '';
+        break;
+      case 'publication':
+        contentTitle = content.title;
+        contentDescription = content.abstract || '';
+        break;
+      case 'blog':
+        contentTitle = content.title;
+        contentDescription = content.excerpt || content.content?.substring(0, 100) || '';
+        break;
+      case 'community':
+        contentTitle = content.title || content.content?.substring(0, 50) || '';
+        contentDescription = content.content || '';
+        break;
     }
 
     // Check if bookmark already exists
@@ -56,24 +115,43 @@ router.post('/', auth, async (req, res) => {
     });
 
     if (existingBookmark) {
-      return res.status(400).json({ msg: 'Project already bookmarked' });
+      return res.status(400).json({ msg: `This ${type} is already bookmarked` });
     }
 
-    // Create new bookmark
+    // Extract additional metadata based on content type
+    let tags = [];
+    let category = '';
+    
+    if (content.tags) {
+      tags = Array.isArray(content.tags) ? content.tags : [content.tags];
+    }
+    
+    if (content.category) {
+      category = content.category;
+    } else if (type === 'project' && content.status) {
+      category = content.status;
+    }
+    
+    // Create new bookmark using the updated schema fields
     const bookmark = new Bookmark({
       user: req.user.id,
       projectId: projectId,
       type: type,
-      projectTitle: project.title,
-      projectDescription: project.description
+      contentModel: contentModel,
+      projectTitle: contentTitle,
+      projectDescription: contentDescription,
+      tags: tags,
+      category: category
     });
 
     await bookmark.save();
+    
+    // Populate both the user reference and the dynamic projectId reference
     await bookmark.populate(['user', 'projectId']);
 
     res.status(201).json({
       success: true,
-      message: 'Project bookmarked successfully',
+      message: `${type.charAt(0).toUpperCase() + type.slice(1)} bookmarked successfully`,
       data: bookmark
     });
   } catch (error) {
@@ -111,13 +189,31 @@ router.get('/', auth, async (req, res) => {
     // Pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
+    // First fetch bookmarks without population to avoid reference errors
     const bookmarks = await Bookmark.find(query)
-      .populate('user', 'name email')
-      .populate('projectId', 'title description tags status creator')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
-
+    
+    // Process bookmarks with safe handling of missing references
+    const processedBookmarks = bookmarks.map(bookmark => {
+      // Use the bookmark's stored title and description instead of relying on populated content
+      const processedBookmark = {
+        ...bookmark.toObject(),
+        contentDetails: {
+          _id: bookmark.projectId,
+          title: bookmark.projectTitle || 'Untitled',
+          description: bookmark.projectDescription || '',
+          type: bookmark.type,
+          contentModel: bookmark.contentModel,
+          tags: bookmark.tags || [],
+          category: bookmark.category || '',
+        }
+      };
+      
+      return processedBookmark;
+    });
+    
     const totalBookmarks = await Bookmark.countDocuments(query);
     const totalPages = Math.ceil(totalBookmarks / parseInt(limit));
 
@@ -127,7 +223,7 @@ router.get('/', auth, async (req, res) => {
       totalBookmarks,
       totalPages,
       currentPage: parseInt(page),
-      data: bookmarks
+      data: processedBookmarks
     });
   } catch (error) {
     console.error('Get bookmarks error:', error);
@@ -136,25 +232,52 @@ router.get('/', auth, async (req, res) => {
 });
 
 //////////////////////////
-// 🔍 CHECK IF PROJECT IS BOOKMARKED
+// 🔍 CHECK IF CONTENT IS BOOKMARKED
 //////////////////////////
 router.get('/check/:projectId', auth, async (req, res) => {
   try {
     const { projectId } = req.params;
+    const { type } = req.query; // Optional type parameter to check specific content type
 
     if (!mongoose.Types.ObjectId.isValid(projectId)) {
-      return res.status(400).json({ msg: 'Invalid project ID format' });
+      return res.status(400).json({ msg: 'Invalid content ID format' });
     }
 
-    const bookmark = await Bookmark.findOne({
+    // Build the query
+    const query = {
       user: req.user.id,
       projectId: projectId
-    });
+    };
+    
+    // Add type to query if specified
+    if (type && ['project', 'publication', 'blog', 'community'].includes(type)) {
+      query.type = type;
+      
+      // Add contentModel based on type
+      switch (type) {
+        case 'project':
+          query.contentModel = 'Project';
+          break;
+        case 'publication':
+          query.contentModel = 'Publication';
+          break;
+        case 'blog':
+          query.contentModel = 'Blog';
+          break;
+        case 'community':
+          query.contentModel = 'CommunityPost';
+          break;
+      }
+    }
+
+    const bookmark = await Bookmark.findOne(query);
 
     res.json({
       success: true,
       bookmarked: !!bookmark,
-      bookmarkId: bookmark ? bookmark._id : null
+      bookmarkId: bookmark ? bookmark._id : null,
+      type: bookmark ? bookmark.type : null,
+      contentModel: bookmark ? bookmark.contentModel : null
     });
   } catch (error) {
     console.error('Check bookmark error:', error);
@@ -196,20 +319,45 @@ router.delete('/:id', auth, async (req, res) => {
 });
 
 //////////////////////////
-// ❌ REMOVE BOOKMARK BY PROJECT ID
+// ❌ REMOVE BOOKMARK BY CONTENT ID
 //////////////////////////
-router.delete('/project/:projectId', auth, async (req, res) => {
+router.delete('/content/:projectId', auth, async (req, res) => {
   try {
     const { projectId } = req.params;
+    const { type } = req.query; // Optional type parameter to specify content type
 
     if (!mongoose.Types.ObjectId.isValid(projectId)) {
-      return res.status(400).json({ msg: 'Invalid project ID format' });
+      return res.status(400).json({ msg: 'Invalid content ID format' });
     }
 
-    const bookmark = await Bookmark.findOne({
+    // Build the query
+    const query = {
       user: req.user.id,
       projectId: projectId
-    });
+    };
+    
+    // Add type and contentModel to query if specified
+    if (type && ['project', 'publication', 'blog', 'community'].includes(type)) {
+      query.type = type;
+      
+      // Add contentModel based on type
+      switch (type) {
+        case 'project':
+          query.contentModel = 'Project';
+          break;
+        case 'publication':
+          query.contentModel = 'Publication';
+          break;
+        case 'blog':
+          query.contentModel = 'Blog';
+          break;
+        case 'community':
+          query.contentModel = 'CommunityPost';
+          break;
+      }
+    }
+
+    const bookmark = await Bookmark.findOne(query);
 
     if (!bookmark) {
       return res.status(404).json({ msg: 'Bookmark not found' });
@@ -219,11 +367,92 @@ router.delete('/project/:projectId', auth, async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Bookmark removed successfully'
+      message: `${bookmark.type.charAt(0).toUpperCase() + bookmark.type.slice(1)} bookmark removed successfully`
     });
   } catch (error) {
-    console.error('Delete bookmark by project error:', error);
+    console.error('Delete bookmark by content ID error:', error);
     res.status(500).json({ msg: 'Server error while removing bookmark', error: error.message });
+  }
+});
+
+//////////////////////////
+// 📊 GET BOOKMARK STATISTICS
+//////////////////////////
+//////////////////////////
+// 📑 GET BOOKMARKS BY TYPE
+//////////////////////////
+router.get('/by-type/:type', auth, async (req, res) => {
+  try {
+    const { type } = req.params;
+    const { page = 1, limit = 10, search } = req.query;
+    
+    // Validate type
+    if (!['project', 'publication', 'blog', 'community'].includes(type)) {
+      return res.status(400).json({ msg: 'Invalid content type. Must be one of: project, publication, blog, community' });
+    }
+    
+    // Build query
+    const query = { 
+      user: req.user.id,
+      type: type
+    };
+    
+    // Add contentModel based on type
+    switch (type) {
+      case 'project':
+        query.contentModel = 'Project';
+        break;
+      case 'publication':
+        query.contentModel = 'Publication';
+        break;
+      case 'blog':
+        query.contentModel = 'Blog';
+        break;
+      case 'community':
+        query.contentModel = 'CommunityPost';
+        break;
+    }
+    
+    if (search) {
+      query.$or = [
+        { projectTitle: { $regex: search, $options: 'i' } },
+        { projectDescription: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    // Pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    const bookmarksQuery = Bookmark.find(query)
+      .populate('user', 'name email')
+      .populate('projectId')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+    
+    const bookmarks = await bookmarksQuery.exec();
+    
+    // Process bookmarks to provide consistent response structure
+    const processedBookmarks = bookmarks.map(bookmark => ({
+      ...bookmark.toObject(),
+      contentDetails: bookmark.projectId
+    }));
+    
+    const totalBookmarks = await Bookmark.countDocuments(query);
+    const totalPages = Math.ceil(totalBookmarks / parseInt(limit));
+    
+    res.json({
+      success: true,
+      count: bookmarks.length,
+      totalBookmarks,
+      totalPages,
+      currentPage: parseInt(page),
+      data: processedBookmarks
+    });
+    
+  } catch (error) {
+    console.error('Get bookmarks by type error:', error);
+    res.status(500).json({ msg: 'Server error while fetching bookmarks', error: error.message });
   }
 });
 
@@ -234,28 +463,59 @@ router.get('/stats/overview', auth, async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const totalBookmarks = await Bookmark.countDocuments({ user: userId });
+    // Handle each query separately to prevent one failure from affecting others
+    let totalBookmarks = 0;
+    let bookmarksByType = [];
+    let recentBookmarks = 0;
+    let popularContent = [];
+
+    try {
+      totalBookmarks = await Bookmark.countDocuments({ user: userId });
+    } catch (err) {
+      console.error('Error counting total bookmarks:', err);
+    }
     
-    // Bookmarks by type
-    const bookmarksByType = await Bookmark.aggregate([
-      { $match: { user: new mongoose.Types.ObjectId(userId) } },
-      { $group: { _id: '$type', count: { $sum: 1 } } }
-    ]);
+    try {
+      // Bookmarks by type
+      bookmarksByType = await Bookmark.aggregate([
+        { $match: { user: new mongoose.Types.ObjectId(userId) } },
+        { $group: { _id: '$type', count: { $sum: 1 } } },
+        { $sort: { count: -1 } }
+      ]);
+    } catch (err) {
+      console.error('Error aggregating bookmarks by type:', err);
+    }
 
-    // Recent bookmarks (last 7 days)
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const recentBookmarks = await Bookmark.countDocuments({
-      user: userId,
-      createdAt: { $gte: sevenDaysAgo }
-    });
+    try {
+      // Recent bookmarks (last 7 days)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      recentBookmarks = await Bookmark.countDocuments({
+        user: userId,
+        createdAt: { $gte: sevenDaysAgo }
+      });
+    } catch (err) {
+      console.error('Error counting recent bookmarks:', err);
+    }
 
-    // Most bookmarked projects
-    const popularProjects = await Bookmark.aggregate([
-      { $group: { _id: '$projectId', count: { $sum: 1 }, title: { $first: '$projectTitle' } } },
-      { $sort: { count: -1 } },
-      { $limit: 5 }
-    ]);
+    try {
+      // Most bookmarked content - modified to avoid grouping issues
+      popularContent = await Bookmark.find({ user: userId })
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .select('projectTitle type contentModel createdAt')
+        .lean();
+        
+      // Transform to match expected structure
+      popularContent = popularContent.map(item => ({
+        title: item.projectTitle || 'Untitled',
+        type: item.type || 'unknown',
+        count: 1, // Each user bookmark counts as 1
+        contentModel: item.contentModel
+      }));
+    } catch (err) {
+      console.error('Error finding popular content:', err);
+    }
 
     res.json({
       success: true,
@@ -263,12 +523,22 @@ router.get('/stats/overview', auth, async (req, res) => {
         totalBookmarks,
         bookmarksByType,
         recentBookmarks,
-        popularProjects
+        popularContent: popularContent
       }
     });
   } catch (error) {
     console.error('Get bookmark statistics error:', error);
-    res.status(500).json({ msg: 'Server error while fetching bookmark statistics', error: error.message });
+    res.status(500).json({ 
+      success: false,
+      msg: 'Server error while fetching bookmark statistics', 
+      error: error.message,
+      data: {
+        totalBookmarks: 0,
+        bookmarksByType: [],
+        recentBookmarks: 0,
+        popularContent: []
+      }
+    });
   }
 });
 
@@ -277,61 +547,131 @@ router.get('/stats/overview', auth, async (req, res) => {
 //////////////////////////
 router.post('/bulk', auth, async (req, res) => {
   try {
-    const { projectIds, action } = req.body;
+    const { contentIds, action, type = 'project' } = req.body;
 
-    if (!Array.isArray(projectIds) || projectIds.length === 0) {
-      return res.status(400).json({ msg: 'Project IDs array is required' });
+    if (!Array.isArray(contentIds) || contentIds.length === 0) {
+      return res.status(400).json({ msg: 'Content IDs array is required' });
     }
 
     if (!['add', 'remove'].includes(action)) {
       return res.status(400).json({ msg: 'Action must be either "add" or "remove"' });
     }
 
-    const validProjectIds = projectIds.filter(id => mongoose.Types.ObjectId.isValid(id));
+    // Validate content type
+    if (!['project', 'publication', 'blog', 'community'].includes(type)) {
+      return res.status(400).json({ msg: 'Invalid content type. Must be one of: project, publication, blog, community' });
+    }
 
-    if (validProjectIds.length === 0) {
-      return res.status(400).json({ msg: 'No valid project IDs provided' });
+    const validContentIds = contentIds.filter(id => mongoose.Types.ObjectId.isValid(id));
+
+    if (validContentIds.length === 0) {
+      return res.status(400).json({ msg: 'No valid content IDs provided' });
     }
 
     let result;
+    let contentModel;
+    
+    // Determine the content model based on type
+    switch (type) {
+      case 'project':
+        contentModel = 'Project';
+        break;
+      case 'publication':
+        contentModel = 'Publication';
+        break;
+      case 'blog':
+        contentModel = 'Blog';
+        break;
+      case 'community':
+        contentModel = 'CommunityPost';
+        break;
+    }
+
+    // Import the appropriate model based on content type
+    let Model;
+    try {
+      switch (type) {
+        case 'project':
+          Model = require('../models/Project');
+          break;
+        case 'publication':
+          Model = require('../models/publicationSchema');
+          break;
+        case 'blog':
+          Model = require('../models/Blog');
+          break;
+        case 'community':
+          Model = require('../models/CommunityPostSchema');
+          break;
+      }
+    } catch (error) {
+      console.error(`Error importing model for type ${type}:`, error);
+      return res.status(500).json({ msg: `Error loading ${type} model. Please contact support.` });
+    }
     
     if (action === 'add') {
-      // Validate projects exist
-      const existingProjects = await Project.find({ _id: { $in: validProjectIds } });
+      // Validate content items exist
+      const existingContent = await Model.find({ _id: { $in: validContentIds } });
       
-      if (existingProjects.length !== validProjectIds.length) {
-        return res.status(404).json({ msg: 'Some projects not found' });
+      if (existingContent.length !== validContentIds.length) {
+        return res.status(404).json({ msg: `Some ${type}s not found` });
       }
 
       // Check for existing bookmarks
       const existingBookmarks = await Bookmark.find({
         user: req.user.id,
-        projectId: { $in: validProjectIds }
+        projectId: { $in: validContentIds },
+        type: type
       });
 
-      const existingProjectIds = existingBookmarks.map(b => b.projectId.toString());
-      const newProjectIds = validProjectIds.filter(id => !existingProjectIds.includes(id));
+      const existingContentIds = existingBookmarks.map(b => b.projectId.toString());
+      const newContentIds = validContentIds.filter(id => !existingContentIds.includes(id));
 
-      if (newProjectIds.length === 0) {
-        return res.status(400).json({ msg: 'All projects are already bookmarked' });
+      if (newContentIds.length === 0) {
+        return res.status(400).json({ msg: `All ${type}s are already bookmarked` });
       }
 
-      // Create new bookmarks
-      const bookmarksToCreate = existingProjects
-        .filter(project => newProjectIds.includes(project._id.toString()))
-        .map(project => ({
-          user: req.user.id,
-          projectId: project._id,
-          type: 'project',
-          projectTitle: project.title,
-          projectDescription: project.description
-        }));
+      // Create new bookmarks based on content type
+      const bookmarksToCreate = existingContent
+        .filter(content => newContentIds.includes(content._id.toString()))
+        .map(content => {
+          let title, description;
+          
+          // Set appropriate title and description fields based on content type
+          switch (type) {
+            case 'project':
+              title = content.title;
+              description = content.description || '';
+              break;
+            case 'publication':
+              title = content.title;
+              description = content.abstract || '';
+              break;
+            case 'blog':
+              title = content.title;
+              description = content.excerpt || content.content?.substring(0, 100) || '';
+              break;
+            case 'community':
+              title = content.title || content.content?.substring(0, 50) || '';
+              description = content.content || '';
+              break;
+          }
+          
+          return {
+            user: req.user.id,
+            projectId: content._id,
+            type: type,
+            contentModel: contentModel,
+            projectTitle: title,
+            projectDescription: description
+          };
+        });
 
       result = await Bookmark.insertMany(bookmarksToCreate);
 
       res.json({
         success: true,
-        message: `${result.length} projects bookmarked successfully`,
+        message: `${result.length} ${type}s bookmarked successfully`,
         added: result.length,
         skipped: existingBookmarks.length
       });
@@ -339,12 +679,13 @@ router.post('/bulk', auth, async (req, res) => {
     } else if (action === 'remove') {
       result = await Bookmark.deleteMany({
         user: req.user.id,
-        projectId: { $in: validProjectIds }
+        projectId: { $in: validContentIds },
+        type: type
       });
 
       res.json({
         success: true,
-        message: `${result.deletedCount} bookmarks removed successfully`,
+        message: `${result.deletedCount} ${type} bookmarks removed successfully`,
         removed: result.deletedCount
       });
     }
@@ -363,15 +704,41 @@ router.get('/export', auth, async (req, res) => {
     const { format = 'json' } = req.query;
 
     const bookmarks = await Bookmark.find({ user: req.user.id })
-      .populate('projectId', 'title description tags status creator')
       .sort({ createdAt: -1 });
+    
+    // Process bookmarks to handle missing or null content references
+    const processedBookmarks = bookmarks.map(bookmark => {
+      return {
+        id: bookmark._id,
+        type: bookmark.type,
+        title: bookmark.projectTitle || 'Untitled',
+        description: bookmark.projectDescription || '',
+        tags: bookmark.tags || [],
+        category: bookmark.category || '',
+        createdAt: bookmark.createdAt,
+        lastVisited: bookmark.lastVisited
+      };
+    });
 
     if (format === 'csv') {
-      // Convert to CSV format
-      const csvHeader = 'Title,Description,Tags,Status,Bookmarked Date\n';
-      const csvRows = bookmarks.map(bookmark => {
-        const project = bookmark.projectId;
-        return `"${project.title}","${project.description}","${project.tags.join(';')}","${project.status}","${bookmark.createdAt.toISOString()}"`;
+      // Convert to CSV format with proper escaping
+      const csvHeader = 'Type,Title,Description,Tags,Category,Bookmarked Date\n';
+      const csvRows = processedBookmarks.map(bookmark => {
+        // Properly escape CSV fields to handle quotes and commas
+        const escapeCSV = (field) => {
+          if (field === null || field === undefined) return '""';
+          const str = String(field).replace(/"/g, '""');
+          return `"${str}"`;
+        };
+        
+        const title = escapeCSV(bookmark.title);
+        const description = escapeCSV(bookmark.description);
+        const tags = escapeCSV(Array.isArray(bookmark.tags) ? bookmark.tags.join(';') : bookmark.tags);
+        const category = escapeCSV(bookmark.category);
+        const type = escapeCSV(bookmark.type);
+        const date = escapeCSV(bookmark.createdAt.toISOString());
+        
+        return `${type},${title},${description},${tags},${category},${date}`;
       }).join('\n');
 
       res.setHeader('Content-Type', 'text/csv');
@@ -382,13 +749,52 @@ router.get('/export', auth, async (req, res) => {
       res.json({
         success: true,
         exportDate: new Date().toISOString(),
-        totalBookmarks: bookmarks.length,
-        data: bookmarks
+        totalBookmarks: processedBookmarks.length,
+        data: processedBookmarks
       });
     }
   } catch (error) {
     console.error('Export bookmarks error:', error);
     res.status(500).json({ msg: 'Server error while exporting bookmarks', error: error.message });
+  }
+});
+
+//////////////////////////
+// 🕒 UPDATE LAST VISITED
+//////////////////////////
+router.put('/visit/:id', auth, async (req, res) => {
+  try {
+    const bookmarkId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(bookmarkId)) {
+      return res.status(400).json({ msg: 'Invalid bookmark ID format' });
+    }
+
+    const bookmark = await Bookmark.findById(bookmarkId);
+    if (!bookmark) {
+      return res.status(404).json({ msg: 'Bookmark not found' });
+    }
+
+    // Check if user owns the bookmark
+    if (bookmark.user.toString() !== req.user.id) {
+      return res.status(403).json({ msg: 'Unauthorized to update this bookmark' });
+    }
+
+    // Update last visited timestamp
+    bookmark.lastVisited = new Date();
+    await bookmark.save();
+
+    res.json({
+      success: true,
+      message: 'Bookmark visit timestamp updated',
+      data: {
+        bookmarkId: bookmark._id,
+        lastVisited: bookmark.lastVisited
+      }
+    });
+  } catch (error) {
+    console.error('Update bookmark visit timestamp error:', error);
+    res.status(500).json({ msg: 'Server error while updating bookmark visit timestamp', error: error.message });
   }
 });
 
