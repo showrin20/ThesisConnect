@@ -176,12 +176,12 @@ const ProjectCard = ({
     try {
       if (isBookmarked) {
         // If already bookmarked, remove the bookmark
-        await axios.delete(`/api/bookmarks/content/${projectId}?type=project`, {
+        await axios.delete(`/bookmarks/content/${projectId}?type=project`, {
           headers: { 'x-auth-token': user.token }
         });
       } else {
         // If not bookmarked, add a bookmark
-        await axios.post('/api/bookmarks', {
+        await axios.post('/bookmarks', {
           projectId: projectId,
           type: 'project'  // You can adjust this based on the content type
         }, {

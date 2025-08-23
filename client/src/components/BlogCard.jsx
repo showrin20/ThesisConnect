@@ -42,7 +42,7 @@ const BlogCard = ({
       if (!blogId || !user?.token) return;
       
       try {
-        const response = await axios.get(`/api/bookmarks/check/${blogId}`, {
+        const response = await axios.get(`/bookmarks/check/${blogId}`, {
           headers: { 'x-auth-token': user.token }
         });
         
@@ -69,12 +69,12 @@ const BlogCard = ({
     try {
       if (isBookmarked) {
         // If already bookmarked, remove the bookmark
-        await axios.delete(`/api/bookmarks/content/${blogId}?type=blog`, {
+        await axios.delete(`/bookmarks/content/${blogId}?type=blog`, {
           headers: { 'x-auth-token': user.token }
         });
       } else {
         // If not bookmarked, add a bookmark
-        await axios.post('/api/bookmarks', {
+        await axios.post('/bookmarks', {
           projectId: blogId,
           type: 'blog'
         }, {

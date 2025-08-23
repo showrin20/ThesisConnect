@@ -105,7 +105,7 @@ export default function Dashboard() {
       setProjectsError(null);
       try {
         // Use the my-projects endpoint which fetches both created and collaborated projects
-        const response = await axios.get('/projects/my-projects');
+        const response = await axios.get('/projects');
         setRecentProjects(response.data?.data || []);
       } catch (error) {
         console.error('Failed to fetch projects:', error);

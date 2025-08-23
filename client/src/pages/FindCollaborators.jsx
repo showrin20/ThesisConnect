@@ -56,7 +56,7 @@ const FindCollaborators = () => {
   const fetchCollaborators = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('/users?role=student&limit=50');
+      const res = await axios.get('/users?role=student');
       const data = res.data.data || res.data || [];
 
       const filteredList = data

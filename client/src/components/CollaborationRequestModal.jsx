@@ -135,7 +135,7 @@ Best regards!`;
                   borderColor: messageError ? colors.status?.error : colors.border.secondary,
                   focusRingColor: colors.primary?.blue?.[500] || '#3b82f6'
                 }}
-              />
+              />    
               {messageError && (
                 <p className="text-xs mt-1" style={{ color: colors.status?.error }}>
                   {messageError}

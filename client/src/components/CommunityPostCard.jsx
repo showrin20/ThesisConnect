@@ -34,7 +34,7 @@ const CommunityPostCard = ({
       if (!communityPostId || !user?.token) return;
       
       try {
-        const response = await axios.get(`/api/bookmarks/check/${communityPostId}`, {
+        const response = await axios.get(`/bookmarks/check/${communityPostId}`, {
           headers: { 'x-auth-token': user.token }
         });
         
@@ -61,12 +61,12 @@ const CommunityPostCard = ({
     try {
       if (isBookmarked) {
         // If already bookmarked, remove the bookmark
-        await axios.delete(`/api/bookmarks/content/${communityPostId}?type=community`, {
+        await axios.delete(`/bookmarks/content/${communityPostId}?type=community`, {
           headers: { 'x-auth-token': user.token }
         });
       } else {
         // If not bookmarked, add a bookmark
-        await axios.post('/api/bookmarks', {
+        await axios.post('/bookmarks', {
           projectId: communityPostId,
           type: 'community'
         }, {

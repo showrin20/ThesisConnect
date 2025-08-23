@@ -12,6 +12,7 @@ import {
   Bookmark,
 } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
+import { debounce } from 'lodash';
 import axios from '../axios';
 import { useAuth } from '../context/AuthContext';
 import { useAlert } from '../context/AlertContext';
@@ -26,16 +27,14 @@ export default function MyProjects() {
   const [projects, setProjects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [projectsError, setProjectsError] = useState(null);
-  const [bookmarkedProjects, setBookmarkedProjects] = useState({}); // Track bookmarked projects
-  const [bookmarkLoading, setBookmarkLoading] = useState({});  // Track bookmark operations by projectId
+  const [bookmarkedProjects, setBookmarkedProjects] = useState({});
+  const [bookmarkLoading, setBookmarkLoading] = useState({});
 
-  // Get auth context and alerts
   const { user } = useAuth();
   const { showSuccess, showError } = useAlert();
 
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(6); // default for desktop
+  const [itemsPerPage, setItemsPerPage] = useState(6);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -46,93 +45,96 @@ export default function MyProjects() {
         const fetchedProjects = response.data?.data || [];
         console.log('Fetched Projects:', fetchedProjects);
         setProjects(fetchedProjects);
-        
-        // Check bookmark status for each project if user is logged in
+
+        // Initialize bookmarkedProjects with default values
+        const initialBookmarkStatus = {};
+        fetchedProjects.forEach(project => {
+          initialBookmarkStatus[project._id] = {
+            isBookmarked: false,
+            bookmarkId: null
+          };
+        });
+        setBookmarkedProjects(initialBookmarkStatus);
+
         if (user?.token) {
-          checkBookmarkStatus(fetchedProjects);
+          await checkBookmarkStatus(fetchedProjects);
         }
       } catch (error) {
         console.error('Failed to fetch projects:', error);
         setProjectsError('Failed to load projects');
         setProjects([]);
+        setBookmarkedProjects({});
       } finally {
         setLoadingProjects(false);
       }
     };
     fetchProjects();
-  }, [user]);
-  
-  // Function to check bookmark status for projects
+  }, [user?.token]);
+
   const checkBookmarkStatus = async (projectsList) => {
     if (!user?.token || !projectsList?.length) return;
-    
+
     try {
-      // Create a new bookmark status object
+      const promises = projectsList.map(project =>
+        axios.get(`/bookmarks/check/${project._id}`, {
+          params: { type: 'project' },
+          headers: { 'x-auth-token': user.token }
+        }).then(response => ({
+          projectId: project._id,
+          data: response.data
+        }))
+      );
+
+      const results = await Promise.allSettled(promises);
       const bookmarkStatus = {};
-      
-      // Check each project's bookmark status
-      for (const project of projectsList) {
-        try {
-          const response = await axios.get(`/bookmarks/check/${project._id}`, {
-            params: { type: 'project' },
-            headers: { 'x-auth-token': user.token }
-          });
-          
-          if (response.data.success) {
-            bookmarkStatus[project._id] = {
-              isBookmarked: response.data.bookmarked,
-              bookmarkId: response.data.bookmarkId
-            };
-          }
-        } catch (err) {
-          console.error(`Error checking bookmark for project ${project._id}:`, err);
-        }
-      }
-      
-      // Update the bookmark status state
+      results.forEach(({ status, value }) => {
+        const projectId = value.projectId;
+        bookmarkStatus[projectId] = {
+          isBookmarked: status === 'fulfilled' && value.data?.success ? value.data.bookmarked : false,
+          bookmarkId: status === 'fulfilled' && value.data?.success ? value.data.bookmarkId : null
+        };
+      });
+
+      console.log('Bookmark statuses:', bookmarkStatus);
       setBookmarkedProjects(bookmarkStatus);
-      
     } catch (error) {
       console.error('Error checking bookmark statuses:', error);
+      showError('Failed to load bookmark statuses');
     }
   };
-  
-  // Handle bookmark toggle
-  const handleBookmarkToggle = async (projectId) => {
-    // Don't proceed if user not logged in or operation in progress
+
+  const debouncedBookmarkToggle = debounce(async (projectId) => {
     if (!user?.token || bookmarkLoading[projectId]) return;
-    
-    // Mark this project's bookmark operation as loading
+
     setBookmarkLoading(prev => ({ ...prev, [projectId]: true }));
-    
     try {
-      const isCurrentlyBookmarked = bookmarkedProjects[projectId]?.isBookmarked;
-      
+      const isCurrentlyBookmarked = bookmarkedProjects[projectId]?.isBookmarked || false;
+      console.log(`Toggling bookmark for project ${projectId}, current state: ${isCurrentlyBookmarked}`);
+
       if (isCurrentlyBookmarked) {
-        // Remove bookmark
         const bookmarkId = bookmarkedProjects[projectId].bookmarkId;
+        if (!bookmarkId) {
+          throw new Error('Bookmark ID missing for removal');
+        }
+        console.log('Removing bookmark ID:', bookmarkId);
         await axios.delete(`/bookmarks/${bookmarkId}`, {
           headers: { 'x-auth-token': user.token }
         });
-        
-        // Update state
         setBookmarkedProjects(prev => ({
           ...prev,
           [projectId]: { isBookmarked: false, bookmarkId: null }
         }));
-        
         showSuccess('Project removed from bookmarks');
       } else {
-        // Add bookmark
+        console.log('Adding bookmark for project:', projectId);
         const response = await axios.post('/bookmarks', {
           projectId: projectId,
           type: 'project'
         }, {
           headers: { 'x-auth-token': user.token }
         });
-        
-        // Update state with new bookmark info
-        if (response.data.success) {
+        console.log('Bookmark response:', response.data);
+        if (response.data.success && response.data.data?._id) {
           setBookmarkedProjects(prev => ({
             ...prev,
             [projectId]: { 
@@ -140,28 +142,30 @@ export default function MyProjects() {
               bookmarkId: response.data.data._id 
             }
           }));
-          
           showSuccess('Project added to bookmarks');
+        } else {
+          throw new Error('Invalid bookmark creation response');
         }
       }
     } catch (error) {
       console.error('Error toggling bookmark:', error);
-      showError(error.response?.data?.msg || 'Failed to update bookmark');
+      const errorMsg = error.response?.data?.msg || 
+                       error.message === 'Network Error' ? 'Server is unreachable' : 
+                       'Failed to update bookmark';
+      showError(errorMsg);
     } finally {
-      // Clear loading state for this project
       setBookmarkLoading(prev => ({ ...prev, [projectId]: false }));
     }
-  };
+  }, 300);
 
-  // Adjust items per page based on screen size
   useEffect(() => {
     const updateItemsPerPage = () => {
       if (window.innerWidth < 768) {
-        setItemsPerPage(2); // 1 col × 2 rows
+        setItemsPerPage(2);
       } else if (window.innerWidth < 1024) {
-        setItemsPerPage(4); // 2 cols × 2 rows
+        setItemsPerPage(4);
       } else {
-        setItemsPerPage(6); // 3 cols × 2 rows
+        setItemsPerPage(6);
       }
     };
     updateItemsPerPage();
@@ -186,7 +190,7 @@ export default function MyProjects() {
         );
 
       const matchesStatus =
-        selectedStatus === 'All' || selectedStatus === 'Personal'; // placeholder logic
+        selectedStatus === 'All' || selectedStatus === 'Personal';
 
       const matchesKeywords =
         selectedKeywords.length === 0 ||
@@ -198,7 +202,6 @@ export default function MyProjects() {
     });
   }, [projects, searchTerm, selectedStatus, selectedKeywords]);
 
-  // Calculate pagination
   const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
   const paginatedProjects = filteredProjects.slice(
     (currentPage - 1) * itemsPerPage,
@@ -211,14 +214,14 @@ export default function MyProjects() {
         ? prev.filter((k) => k !== keyword)
         : [...prev, keyword]
     );
-    setCurrentPage(1); // reset page when filter changes
+    setCurrentPage(1);
   };
 
   const clearFilters = () => {
     setSearchTerm('');
     setSelectedStatus('All');
     setSelectedKeywords([]);
-    setCurrentPage(1); // reset page when clearing filters
+    setCurrentPage(1);
   };
 
   const getStatusBadgeColor = (status) => {
@@ -243,7 +246,6 @@ export default function MyProjects() {
     }
   };
 
-  // Pagination navigation
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
@@ -257,7 +259,6 @@ export default function MyProjects() {
         background: `linear-gradient(135deg, ${colors.gradients.background.main}, ${colors.gradients.background.hero})`
       }}
     >
-      {/* Header */}
       <div 
         className="backdrop-blur-sm border-b shadow-sm"
         style={{ borderColor: `${colors.border.primary}99` }}
@@ -281,7 +282,6 @@ export default function MyProjects() {
             </p>
           </div>
 
-          {/* Search and Filters */}
           <div 
             className="backdrop-blur-sm rounded-2xl p-6 border shadow-lg"
             style={{
@@ -341,7 +341,6 @@ export default function MyProjects() {
               </div>
             </div>
 
-            {/* Filter Options */}
             {showFilters && (
               <div 
                 className="border-t pt-4 animate-in slide-in-from-top-2 duration-200"
@@ -438,7 +437,6 @@ export default function MyProjects() {
               </div>
             )}
 
-            {/* Result Summary */}
             <div 
               className="mt-4 pt-4 border-t"
               style={{ borderColor: `${colors.border.primary}99` }}
@@ -451,7 +449,6 @@ export default function MyProjects() {
         </div>
       </div>
 
-      {/* Project Grid */}
       <div className="container mx-auto px-4 py-8">
         {loadingProjects ? (
           <div className="text-center py-12" style={{ color: colors.text.muted }}>Loading projects...</div>
@@ -506,31 +503,43 @@ export default function MyProjects() {
                           {project.title}
                         </span>
                       </h2>
-                      
-                      {/* Bookmark Button */}
                       {user && (
                         <button
+                          key={`${project._id}-${bookmarkedProjects[project._id]?.isBookmarked}`}
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleBookmarkToggle(project._id);
+                            e.preventDefault();
+                            debouncedBookmarkToggle(project._id);
                           }}
                           disabled={bookmarkLoading[project._id]}
-                          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 transform hover:scale-110"
+                          className={`p-2 rounded-full transition-colors duration-300 transform hover:scale-110 ${
+                            bookmarkedProjects[project._id]?.isBookmarked 
+                              ? 'bg-yellow-50 hover:bg-yellow-100 dark:bg-yellow-900/20 dark:hover:bg-yellow-800/30' 
+                              : 'hover:bg-gray-500'
+                          }`}
                           title={bookmarkedProjects[project._id]?.isBookmarked ? "Remove from bookmarks" : "Add to bookmarks"}
                           style={{ 
                             marginTop: '4px',
-                            opacity: bookmarkLoading[project._id] ? 0.7 : 1 
+                            opacity: bookmarkLoading[project._id] ? 0.7 : 1,
+                            transform: bookmarkedProjects[project._id]?.isBookmarked ? 'scale(1.05)' : 'scale(1)'
                           }}
                         >
-                          <Bookmark 
-                            size={18} 
-                            fill={bookmarkedProjects[project._id]?.isBookmarked ? '#FFD700' : 'transparent'} 
-                            color={bookmarkedProjects[project._id]?.isBookmarked ? '#FFD700' : colors.text.secondary} 
-                          />
+                          {bookmarkLoading[project._id] ? (
+                            <span className="animate-spin">⏳</span>
+                          ) : (
+                            <Bookmark 
+                              size={18} 
+                              fill={bookmarkedProjects[project._id]?.isBookmarked ? '#FFD700' : 'transparent'} 
+                              color={bookmarkedProjects[project._id]?.isBookmarked ? '#FFD700' : colors.text.secondary} 
+                              className={`transition-all duration-300 ${
+                                bookmarkedProjects[project._id]?.isBookmarked ? "drop-shadow-sm" : ""
+                              }`}
+                              strokeWidth={bookmarkedProjects[project._id]?.isBookmarked ? 1.5 : 2}
+                            />
+                          )}
                         </button>
                       )}
                     </div>
-                    
                     <div className="flex items-center gap-2 mb-3">
                       <div
                         className="flex items-center gap-1 px-3 py-1 rounded-full border text-xs font-medium"
@@ -649,7 +658,6 @@ export default function MyProjects() {
               ))}
             </div>
 
-            {/* Pagination Controls */}
             {totalPages > 1 && (
               <div className="flex justify-center items-center gap-2 mt-8">
                 <button
@@ -676,7 +684,6 @@ export default function MyProjects() {
                   <span>Previous</span>
                 </button>
 
-                {/* Page Numbers */}
                 <div className="flex gap-1">
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                     <button

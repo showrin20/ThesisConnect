@@ -50,7 +50,7 @@ const PublicationCard = ({
       if (!publicationId || !user?.token) return;
       
       try {
-        const response = await axios.get(`/api/bookmarks/check/${publicationId}`, {
+        const response = await axios.get(`/bookmarks/check/${publicationId}`, {
           headers: { 'x-auth-token': user.token }
         });
         
@@ -77,12 +77,12 @@ const PublicationCard = ({
     try {
       if (isBookmarked) {
         // If already bookmarked, remove the bookmark
-        await axios.delete(`/api/bookmarks/content/${publicationId}?type=publication`, {
+        await axios.delete(`/bookmarks/content/${publicationId}?type=publication`, {
           headers: { 'x-auth-token': user.token }
         });
       } else {
         // If not bookmarked, add a bookmark
-        await axios.post('/api/bookmarks', {
+        await axios.post('/bookmarks', {
           projectId: publicationId,
           type: 'publication'
         }, {
