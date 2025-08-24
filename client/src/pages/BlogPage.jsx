@@ -266,7 +266,7 @@ const BlogPage = () => {
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button
                         style={{
-                          background: colors.accent.red[500],
+                          background: colors.button.primary.background,
                           color: colors.text.primary,
                           border: 'none',
                           padding: '6px 10px',

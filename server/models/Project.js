@@ -13,6 +13,10 @@ const projectSchema = new mongoose.Schema({
       message: 'Invalid project link URL',
     },
   },
+  isPrivate: {
+    type: Boolean,
+    default: false,
+  },
   status: {
     type: String,
     enum: ['Planned', 'In Progress', 'Completed'],

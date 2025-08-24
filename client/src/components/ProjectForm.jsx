@@ -22,6 +22,7 @@ const ProjectForm = ({
     link: initialData.link || '',
     tags: Array.isArray(initialData.tags) ? initialData.tags.join(', ') : '',
     status: initialData.status || 'Planned',
+    isPrivate: initialData.isPrivate || false,
     collaborators: [],
     thesisDraft: initialData.thesisDraft || { externalLink: '', description: '' },
   });
@@ -185,6 +186,7 @@ const ProjectForm = ({
       submitData.append('title', formData.title);
       submitData.append('description', formData.description);
       submitData.append('status', formData.status);
+      submitData.append('isPrivate', formData.isPrivate);
       if (hasLink) submitData.append('link', formData.link);
       if (formData.tags) {
         const tags = formData.tags.split(',').map((t) => t.trim()).filter(Boolean);
@@ -230,6 +232,7 @@ const ProjectForm = ({
         link: '',
         tags: '',
         status: 'Planned',
+        isPrivate: false,
         collaborators: [],
         thesisDraft: { externalLink: '', description: '' },
       });
@@ -517,6 +520,59 @@ const ProjectForm = ({
             <option value="In Progress">In Progress</option>
             <option value="Completed">Completed</option>
           </select>
+        </div>
+        
+        {/* Privacy Setting */}
+        <div>
+          <div className="flex items-center justify-between">
+            <label
+              htmlFor="isPrivate"
+              className="text-sm font-medium mb-2"
+              style={{ color: colors.text.secondary }}
+            >
+              Project Privacy
+            </label>
+            <div 
+              className="text-xs px-2 py-1 rounded-full"
+              style={{ 
+                backgroundColor: formData.isPrivate ? colors.status.error.background : colors.status.success.background,
+                color: formData.isPrivate ? colors.status.error.text : colors.status.success.text 
+              }}
+            >
+              {formData.isPrivate ? '🔒 Private' : '🌐 Public'}
+            </div>
+          </div>
+          <div
+            className="p-4 rounded-lg border"
+            style={{ 
+              backgroundColor: colors.background.tertiary,
+              borderColor: formData.isPrivate ? colors.status.error.border : colors.status.success.border
+            }}
+          >
+            <div className="flex items-center mb-4">
+              <input
+                type="checkbox"
+                id="isPrivate"
+                name="isPrivate"
+                checked={formData.isPrivate}
+                onChange={(e) => setFormData(prev => ({ ...prev, isPrivate: e.target.checked }))}
+                className="w-4 h-4 mr-2"
+                style={{ accentColor: colors.primary.blue[500] }}
+              />
+              <label
+                htmlFor="isPrivate"
+                className="font-medium"
+                style={{ color: colors.text.primary }}
+              >
+                Make this project private
+              </label>
+            </div>
+            <p className="text-xs" style={{ color: colors.text.secondary }}>
+              {formData.isPrivate ? 
+                "🔒 Private projects are visible only to you and your collaborators. They won't appear in public listings." : 
+                "🌐 Public projects are visible to everyone. They will appear in project listings and search results."}
+            </p>
+          </div>
         </div>
 
         {/* Collaborators Section */}
@@ -1143,6 +1199,7 @@ ProjectForm.propTypes = {
     link: PropTypes.string,
     tags: PropTypes.arrayOf(PropTypes.string),
     status: PropTypes.oneOf(['Planned', 'In Progress', 'Completed']),
+    isPrivate: PropTypes.bool,
     creator: PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.shape({

@@ -74,7 +74,6 @@ router.post('/request', auth, async (req, res) => {
       });
     }
 
-    // Ensure projectId is either a valid ObjectId or null (not undefined)
     const finalProjectId = projectId || null;
 
     // Check if recipient exists
@@ -86,7 +85,7 @@ router.post('/request', auth, async (req, res) => {
       });
     }
 
-    // Check if user is trying to send request to themselves
+    // Prevent sending to self
     if (req.user.id === recipientId) {
       return res.status(400).json({ 
         success: false, 
@@ -94,33 +93,32 @@ router.post('/request', auth, async (req, res) => {
       });
     }
 
-    // Check if request already exists (for the same project or general)
-    const existingRequest = await Collaboration.findOne({
-      requester: req.user.id,
-      recipient: recipientId,
-      projectId: finalProjectId
-    });
+    // ✅ Duplicate check logic
+    let existingRequest;
+    if (finalProjectId) {
+      // Block only if same recipient + same project
+      existingRequest = await Collaboration.findOne({
+        requester: req.user.id,
+        recipient: recipientId,
+        projectId: finalProjectId
+      });
+    } else {
+      // Block only if a general request already exists
+      existingRequest = await Collaboration.findOne({
+        requester: req.user.id,
+        recipient: recipientId,
+        projectId: null
+      });
+    }
 
     if (existingRequest) {
       return res.status(400).json({ 
         success: false, 
-        message: finalProjectId ? 'Collaboration request for this project already exists' : 'Collaboration request already exists' 
+        message: finalProjectId 
+          ? 'Collaboration request for this project already exists' 
+          : 'A general collaboration request already exists with this user' 
       });
     }
-
-    // Also check for any existing collaboration between these users (regardless of project)
-    // This prevents spam and ensures clean collaboration history
-    // const anyExistingCollaboration = await Collaboration.findOne({
-    //   requester: req.user.id,
-    //   recipient: recipientId
-    // });
-
-    // if (anyExistingCollaboration && anyExistingCollaboration.status === 'pending') {
-    //   return res.status(400).json({ 
-    //     success: false, 
-    //     message: 'You already have a pending collaboration request with this user' 
-    //   });
-    // }
 
     // Create new collaboration request
     const collaboration = new Collaboration({
@@ -133,7 +131,6 @@ router.post('/request', auth, async (req, res) => {
 
     await collaboration.save();
     
-    // Populate the collaboration with user details
     await collaboration.populate([
       { path: 'requester', select: 'name email university' },
       { path: 'recipient', select: 'name email university' }
@@ -145,7 +142,6 @@ router.post('/request', auth, async (req, res) => {
       data: collaboration 
     });
   } catch (error) {
-    // Handle MongoDB duplicate key errors specifically
     if (error.code === 11000) {
       return res.status(400).json({ 
         success: false, 
@@ -166,7 +162,6 @@ router.get('/status/:userId', auth, async (req, res) => {
   try {
     const { userId } = req.params;
     
-    // Validate user ID
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ 
         success: false, 
@@ -174,7 +169,6 @@ router.get('/status/:userId', auth, async (req, res) => {
       });
     }
 
-    // Find collaboration between the two users
     const collaboration = await Collaboration.findOne({
       $or: [
         { requester: req.user.id, recipient: userId },
@@ -186,12 +180,9 @@ router.get('/status/:userId', auth, async (req, res) => {
     let data = null;
 
     if (collaboration) {
-      // Determine the status from the current user's perspective
       if (collaboration.requester.toString() === req.user.id) {
-        // Current user is the requester
         status = collaboration.status === 'pending' ? 'sent' : collaboration.status;
       } else {
-        // Current user is the recipient
         status = collaboration.status === 'pending' ? 'pending' : collaboration.status;
       }
       data = collaboration;
@@ -283,7 +274,7 @@ router.get('/project/:projectId/requests', auth, async (req, res) => {
 router.put('/respond/:collaborationId', auth, async (req, res) => {
   try {
     const { collaborationId } = req.params;
-    const { status, responseMessage } = req.body; // 'accepted' or 'declined' with optional responseMessage
+    const { status, responseMessage } = req.body;
     
     if (!['accepted', 'declined'].includes(status)) {
       return res.status(400).json({ 
@@ -301,7 +292,6 @@ router.put('/respond/:collaborationId', auth, async (req, res) => {
       });
     }
 
-    // Check if current user is the recipient
     if (collaboration.recipient.toString() !== req.user.id) {
       return res.status(403).json({ 
         success: false, 
@@ -309,7 +299,6 @@ router.put('/respond/:collaborationId', auth, async (req, res) => {
       });
     }
 
-    // Check if already responded
     if (collaboration.status !== 'pending') {
       return res.status(400).json({ 
         success: false, 
@@ -317,13 +306,11 @@ router.put('/respond/:collaborationId', auth, async (req, res) => {
       });
     }
 
-    // Update collaboration status and response message
     collaboration.status = status;
     collaboration.responseMessage = responseMessage || null;
     collaboration.respondedAt = new Date();
     await collaboration.save();
 
-    // If accepted and has projectId, add collaborator to project
     if (status === 'accepted' && collaboration.projectId) {
       try {
         const Project = require('../models/Project');
@@ -334,7 +321,7 @@ router.put('/respond/:collaborationId', auth, async (req, res) => {
           await project.save();
         }
       } catch (projectError) {
-        // Don't fail the collaboration response if project update fails
+        // Don't fail if project update fails
       }
     }
 
@@ -356,7 +343,7 @@ router.put('/respond/:collaborationId', auth, async (req, res) => {
   }
 });
 
-// Cancel collaboration request (requester or recipient)
+// Cancel collaboration request
 router.delete('/cancel/:collaborationId', auth, async (req, res) => {
   try {
     const { collaborationId } = req.params;
@@ -370,7 +357,6 @@ router.delete('/cancel/:collaborationId', auth, async (req, res) => {
       });
     }
 
-    // Check if current user is either requester or recipient
     const isRequester = collaboration.requester.toString() === req.user.id;
     const isRecipient = collaboration.recipient.toString() === req.user.id;
 
@@ -380,14 +366,6 @@ router.delete('/cancel/:collaborationId', auth, async (req, res) => {
         message: 'Unauthorized to delete this request' 
       });
     }
-
-    // // Only allow deletion of pending requests
-    // if (collaboration.status !== 'pending' && ) {
-    //   return res.status(400).json({ 
-    //     success: false, 
-    //     message: 'Can only delete pending requests' 
-    //   });
-    // }
 
     await Collaboration.findByIdAndDelete(collaborationId);
 
@@ -402,6 +380,5 @@ router.delete('/cancel/:collaborationId', auth, async (req, res) => {
     });
   }
 });
-
 
 module.exports = router;

@@ -19,13 +19,15 @@ const ProjectCard = ({
   collaborators, 
   currentUserId, 
   userRole,
+  isPrivate,
   reviews = [],
   isBookmarked: initialIsBookmarked = false,
   onBookmarkToggle,
   onEdit, 
   onDelete,
   onReviewAdded,
-  onReviewDeleted
+  onReviewDeleted,
+  renderActions // Custom render function for action buttons
 }) => {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewComment, setReviewComment] = useState('');
@@ -248,12 +250,27 @@ const ProjectCard = ({
               </button>
             )}
           </div>
-          <span 
-            className="px-3 py-1 rounded-full text-xs font-medium border"
-            style={getStatusColor(project?.status || status)}
-          >
-            {project?.status || status}
-          </span>
+          <div className="flex items-center gap-2">
+            {/* Show privacy status icon */}
+            {(project?.isPrivate || isPrivate) && (
+              <span
+                className="flex items-center gap-1 px-2 py-1 rounded-full text-xs"
+                style={{
+                  backgroundColor: colors.status.error.background,
+                  color: colors.status.error.text
+                }}
+                title="This project is private"
+              >
+                🔒
+              </span>
+            )}
+            <span 
+              className="px-3 py-1 rounded-full text-xs font-medium border"
+              style={getStatusColor(project?.status || status)}
+            >
+              {project?.status || status}
+            </span>
+          </div>
         </div>
         
         <p className="text-sm mb-4 line-clamp-2" style={{ color: `${colors.text.secondary}B3` }}>
@@ -482,7 +499,11 @@ const ProjectCard = ({
         )}
 
         {/* Action Buttons */}
-        {(onEdit || onDelete) && (
+        {renderActions ? (
+          <div className="mt-4 pt-4 border-t" style={{ borderColor: colors.border.secondary }}>
+            {renderActions()}
+          </div>
+        ) : (onEdit || onDelete) && (
           <div className="flex gap-2 mt-4 pt-4 border-t" style={{ borderColor: colors.border.secondary }}>
             {onEdit && (
               <button

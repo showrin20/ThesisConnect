@@ -60,7 +60,7 @@ const isValidURL = url => {
 //////////////////////////
 router.post('/', auth, upload.single('thesisPdf'), async (req, res) => {
   try {
-    let { title, description, link, tags, status, collaborators, thesisDraft } = req.body;
+    let { title, description, link, tags, status, collaborators, thesisDraft, isPrivate } = req.body;
 
     // Parse collaborators if sent as JSON string (from form-data)
     if (typeof collaborators === 'string') {
@@ -118,6 +118,7 @@ router.post('/', auth, upload.single('thesisPdf'), async (req, res) => {
       link: link || '',
       tags: Array.isArray(tags) ? tags : (tags ? tags.split(',').map(t => t.trim()) : []),
       status: status || 'Planned',
+      isPrivate: isPrivate === 'true' || isPrivate === true,
       collaborators: [], // Start with no collaborators
       creator: req.user.id,
       thesisDraft: Object.keys(thesisDraftData).length ? thesisDraftData : undefined,
@@ -159,11 +160,48 @@ router.get('/search-collaborators', auth, async (req, res) => {
 //////////////////////////
 // 📌 GET ALL PROJECTS
 //////////////////////////
-router.get('/', async (_req, res) => {
+router.get('/', async (req, res) => {
   try {
+    let query = {};
+    
+    // If user is not authenticated, only show public projects
+    if (!req.header('x-auth-token') && !req.header('Authorization')) {
+      query.isPrivate = { $ne: true };
+    } else {
+      // Try to authenticate the user
+      try {
+        let token = req.header('x-auth-token') || '';
+        const authHeader = req.header('Authorization');
+        if (!token && authHeader?.startsWith('Bearer ')) token = authHeader.substring(7);
+        
+        if (token) {
+          const decoded = jwt.verify(token, process.env.JWT_SECRET);
+          const userId = decoded.id;
+          
+          // If authenticated, show public projects + their own projects + projects they collaborate on
+          query = {
+            $or: [
+              { isPrivate: { $ne: true } }, // Public projects
+              { creator: userId },          // User's own projects
+              { collaborators: userId }     // Projects where user is a collaborator
+            ]
+          };
+        } else {
+          // If no valid token, only show public projects
+          query.isPrivate = { $ne: true };
+        }
+      } catch (err) {
+        // If token verification fails, only show public projects
+        query.isPrivate = { $ne: true };
+      }
+    }
+    
     const [projects, total] = await Promise.all([
-      Project.find().populate('creator', 'name email university').populate('collaborators', 'name email role').sort({ createdAt: -1 }),
-      Project.countDocuments()
+      Project.find(query)
+        .populate('creator', 'name email university')
+        .populate('collaborators', 'name email role')
+        .sort({ createdAt: -1 }),
+      Project.countDocuments(query)
     ]);
 
     res.json({ success: true, total, count: projects.length, data: projects });
@@ -212,7 +250,7 @@ router.put('/:id', auth, async (req, res) => {
       return res.status(403).json({ msg: 'Unauthorized to update this project' });
     }
 
-    let { title, description, link, tags, status, collaborators } = req.body;
+    let { title, description, link, tags, status, collaborators, isPrivate } = req.body;
 
     // Parse collaborators if sent as JSON string (from form-data)
     if (typeof collaborators === 'string') {
@@ -227,6 +265,7 @@ router.put('/:id', auth, async (req, res) => {
     }
     if (tags !== undefined) project.tags = Array.isArray(tags) ? tags : [];
     if (status !== undefined) project.status = status;
+    if (isPrivate !== undefined) project.isPrivate = isPrivate === 'true' || isPrivate === true;
 
     // Collaborators are now managed through collaboration requests, not direct updates
     // if (collaborators !== undefined && Array.isArray(collaborators)) {
@@ -270,7 +309,31 @@ router.get('/user/:userId', async (req, res) => {
     const { userId } = req.params;
     if (!mongoose.Types.ObjectId.isValid(userId)) return res.status(400).json({ msg: 'Invalid user ID format' });
 
-    const projects = await Project.find({ creator: userId })
+    let query = { creator: userId };
+    let isAuthenticated = false;
+    let authUserId = null;
+
+    // Check if user is authenticated
+    try {
+      let token = req.header('x-auth-token') || '';
+      const authHeader = req.header('Authorization');
+      if (!token && authHeader?.startsWith('Bearer ')) token = authHeader.substring(7);
+      
+      if (token) {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        isAuthenticated = true;
+        authUserId = decoded.id;
+      }
+    } catch (err) {
+      // Token verification failed, consider as not authenticated
+    }
+
+    // If the requester is not the creator of these projects, only show public ones
+    if (!isAuthenticated || authUserId !== userId) {
+      query.isPrivate = { $ne: true };
+    }
+
+    const projects = await Project.find(query)
       .populate('creator', 'name email university')
       .populate('collaborators', 'name email role')
       .sort({ createdAt: -1 })
@@ -501,16 +564,41 @@ router.put('/:id/reviews/:reviewId', auth, async (req, res) => {
   }
 });
 
+//////////////////////////
+// 📌 TOGGLE PROJECT PRIVACY
+//////////////////////////
+router.patch('/:id/privacy', auth, async (req, res) => {
+  const projectId = req.params.id;
+  try {
+    if (!mongoose.Types.ObjectId.isValid(projectId))
+      return res.status(400).json({ msg: 'Invalid project ID format' });
 
+    const project = await Project.findById(projectId);
+    if (!project) return res.status(404).json({ msg: 'Project not found' });
 
+    // Only project creator or admin can change privacy settings
+    if (project.creator.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ msg: 'Unauthorized to change project privacy' });
+    }
 
+    const { isPrivate } = req.body;
+    
+    // Update privacy status
+    project.isPrivate = isPrivate === true || isPrivate === 'true';
+    await project.save();
 
-
-
-
-
-
-
+    await project.populate('creator', 'name email university');
+    await project.populate('collaborators', 'name email role');
+    
+    res.json({ 
+      success: true, 
+      msg: `Project is now ${project.isPrivate ? 'private' : 'public'}`,
+      data: project 
+    });
+  } catch (error) {
+    res.status(500).json({ msg: 'Server error while updating project privacy', error: error.message });
+  }
+});
 
 //////////////////////////
 // 📌 DELETE PROJECT

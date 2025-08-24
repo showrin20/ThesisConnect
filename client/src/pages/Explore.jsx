@@ -41,10 +41,15 @@ export default function MyProjects() {
       setLoadingProjects(true);
       setProjectsError(null);
       try {
+        // The /projects endpoint already handles authentication appropriately
+        // We'll just filter the projects on the client side
         const response = await axios.get('/projects');
         const fetchedProjects = response.data?.data || [];
         console.log('Fetched Projects:', fetchedProjects);
-        setProjects(fetchedProjects);
+        
+        // Filter out any private projects
+        const publicProjects = fetchedProjects.filter(project => !project.isPrivate);
+        setProjects(publicProjects);
 
         // Initialize bookmarkedProjects with default values
         const initialBookmarkStatus = {};
@@ -182,6 +187,9 @@ export default function MyProjects() {
 
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
+      // First ensure the project is not private
+      if (project.isPrivate) return false;
+      
       const matchesSearch =
         project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -264,25 +272,31 @@ export default function MyProjects() {
         style={{ borderColor: `${colors.border.primary}99` }}
       >
         <div className="container mx-auto px-4 py-12">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              <span 
-                className="bg-clip-text text-transparent"
+            <div className="text-center mb-8">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">
+                <span 
+                  className="bg-clip-text text-transparent"
+                  style={{
+                    background: colors.gradients.brand.primary,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent'
+                  }}
+                >
+                  Research Projects
+                </span>
+              </h1>
+              <p className="text-lg max-w-2xl mx-auto" style={{ color: colors.text.primary }}>
+                Exploring real-world problems with tech innovation
+              </p>
+              <div className="mt-3 inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-medium"
                 style={{
-                  background: colors.gradients.brand.primary,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent'
-                }}
-              >
-                Research Projects
-              </span>
-            </h1>
-            <p className="text-lg max-w-2xl mx-auto" style={{ color: colors.text.primary }}>
-              Exploring real-world problems with tech innovation
-            </p>
-          </div>
-
-          <div 
+                  backgroundColor: colors.status.success.background,
+                  borderColor: colors.status.success.border,
+                  color: colors.status.success.text
+                }}>
+                <span>🌐 Showing public projects only</span>
+              </div>
+            </div>          <div 
             className="backdrop-blur-sm rounded-2xl p-6 border shadow-lg"
             style={{
               backgroundColor: `${colors.background.glass}B3`,
@@ -548,6 +562,7 @@ export default function MyProjects() {
                         <Clock className="w-3 h-3" />
                         <span>{new Date(project.createdAt).toDateString()}</span>
                       </div>
+                    
                     </div>
                   </div>
 

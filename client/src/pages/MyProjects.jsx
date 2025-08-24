@@ -4,8 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import axios from '../axios';
 import ProjectCard from '../components/ProjectCard';
 import ProjectForm from '../components/ProjectForm';
-import { Edit, Trash2 } from 'lucide-react';
+import ProjectPrivacyToggle from '../components/ProjectPrivacyToggle';
+import { Edit, Trash2, Lock, Globe } from 'lucide-react';
 import statsService from '../services/statsService';
+import projectService from '../services/projectService';
 import { colors } from '../styles/colors';
 import { getButtonStyles, getCardStyles, getGradientTextStyles } from '../styles/styleUtils';
 import Sidebar from '../components/DashboardSidebar';
@@ -220,6 +222,23 @@ export default function MyProjects() {
     );
   };
 
+  // Handle privacy toggle
+  const handlePrivacyToggle = async (projectId, isNowPrivate) => {
+    try {
+      const response = await projectService.toggleProjectPrivacy(projectId, isNowPrivate);
+      // Update projects list with updated privacy setting
+      setProjects(prevProjects => 
+        prevProjects.map(project => 
+          project._id === projectId ? {...project, isPrivate: isNowPrivate} : project
+        )
+      );
+      return response;
+    } catch (err) {
+      setError(err.message || 'Failed to update project privacy');
+      return null;
+    }
+  };
+
   return (
     <div className="min-h-screen" style={{ background: colors.gradients.background.page }}>
       <div className="absolute inset-0" style={{ opacity: 0.3 }}>
@@ -262,9 +281,20 @@ export default function MyProjects() {
               {editingProject && (
                 <div className="max-w-2xl mx-auto rounded-xl p-8 mb-8 shadow-lg" style={getCardStyles('glass')}>
                   <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-semibold" style={{ color: colors.text.primary }}>
-                      Edit Project
-                    </h2>
+                    <div className="flex items-center gap-3">
+                      <h2 className="text-2xl font-semibold" style={{ color: colors.text.primary }}>
+                        Edit Project
+                      </h2>
+                      <div 
+                        className="text-xs px-2 py-1 rounded-full"
+                        style={{ 
+                          backgroundColor: editingProject.isPrivate ? colors.status.error.background : colors.status.success.background,
+                          color: editingProject.isPrivate ? colors.status.error.text : colors.status.success.text 
+                        }}
+                      >
+                        {editingProject.isPrivate ? '🔒 Private' : '🌐 Public'}
+                      </div>
+                    </div>
                     <button
                       type="button"
                       onClick={cancelForm}
@@ -356,7 +386,7 @@ export default function MyProjects() {
                 </p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {projects.map((project) => (
+                  {filteredProjects.map((project) => (
                     <div key={project._id}>
                       <ProjectCard 
                         {...project}
@@ -368,6 +398,37 @@ export default function MyProjects() {
                         onDelete={() => confirmDelete(project)}
                         onReviewAdded={handleReviewAdded}
                         onReviewDeleted={handleReviewDeleted}
+                        renderActions={() => (
+                          <div className="mt-3 flex flex-wrap items-center gap-2">
+                            {/* Only show privacy toggle to project owner and admin */}
+                            {(project.creator._id === user?.id || user?.role === 'admin') && (
+                              <ProjectPrivacyToggle 
+                                projectId={project._id}
+                                isPrivate={project.isPrivate}
+                                onToggle={(isPrivate) => handlePrivacyToggle(project._id, isPrivate)}
+                                size="small"
+                              />
+                            )}
+                            <button
+                              onClick={() => startEditing(project)}
+                              className="p-1 rounded transition-all duration-200"
+                              style={{ backgroundColor: colors.background.tertiary }}
+                              onMouseEnter={(e) => (e.target.style.backgroundColor = colors.button.outline.backgroundHover)}
+                              onMouseLeave={(e) => (e.target.style.backgroundColor = colors.background.tertiary)}
+                            >
+                              <Edit size={16} style={{ color: colors.text.primary }} />
+                            </button>
+                            <button
+                              onClick={() => confirmDelete(project)}
+                              className="p-1 rounded transition-all duration-200"
+                              style={{ backgroundColor: colors.background.tertiary }}
+                              onMouseEnter={(e) => (e.target.style.backgroundColor = colors.status.error.background)}
+                              onMouseLeave={(e) => (e.target.style.backgroundColor = colors.background.tertiary)}
+                            >
+                              <Trash2 size={16} style={{ color: colors.text.primary }} />
+                            </button>
+                          </div>
+                        )}
                       />
                     </div>
                   ))}
