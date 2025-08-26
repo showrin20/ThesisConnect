@@ -9,7 +9,7 @@ export const UserProvider = ({ children }) => {
     // Check for token and fetch user data
     const token = localStorage.getItem('token');
     if (token) {
-      fetch('http://localhost:1085/api/users/me', {
+      fetch('http://localhost:1085/api/users/me'|| import.meta.env.VITE_API_URL || 'https://thesisconnect-backend.onrender.com/api/users/me', {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => res.json())
