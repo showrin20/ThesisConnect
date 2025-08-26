@@ -273,6 +273,8 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+   
+   
    <Route
             path="/collaboration-requests"
             element={

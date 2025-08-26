@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const instance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://thesisconnect-backend.onrender.com/api',
+  baseURL: import.meta.env.VITE_API_URL|| 'https://thesisconnect-backend.onrender.com/api'||'http://localhost:1085/api',
   withCredentials: true,
   timeout: 10000,
   headers: {
