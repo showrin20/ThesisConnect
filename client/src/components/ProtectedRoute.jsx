@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getStatusStyles, getButtonStyles } from '../styles/styleUtils';
 
 const ProtectedRoute = ({ children, requiredRole = null }) => {
   const { isAuthenticated, user, loading } = useAuth();
@@ -27,14 +28,17 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
   if (requiredRole && user?.role !== requiredRole) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900/20 via-slate-900 to-blue-900/20 flex items-center justify-center">
-        <div className="bg-white/10 backdrop-blur-lg rounded-xl p-8 border border-white/20 text-center">
-          <h2 className="text-2xl font-bold text-white mb-4">Access Denied</h2>
-          <p className="text-white/70 mb-6">
+        <div className="backdrop-blur-lg rounded-xl p-8 text-center" style={getStatusStyles('error')}>
+          <h2 className="text-2xl font-bold mb-4">Access Denied</h2>
+          <p className="mb-6">
             You don't have permission to access this page. Required role: {requiredRole}
           </p>
           <button
             onClick={() => window.history.back()}
-            className="px-6 py-3 bg-gradient-to-r from-sky-500 to-purple-500 text-white rounded-lg hover:from-sky-600 hover:to-purple-600 transition-all duration-200"
+            className="px-6 py-3 rounded-lg transition-all duration-200"
+            style={getButtonStyles('primary')}
+            onMouseEnter={(e) => Object.assign(e.target.style, getButtonStyles('primary'), { transform: 'scale(1.05)' })}
+            onMouseLeave={(e) => Object.assign(e.target.style, getButtonStyles('primary'), { transform: 'scale(1)' })}
           >
             Go Back
           </button>

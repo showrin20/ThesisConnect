@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import loginPic from '../assets/loginPic.png';
 import signupPic from '../assets/signupPic.png';
+import PasswordStrengthMeter, { validatePasswordStrength } from './PasswordStrengthMeter';
 import { colors } from '../styles/colors';
-import { getInputStyles, getButtonStyles, getCardStyles, getGradientTextStyles } from '../styles/styleUtils';
+import { getInputStyles, getButtonStyles, getCardStyles, getGradientTextStyles, getStatusStyles } from '../styles/styleUtils';
 
 export default function Auth({ isSignup = false }) {
   const [formData, setFormData] = useState({
@@ -19,20 +20,40 @@ export default function Auth({ isSignup = false }) {
   });
 
   const [error, setError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { register, login, clearError } = useAuth();
   const navigate = useNavigate();
 
+  // Using the imported validatePasswordStrength function from PasswordStrengthMeter
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    // Validate password if the field is being changed and we're signing up
+    if (name === 'password' && isSignup) {
+      if (value && !validatePasswordStrength(value)) {
+        setPasswordError('Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character.');
+      } else {
+        setPasswordError('');
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setPasswordError('');
     setIsLoading(true);
     clearError();
+
+    // Password validation for signup
+    if (isSignup && !validatePasswordStrength(formData.password)) {
+      setPasswordError('Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character.');
+      setIsLoading(false);
+      return;
+    }
 
     try {
       let result;
@@ -90,16 +111,32 @@ export default function Auth({ isSignup = false }) {
           </h2>
 
           {error && (
-            <div className="text-center mb-4 p-3 rounded-lg" style={{ 
-              backgroundColor: colors.status.error.background,
-              color: colors.status.error.text,
-              border: `1px solid ${colors.status.error.border}`
-            }}>
-              {error}
+            <div className="mb-4 flex items-start" style={getStatusStyles('error')}>
+              <div className="mr-3 font-bold">✕</div>
+              <div className="flex-1">{error}</div>
+              <button 
+                onClick={() => setError('')}
+                className="ml-2 text-sm hover:opacity-75"
+                aria-label="Dismiss"
+              >
+                ×
+              </button>
             </div>
           )}
-
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
+          
+          {passwordError && (
+            <div className="mb-4 flex items-start" style={getStatusStyles('warning')}>
+              <div className="mr-3 font-bold">⚠</div>
+              <div className="flex-1">{passwordError}</div>
+              <button 
+                onClick={() => setPasswordError('')}
+                className="ml-2 text-sm hover:opacity-75"
+                aria-label="Dismiss"
+              >
+                ×
+              </button>
+            </div>
+          )}          <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
             {isSignup && (
               <>
                 <Input label="Name" name="name" value={formData.name} onChange={handleChange} required />
@@ -129,7 +166,31 @@ export default function Auth({ isSignup = false }) {
             )}
 
             <Input label="Email" name="email" type="email" value={formData.email} onChange={handleChange} required />
-            <Input label="Password" name="password" type="password" value={formData.password} onChange={handleChange} required />
+            <div>
+              <Input 
+                label="Password" 
+                name="password" 
+                type="password" 
+                value={formData.password} 
+                onChange={handleChange} 
+                required 
+              />
+              {isSignup && (
+                <>
+                  <PasswordStrengthMeter password={formData.password} />
+                  {formData.password && validatePasswordStrength(formData.password) ? (
+                    <div className="mt-2 flex items-center text-xs" style={{...getStatusStyles('success'), padding: '8px 12px'}}>
+                      <div className="mr-2 font-bold">✓</div>
+                      <div>Strong password</div>
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-xs" style={{ color: colors.text.muted }}>
+                      Password must have 8+ chars, uppercase, lowercase, number, and special character
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
 
             <button
               type="submit"

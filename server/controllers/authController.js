@@ -3,6 +3,25 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { validateRole } = require('../middlewares/auth');
 
+// Password validation function
+const validatePasswordStrength = (password) => {
+  if (!password) return false;
+  
+  // Check all criteria separately for better feedback
+  const hasMinLength = password.length >= 8;
+  const hasLowercase = /[a-z]/.test(password);
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasDigit = /[0-9]/.test(password);
+  const hasSpecial = /[^A-Za-z0-9]/.test(password);
+  
+  // Calculate strength score (0-5)
+  const score = [hasMinLength, hasLowercase, hasUppercase, hasDigit, hasSpecial]
+    .filter(Boolean).length;
+  
+  // Require at least 4 out of 5 criteria to be met
+  return score >= 4;
+};
+
 // REGISTER CONTROLLER
 exports.register = async (req, res) => {
   const {
@@ -31,6 +50,14 @@ exports.register = async (req, res) => {
       return res.status(400).json({ 
         success: false,
         msg: 'Name, email, and password are required' 
+      });
+    }
+    
+    // Password strength validation
+    if (!validatePasswordStrength(password)) {
+      return res.status(400).json({
+        success: false,
+        msg: 'Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character.'
       });
     }
 

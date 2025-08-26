@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, AlertCircle, XCircle, X, Info } from 'lucide-react';
 import { colors } from '../styles/colors';
+import { getStatusStyles } from '../styles/styleUtils';
 
 const Alert = ({ 
   message, 
@@ -28,37 +29,17 @@ const Alert = ({
     setTimeout(() => onClose?.(), 300);
   };
 
-  const getAlertStyles = () => {
+  const getIconColor = () => {
     switch (type) {
       case 'success':
-        return {
-          backgroundColor: colors.status.success.background,
-          borderColor: colors.status.success.border,
-          textColor: colors.text.success,
-          iconColor: colors.icon.success
-        };
+        return colors.icon.success;
       case 'error':
-        return {
-          backgroundColor: colors.status.error.background,
-          borderColor: colors.status.error.border,
-          textColor: colors.text.error,
-          iconColor: colors.icon.error
-        };
+        return colors.icon.error;
       case 'warning':
-        return {
-          backgroundColor: colors.status.warning.background,
-          borderColor: colors.status.warning.border,
-          textColor: colors.text.warning,
-          iconColor: colors.icon.warning
-        };
+        return colors.icon.warning;
       case 'info':
       default:
-        return {
-          backgroundColor: `${colors.primary.blue[500]}20`,
-          borderColor: colors.primary.blue[400],
-          textColor: colors.text.primary,
-          iconColor: colors.icon.primary
-        };
+        return colors.icon.primary;
     }
   };
 
@@ -76,7 +57,8 @@ const Alert = ({
     }
   };
 
-  const styles = getAlertStyles();
+  const statusStyle = getStatusStyles(type);
+  const iconColor = getIconColor();
   const Icon = getIcon();
 
   if (!isVisible) {
@@ -86,21 +68,20 @@ const Alert = ({
   return (
     <div 
       className={`
-        flex items-start gap-3 p-4 rounded-lg border backdrop-blur-sm
+        flex items-start gap-3 backdrop-blur-sm
         transition-all duration-300 ease-in-out transform
         ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
         ${className}
       `}
       style={{
-        backgroundColor: styles.backgroundColor,
-        borderColor: styles.borderColor,
-        color: styles.textColor
+        ...statusStyle,
+        color: statusStyle.color || colors.text.primary
       }}
     >
       <Icon 
         size={20} 
         className="flex-shrink-0 mt-0.5"
-        style={{ color: styles.iconColor }}
+        style={{ color: iconColor }}
       />
       
       <div className="flex-1 min-w-0">
@@ -112,7 +93,7 @@ const Alert = ({
       <button
         onClick={handleClose}
         className="flex-shrink-0 p-1 rounded-full transition-colors hover:bg-white/10"
-        style={{ color: styles.iconColor }}
+        style={{ color: iconColor }}
       >
         <X size={16} />
       </button>

@@ -148,40 +148,40 @@ background: {
 
   button: {
     primary: {
-      background: 'linear-gradient(135deg, #0ea5e9, #d946ef)',  // Same vibrant gradient
-      backgroundHover: 'linear-gradient(135deg, #0284c7, #c026d3)',
+      background: '#3b82f6',  // Standard blue that's widely used and accessible
+      backgroundHover: '#2563eb',  // Slightly darker blue for hover
       text: '#ffffff',
       border: 'transparent'
     },
     secondary: {
-      background: 'transparent',
-      backgroundHover: 'rgba(217, 70, 239, 0.05)',  // Very subtle hover
-      text: '#d946ef',
-      textHover: '#c026d3',
-      border: '#d946ef'
+      background: '#f3f4f6',  // Light gray background
+      backgroundHover: '#e5e7eb',  // Slightly darker for hover
+      text: '#4b5563',  // Dark gray text for contrast
+      textHover: '#374151',  // Darker on hover
+      border: '#d1d5db'  // Light gray border
     },
     outline: {
       background: 'transparent',
-      backgroundHover: 'rgba(217, 70, 239, 0.03)',
-      text: '#d946ef',
-      textHover: '#c026d3',
-      border: '#d946ef'
+      backgroundHover: 'rgba(59, 130, 246, 0.05)',  // Very subtle blue hover
+      text: '#3b82f6',  // Same blue as primary
+      textHover: '#2563eb',  // Darker blue on hover
+      border: '#3b82f6'  // Blue border
     },
     danger: {
-      background: '#c53030',  // Softer red for light mode
-      backgroundHover: '#9c2a2a',
+      background: '#ef4444',  // Standard red that's widely recognized
+      backgroundHover: '#dc2626',  // Darker red on hover
       text: '#ffffff',
       border: 'transparent'
     },
     success: {
-      background: '#38a169',  // Gentler green
-      backgroundHover: '#2f855a',
+      background: '#10b981',  // Standard green that's widely used
+      backgroundHover: '#059669',  // Darker green on hover
       text: '#ffffff',
       border: 'transparent'
     },
     disabled: {
-      background: '#ebe8e3',  // Warm light disabled
-      text: '#9b958f',
+      background: '#e5e7eb',  // Light gray for disabled
+      text: '#9ca3af',  // Medium gray text for disabled
       border: 'transparent'
     }
   },
@@ -358,40 +358,40 @@ const darkColors = {
 
   button: {
     primary: {
-      background: 'linear-gradient(135deg, #0ea5e9, #d946ef)',  // Softer primary button
-      backgroundHover: 'linear-gradient(135deg, #0284c7, #c026d3)',
+      background: '#4f46e5',  // Vibrant indigo that works well in dark mode
+      backgroundHover: '#4338ca',  // Slightly darker on hover
       text: '#ffffff',
       border: 'transparent'
     },
     secondary: {
-      background: 'transparent',
-      backgroundHover: 'rgba(217, 70, 239, 0.08)',  // Very subtle hover
-      text: '#d946ef',
-      textHover: '#c026d3',
-      border: '#d946ef'
+      background: '#374151',  // Dark gray that stands out on dark bg
+      backgroundHover: '#4b5563',  // Lighter gray on hover (reverse of light theme)
+      text: '#f9fafb',  // Light text for contrast
+      textHover: '#f3f4f6',  // Slightly dimmed on hover
+      border: '#6b7280'  // Medium gray border
     },
     outline: {
       background: 'transparent',
-      backgroundHover: 'rgba(217, 70, 239, 0.06)',
-      text: '#d946ef',
-      textHover: '#c026d3',
-      border: '#d946ef'
+      backgroundHover: 'rgba(79, 70, 229, 0.1)',  // Subtle indigo hover
+      text: '#6366f1',  // Bright indigo text
+      textHover: '#818cf8',  // Lighter on hover (reverse of light theme)
+      border: '#6366f1'  // Indigo border
     },
     danger: {
-      background: '#f56565',  // Softer danger button
-      backgroundHover: '#e53e3e',
+      background: '#ef4444',  // Standard red
+      backgroundHover: '#dc2626',  // Darker red on hover
       text: '#ffffff',
       border: 'transparent'
     },
     success: {
-      background: '#10d050',  // Gentler success
-      backgroundHover: '#16a34a',
+      background: '#10b981',  // Standard green
+      backgroundHover: '#059669',  // Darker green on hover
       text: '#ffffff',
       border: 'transparent'
     },
     disabled: {
-      background: '#718096',  // Softer disabled
-      text: '#a0aec0',
+      background: '#4b5563',  // Medium dark gray
+      text: '#9ca3af',  // Light gray text
       border: 'transparent'
     }
   },
