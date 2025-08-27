@@ -1,34 +1,5 @@
 {
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/login", "dest": "/index.html" },
-    { "src": "/signup", "dest": "/index.html" },
-    { "src": "/dashboard", "dest": "/index.html" },
-    { "src": "/mentor-dashboard", "dest": "/index.html" },
-    { "src": "/admin-dashboard", "dest": "/index.html" },
-    { "src": "/settings", "dest": "/index.html" },
-    { "src": "/profile", "dest": "/index.html" },
-    { "src": "/profile/(.*)", "dest": "/index.html" },
-    { "src": "/my-projects", "dest": "/index.html" },
-    { "src": "/my-publications", "dest": "/index.html" },
-    { "src": "/my-community-posts", "dest": "/index.html" },
-    { "src": "/my-blogs", "dest": "/index.html" },
-    { "src": "/find-collaborators", "dest": "/index.html" },
-    { "src": "/collaboration-requests", "dest": "/index.html" },
-    { "src": "/user-management", "dest": "/index.html" },
-    { "src": "/project-management", "dest": "/index.html" },
-    { "src": "/publication-management", "dest": "/index.html" },
-    { "src": "/blog-management", "dest": "/index.html" },
-    { "src": "/community-feed", "dest": "/index.html" },
-    { "src": "/find-mentors", "dest": "/index.html" },
-    { "src": "/community-management", "dest": "/index.html" },
-    { "src": "/my-mentees", "dest": "/index.html" },
-    { "src": "/project-reviews", "dest": "/index.html" },
-    { "src": "/bookmarks", "dest": "/index.html" },
-    { "src": "/blog/(.*)", "dest": "/index.html" },
-    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }

@@ -47,7 +47,7 @@ instance.interceptors.response.use(
       
       if (error.response.status === 401) {
         localStorage.removeItem('token');
-        window.location.href = '/login';
+        window.location.href = '/#/login';
       }
     } else if (error.request) {
       // The request was made but no response was received
