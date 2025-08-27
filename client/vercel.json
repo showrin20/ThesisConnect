@@ -4,6 +4,11 @@
   ],
   "routes": [
     { "handle": "filesystem" },
-    { "src": "/.*", "dest": "/index.html" }
+    { "src": "/login", "dest": "/index.html" },
+    { "src": "/signup", "dest": "/index.html" },
+    { "src": "/dashboard", "dest": "/index.html" },
+    { "src": "/mentor-dashboard", "dest": "/index.html" },
+    { "src": "/admin-dashboard", "dest": "/index.html" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
