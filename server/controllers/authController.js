@@ -1,7 +1,16 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const User = require('../models/User');
 const { validateRole } = require('../middlewares/auth');
+
+// Check if nodemailer is available
+let nodemailer;
+try {
+  nodemailer = require('nodemailer');
+} catch (err) {
+  console.warn('Nodemailer not installed. Email functionality will be limited.');
+}
 
 // Password validation function
 const validatePasswordStrength = (password) => {
@@ -457,6 +466,192 @@ exports.googleLogin = async (req, res) => {
     res.status(500).json({ 
       success: false,
       msg: 'Server error during Google authentication' 
+    });
+  }
+};
+
+// FORGOT PASSWORD CONTROLLER
+exports.forgotPassword = async (req, res) => {
+
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ 
+        success: false,
+        msg: 'Email is required' 
+      });
+    }
+
+    // Find user by email
+    const user = await User.findOne({ email });
+    
+    // Don't reveal if user exists or not for security reasons
+    if (!user) {
+      return res.json({ 
+        success: true, 
+        msg: 'If that email exists in our system, we have sent a password reset link.'
+      });
+    }
+
+    // Check if user is a Google account
+    if (user.isGoogleAccount) {
+      return res.status(400).json({
+        success: false,
+        msg: 'This account uses Google authentication. Please use the "Sign in with Google" option.'
+      });
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpiry = Date.now() + 3600000; // 1 hour
+
+    // Save token to user
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = resetTokenExpiry;
+    await user.save();
+
+    // Create reset URL
+    const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
+
+    // Check if nodemailer is available
+    if (nodemailer) {
+      try {
+        // Configure email transporter
+        const transporter = nodemailer.createTransport({
+          host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+          port: process.env.EMAIL_PORT || 587,
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
+          }
+        });
+
+        // Email options
+        const mailOptions = {
+          from: process.env.EMAIL_FROM,
+          to: user.email,
+          subject: 'ThesisConnect - Password Reset',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+              <h2 style="color: #4f46e5; text-align: center;">ThesisConnect Password Reset</h2>
+              <p>Hello ${user.name},</p>
+              <p>You are receiving this email because you (or someone else) has requested a password reset for your account.</p>
+              <p>Please click the button below to reset your password. This link will expire in 1 hour.</p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${resetUrl}" style="background-color: #4f46e5; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Reset Password</a>
+              </div>
+              <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
+              <p>Best regards,<br>The ThesisConnect Team</p>
+              <hr style="border: none; border-top: 1px solid #eaeaea; margin: 30px 0;">
+              <p style="font-size: 12px; color: #777; text-align: center;">
+                If you're having trouble clicking the button, copy and paste this URL into your web browser:
+                <br><a href="${resetUrl}" style="color: #4f46e5;">${resetUrl}</a>
+              </p>
+            </div>
+          `
+        };
+
+        console.log('Attempting to send email to:', user.email);
+        
+        // Send email
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Email sent successfully:', info.response);
+        console.log('Preview URL:', nodemailer.getTestMessageUrl ? nodemailer.getTestMessageUrl(info) : 'No preview URL available');
+      } catch (emailError) {
+        console.error('Failed to send email:', emailError);
+        console.error('Email configuration used:', {
+          host: process.env.EMAIL_HOST,
+          port: process.env.EMAIL_PORT,
+          user: process.env.EMAIL_USER ? '✓ Set' : '✗ Missing',
+          pass: process.env.EMAIL_PASS ? '✓ Set' : '✗ Missing',
+          from: process.env.EMAIL_FROM
+        });
+        // Continue execution even if email fails
+      }
+    } else {
+      console.log('Password reset token generated for', user.email);
+      console.log('Reset URL:', resetUrl);
+    }
+
+    res.json({ 
+      success: true, 
+      msg: 'If that email exists in our system, we have sent a password reset link.'
+    });
+
+  } catch (err) {
+    console.error('🔴 Forgot password error:', {
+      message: err.message,
+      name: err.name,
+      stack: err.stack,
+      error: err,
+    });
+
+    res.status(500).json({ 
+      success: false,
+      msg: 'Server error during password reset request' 
+    });
+  }
+};
+
+// RESET PASSWORD CONTROLLER
+exports.resetPassword = async (req, res) => {
+  try {
+    const { resetToken, password } = req.body;
+
+    if (!resetToken || !password) {
+      return res.status(400).json({
+        success: false,
+        msg: 'Reset token and new password are required'
+      });
+    }
+
+    // Password strength validation
+    if (!validatePasswordStrength(password)) {
+      return res.status(400).json({
+        success: false,
+        msg: 'Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character.'
+      });
+    }
+
+    // Find user with valid token
+    const user = await User.findOne({
+      resetPasswordToken: resetToken,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        msg: 'Password reset token is invalid or has expired'
+      });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Update user password and clear reset token
+    user.password = hashedPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.json({
+      success: true,
+      msg: 'Password has been successfully reset. You can now login with your new password.'
+    });
+
+  } catch (err) {
+    console.error('🔴 Reset password error:', {
+      message: err.message,
+      name: err.name,
+      stack: err.stack,
+      error: err,
+    });
+
+    res.status(500).json({
+      success: false,
+      msg: 'Server error during password reset'
     });
   }
 };

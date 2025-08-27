@@ -275,6 +275,42 @@ export const AuthProvider = ({ children }) => {
     loadUser();
   }, []);
 
+  // Forgot password
+  const forgotPassword = async (email) => {
+    dispatch({ type: AuthActionTypes.SET_LOADING, payload: true });
+    try {
+      const response = await axios.post('/auth/forgot-password', { email });
+      dispatch({ type: AuthActionTypes.SET_LOADING, payload: false });
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      const errorMsg = error.response?.data?.msg || 'Password reset request failed';
+      dispatch({
+        type: AuthActionTypes.AUTH_ERROR,
+        payload: errorMsg,
+      });
+      return { success: false, error: errorMsg };
+    }
+  };
+
+  // Reset password
+  const resetPassword = async (resetToken, password) => {
+    dispatch({ type: AuthActionTypes.SET_LOADING, payload: true });
+    try {
+      const response = await axios.post('/auth/reset-password', { resetToken, password });
+      dispatch({ type: AuthActionTypes.SET_LOADING, payload: false });
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Reset password error:', error);
+      const errorMsg = error.response?.data?.msg || 'Password reset failed';
+      dispatch({
+        type: AuthActionTypes.AUTH_ERROR,
+        payload: errorMsg,
+      });
+      return { success: false, error: errorMsg };
+    }
+  };
+
   const value = {
     ...state,
     register,
@@ -284,6 +320,8 @@ export const AuthProvider = ({ children }) => {
     clearError,
     loadUser,
     updateUser,
+    forgotPassword,
+    resetPassword
   };
 
   return (

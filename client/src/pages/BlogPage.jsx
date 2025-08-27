@@ -266,7 +266,7 @@ const BlogPage = () => {
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button
                         style={{
-                          background: colors.button.primary.background,
+                          background: colors.primary.blue[400],
                           color: colors.text.primary,
                           border: 'none',
                           padding: '6px 10px',
@@ -280,7 +280,7 @@ const BlogPage = () => {
                       </button>
                       <button
                         style={{
-                          background: colors.primary.blue[700],
+                          background: colors.primary.purple[400],
                           color: colors.text.primary,
                           border: 'none',
                           padding: '6px 10px',

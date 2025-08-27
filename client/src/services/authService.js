@@ -63,6 +63,26 @@ const authService = {
   // Check if user is authenticated
   isAuthenticated: () => {
     return !!authService.getCurrentUser();
+  },
+
+  // Request password reset
+  forgotPassword: async (email) => {
+    try {
+      const response = await axios.post('/auth/forgot-password', { email });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { msg: 'Password reset request failed' };
+    }
+  },
+
+  // Reset password with token
+  resetPassword: async (resetToken, password) => {
+    try {
+      const response = await axios.post('/auth/reset-password', { resetToken, password });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { msg: 'Password reset failed' };
+    }
   }
 };
 

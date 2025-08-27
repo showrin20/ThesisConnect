@@ -17,6 +17,8 @@ const UserSchema = new mongoose.Schema({
   researchInterests: String,
   currentPosition: String,
   yearsOfExperience: { type: Number, default: 0 },
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
   role: {
     type: String,
     enum: ['student', 'mentor', 'admin'],

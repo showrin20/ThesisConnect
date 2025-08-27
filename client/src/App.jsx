@@ -16,6 +16,8 @@ import MentorDashboard from './pages/MentorDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Settings from './pages/Settings';
 import Auth from './components/auth';
+import ForgotPassword from './components/ForgotPassword';
+import ResetPassword from './components/ResetPassword';
 import MyProjects from './pages/MyProjects';
 import MyPublications from './pages/MyPublications';
 import MyCommunityPosts from './pages/MyCommunityPosts';
@@ -77,6 +79,8 @@ function AppContent() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Auth />} />
           <Route path="/signup" element={<Auth isSignup={true} />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:resetToken" element={<ResetPassword />} />
           <Route
             path="/dashboard"
             element={
