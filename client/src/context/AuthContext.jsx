@@ -196,6 +196,32 @@ export const AuthProvider = ({ children }) => {
       return { success: false, error: errorMsg };
     }
   };
+  
+  // Google login
+  const loginWithGoogle = async (googleData) => {
+    dispatch({ type: AuthActionTypes.SET_LOADING, payload: true });
+    try {
+      const response = await axios.post('/auth/google-login', googleData);
+
+      dispatch({
+        type: AuthActionTypes.LOGIN_SUCCESS,
+        payload: response.data,
+      });
+      
+      // Set token in axios headers
+      setAuthToken(response.data.token);
+      
+      return { success: true, user: response.data.user };
+    } catch (error) {
+      console.error('Google login error:', error);
+      const errorMsg = error.response?.data?.msg || 'Google authentication failed';
+      dispatch({
+        type: AuthActionTypes.AUTH_ERROR,
+        payload: errorMsg,
+      });
+      return { success: false, error: errorMsg };
+    }
+  };
 
   // Logout user
   const logout = async () => {
@@ -253,6 +279,7 @@ export const AuthProvider = ({ children }) => {
     ...state,
     register,
     login,
+    loginWithGoogle,
     logout,
     clearError,
     loadUser,

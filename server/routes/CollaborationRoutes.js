@@ -96,18 +96,20 @@ router.post('/request', auth, async (req, res) => {
     // ✅ Duplicate check logic
     let existingRequest;
     if (finalProjectId) {
-      // Block only if same recipient + same project
+      // Block only if same recipient + same project + status is not declined
       existingRequest = await Collaboration.findOne({
         requester: req.user.id,
         recipient: recipientId,
-        projectId: finalProjectId
+        projectId: finalProjectId,
+        status: { $ne: 'declined' } // Allow if previous request was declined
       });
     } else {
-      // Block only if a general request already exists
+      // Block only if a general request already exists + status is not declined
       existingRequest = await Collaboration.findOne({
         requester: req.user.id,
         recipient: recipientId,
-        projectId: null
+        projectId: null,
+        status: { $ne: 'declined' } // Allow if previous request was declined
       });
     }
 
@@ -115,8 +117,8 @@ router.post('/request', auth, async (req, res) => {
       return res.status(400).json({ 
         success: false, 
         message: finalProjectId 
-          ? 'Collaboration request for this project already exists' 
-          : 'A general collaboration request already exists with this user' 
+          ? `Collaboration request for this project already exists with status: ${existingRequest.status}` 
+          : `A general collaboration request already exists with this user with status: ${existingRequest.status}` 
       });
     }
 
@@ -145,7 +147,7 @@ router.post('/request', auth, async (req, res) => {
     if (error.code === 11000) {
       return res.status(400).json({ 
         success: false, 
-        message: 'A collaboration request already exists between these users for this project' 
+        message: 'A collaboration request already exists between these users for this project that is not declined' 
       });
     }
     

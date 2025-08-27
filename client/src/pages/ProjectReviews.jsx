@@ -13,9 +13,14 @@ const ProjectReviews = () => {
   const { colors } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const { user ,logout} = useAuth();
+  const { user, logout } = useAuth();
   const { showSuccess, showError, showWarning } = useAlert();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  
+  // Debug log for user info
+  useEffect(() => {
+    console.log('Current user in ProjectReviews:', user);
+  }, [user]);
   
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,7 +30,7 @@ const ProjectReviews = () => {
   const [error, setError] = useState(null);
   const [editingReview, setEditingReview] = useState(null);
   const [reviewText, setReviewText] = useState('');
-  const [reviewRating, setReviewRating] = useState(5);
+  const [rating, setRating] = useState(5); // Renamed for consistency
   const [sortType, setSortType] = useState('dateDesc'); // 'dateDesc', 'dateAsc', 'ratingDesc', 'ratingAsc'
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(2);
@@ -40,16 +45,29 @@ const ProjectReviews = () => {
         // Get projects where user is a mentor
         const response = await axios.get('/projects/my-projects');
         if (response.data.success) {
+          console.log('Fetched projects:', response.data.data);
+          
           // For each project, fetch its reviews
           const projectsWithReviews = await Promise.all(
             response.data.data.map(async (project) => {
               try {
                 const reviewsResponse = await axios.get(`/projects/${project._id}/reviews`);
+                console.log(`Reviews for project ${project.title}:`, reviewsResponse.data);
+                
+                // Ensure each review has an _id field (may come as id in some APIs)
+                const reviews = reviewsResponse.data.success 
+                  ? reviewsResponse.data.data.map(review => ({
+                      ...review,
+                      _id: review._id || review.id, // Ensure _id exists for consistency
+                    }))
+                  : [];
+                  
                 return {
                   ...project,
-                  reviews: reviewsResponse.data.success ? reviewsResponse.data.data : []
+                  reviews: reviews
                 };
               } catch (err) {
+                console.error(`Error fetching reviews for project ${project._id}:`, err);
                 return { ...project, reviews: [] };
               }
             })
@@ -130,20 +148,55 @@ const ProjectReviews = () => {
 
     try {
       setLoading(true);
+      console.log('Adding review to project:', projectId, {
+        comment: reviewText,
+        rating: rating
+      });
+      
+      // Direct method - manually add the review to the project
+      const updatedProject = projects.find(p => p._id === projectId);
+      if (!updatedProject) {
+        throw new Error('Project not found');
+      }
+      
+      // Create a review object locally first for immediate UI feedback
+      const newReview = {
+        _id: `temp-${Date.now()}`, // Temporary ID
+        reviewer: {
+          _id: user._id || user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        },
+        comment: reviewText,
+        rating: rating,
+        createdAt: new Date().toISOString()
+      };
+      
+      // Add to local state for immediate feedback
+      updatedProject.reviews = [newReview, ...updatedProject.reviews];
+      setProjects([...projects]); // Update projects to reflect changes
+      
+      // Then make the API call
       const response = await axios.post(`/projects/${projectId}/reviews`, {
         comment: reviewText,
-        rating: reviewRating
+        rating: rating
       });
 
       if (response.data.success) {
         showSuccess('Review added successfully');
         setReviewText('');
-        setReviewRating(5);
-        setRefreshKey(oldKey => oldKey + 1);
+        setRating(5);
+        setRefreshKey(oldKey => oldKey + 1); // Refresh the data
+      } else {
+        // If API call fails, rollback the local change
+        updatedProject.reviews = updatedProject.reviews.filter(r => r._id !== newReview._id);
+        setProjects([...projects]);
+        throw new Error('Failed to add review');
       }
     } catch (err) {
       console.error('Error adding review:', err);
-      showError(err.response?.data?.msg || 'Failed to add review');
+      showError(err.response?.data?.msg || err.message || 'Failed to add review');
     } finally {
       setLoading(false);
     }
@@ -154,22 +207,47 @@ const ProjectReviews = () => {
     if (!window.confirm('Are you sure you want to delete this review?')) return;
 
     try {
+      console.log('Deleting review:', { projectId, reviewId });
+      
+      // Find project and review in local state
+      const projectToUpdate = projects.find(p => p._id === projectId);
+      if (!projectToUpdate) {
+        throw new Error('Project not found');
+      }
+      
+      // Store original reviews for rollback if needed
+      const originalReviews = [...projectToUpdate.reviews];
+      
+      // Update locally first for immediate feedback
+      projectToUpdate.reviews = projectToUpdate.reviews.filter(r => 
+        r._id !== reviewId && r.id !== reviewId
+      );
+      setProjects([...projects]); // Update UI
+      
+      // Then make API call
       const response = await axios.delete(`/projects/${projectId}/reviews/${reviewId}`);
+      
       if (response.data.success) {
         showSuccess('Review deleted successfully');
-        setRefreshKey(oldKey => oldKey + 1);
+        setRefreshKey(oldKey => oldKey + 1); // Refresh data
+      } else {
+        // Rollback if API call fails
+        projectToUpdate.reviews = originalReviews;
+        setProjects([...projects]);
+        throw new Error('Failed to delete review');
       }
     } catch (err) {
       console.error('Error deleting review:', err);
-      showError(err.response?.data?.msg || 'Failed to delete review');
+      showError(err.response?.data?.msg || err.message || 'Failed to delete review');
     }
   };
 
   // Start editing a review
   const startEditingReview = (project, review) => {
+    console.log('Starting to edit review:', { project, review });
     setEditingReview({ projectId: project._id, review });
     setReviewText(review.comment);
-    setReviewRating(review.rating);
+    setRating(review.rating || 5);
   };
 
   // Update a review
@@ -186,21 +264,61 @@ const ProjectReviews = () => {
 
     try {
       setLoading(true);
-      const response = await axios.put(`/projects/${editingReview.projectId}/reviews/${editingReview.review._id}`, {
+      // Use the correct ID property based on the review object structure
+      const reviewId = editingReview.review._id || editingReview.review.id;
+      
+      console.log('Updating review:', {
+        projectId: editingReview.projectId,
+        reviewId: reviewId,
         comment: reviewText,
-        rating: reviewRating
+        rating: rating
+      });
+
+      // Find project and review in local state
+      const projectToUpdate = projects.find(p => p._id === editingReview.projectId);
+      if (!projectToUpdate) {
+        throw new Error('Project not found');
+      }
+      
+      const reviewToUpdate = projectToUpdate.reviews.find(r => 
+        r._id === reviewId || r.id === reviewId
+      );
+      
+      if (!reviewToUpdate) {
+        throw new Error('Review not found');
+      }
+      
+      // Save original values for rollback if needed
+      const originalComment = reviewToUpdate.comment;
+      const originalRating = reviewToUpdate.rating;
+      
+      // Update locally first for immediate feedback
+      reviewToUpdate.comment = reviewText;
+      reviewToUpdate.rating = rating;
+      setProjects([...projects]); // Update UI
+      
+      // Then make API call
+      const response = await axios.put(`/projects/${editingReview.projectId}/reviews/${reviewId}`, {
+        comment: reviewText,
+        rating: rating
       });
 
       if (response.data.success) {
         showSuccess('Review updated successfully');
         setEditingReview(null);
         setReviewText('');
-        setReviewRating(5);
-        setRefreshKey(oldKey => oldKey + 1);
+        setRating(5);
+        setRefreshKey(oldKey => oldKey + 1); // Refresh data to get server changes
+      } else {
+        // Rollback if API call fails
+        reviewToUpdate.comment = originalComment;
+        reviewToUpdate.rating = originalRating;
+        setProjects([...projects]);
+        throw new Error('Failed to update review');
       }
     } catch (err) {
       console.error('Error updating review:', err);
-      showError(err.response?.data?.msg || 'Failed to update review');
+      showError(err.response?.data?.msg || err.message || 'Failed to update review');
     } finally {
       setLoading(false);
     }
@@ -455,7 +573,7 @@ const ProjectReviews = () => {
                               </div>
                               
                               {/* Only show edit/delete if current user is the reviewer */}
-                              {user?.id === review.reviewer?._id && (
+                              {(user?._id === review.reviewer?._id || user?.id === review.reviewer?._id || user?.id === review.reviewer?.id) && (
                                 <div className="flex space-x-2 ml-2">
                                   <button 
                                     onClick={() => startEditingReview(project, review)}
@@ -465,7 +583,7 @@ const ProjectReviews = () => {
                                     <Edit size={16} />
                                   </button>
                                   <button 
-                                    onClick={() => handleDeleteReview(project._id, review._id)}
+                                    onClick={() => handleDeleteReview(project._id, review._id || review.id)}
                                     className="p-1 rounded hover:bg-gray-200"
                                     style={{ color: colors.accent.red[500] }}
                                   >
@@ -517,12 +635,12 @@ const ProjectReviews = () => {
                             <button
                               key={star}
                               type="button"
-                              onClick={() => setReviewRating(star)}
+                              onClick={() => setRating(star)}
                               className="focus:outline-none mr-1 p-1 hover:bg-gray-200 rounded transition-colors"
                             >
                               <Star 
                                 size={24} 
-                                fill={star <= reviewRating ? colors.accent.yellow[400] : 'none'} 
+                                fill={star <= rating ? colors.accent.yellow[400] : 'none'} 
                                 stroke={colors.accent.yellow[400]}
                               />
                             </button>
@@ -559,7 +677,7 @@ const ProjectReviews = () => {
                             onClick={() => {
                               setEditingReview(null);
                               setReviewText('');
-                              setReviewRating(5);
+                              setRating(5);
                             }}
                             className="px-4 py-2 text-sm rounded-md border"
                             style={{

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Link } from "react-router-dom";
+import { GoogleLogin } from '@react-oauth/google';
+import { jwtDecode } from "jwt-decode";
 
 import { useAuth } from '../context/AuthContext';
 import loginPic from '../assets/loginPic.png';
@@ -18,13 +20,12 @@ export default function Auth({ isSignup = false }) {
     domain: '',
     scholarLink: '',
     githubLink: '',
-    role: 'student', // ✅ Default role set
-  });
+    role: 'student',  });
 
   const [error, setError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { register, login, clearError } = useAuth();
+  const { register, login, loginWithGoogle, clearError } = useAuth();
   const navigate = useNavigate();
 
   // Using the imported validatePasswordStrength function from PasswordStrengthMeter
@@ -93,6 +94,54 @@ export default function Auth({ isSignup = false }) {
     }
   };
 
+  // Google login handlers
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setIsLoading(true);
+      setError('');
+      clearError();
+
+      const decoded = jwtDecode(credentialResponse.credential);
+      console.log('Google login decoded info:', decoded);
+
+      const result = await loginWithGoogle({
+        token: credentialResponse.credential,
+        email: decoded.email,
+        name: decoded.name,
+        picture: decoded.picture,
+        role: isSignup ? formData.role : 'student'
+      });
+
+      if (result.success) {
+        const userRole = result.user?.role || 'student';
+        switch (userRole) {
+          case 'admin':
+            navigate('/admin-dashboard');
+            break;
+          case 'mentor':
+            navigate('/mentor-dashboard');
+            break;
+          case 'student':
+          default:
+            navigate('/dashboard');
+            break;
+        }
+      } else {
+        setError(result.error || 'Failed to login with Google');
+      }
+    } catch (err) {
+      console.error('Google login error:', err);
+      setError(err.message || 'Failed to login with Google');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    console.error('Google login failed');
+    setError('Google login failed. Please try again.');
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" 
          style={{ background: colors.gradients.background.page }}>
@@ -138,7 +187,11 @@ export default function Auth({ isSignup = false }) {
                 ×
               </button>
             </div>
-          )}          <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
+          )}
+          
+          
+          
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
             {isSignup && (
               <>
                 <Input label="Name" name="name" value={formData.name} onChange={handleChange} required />
@@ -224,6 +277,10 @@ export default function Auth({ isSignup = false }) {
 
             
               </p>
+              
+              
+      
+
             ) : (
               <>
                 <a href="#" className="text-sm text-right block transition-colors" style={{ color: colors.primary.blue[400] }}
@@ -242,9 +299,32 @@ export default function Auth({ isSignup = false }) {
   Signup
 </Link>
                 </p>
+               
+              
               </>
             )}
           </form>
+          <div className="my-4">
+            <div className="flex items-center">
+              <div className="flex-grow border-t" style={{ borderColor: colors.border.light }}></div>
+              <span className="px-4 text-sm" style={{ color: colors.text.secondary }}>OR</span>
+              <div className="flex-grow border-t" style={{ borderColor: colors.border.light }}></div>
+            </div>
+            <div className="text-center text-sm" style={{ color: colors.text.secondary }}>
+              {isSignup ? 'Sign up with Google' : 'Sign in with Google'}
+            </div>
+            <div className="flex justify-center">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                size="large"
+                width="100%"
+                text={isSignup ? "signup_with" : "signin_with"}
+                shape="rectangular"
+                logo_alignment="center"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>

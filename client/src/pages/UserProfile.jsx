@@ -189,6 +189,7 @@ const UserProfile = () => {
           disabled: true,
           color: colors.accent?.green?.[500] || '#22c55e'
         };
+      
       default:
         return {
           text: 'Send Collaboration Request',

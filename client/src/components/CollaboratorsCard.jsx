@@ -164,6 +164,14 @@ const sendCollaborationRequest = async (customMessage) => {
           color: colors.primary?.blue?.[500] || '#3b82f6',
           bg: `${colors.primary?.blue?.[500] || '#3b82f6'}20`
         };
+      case 'declined':
+        return {
+          text: isProjectCollaboration ? 'Request Again' : 'Send New Request',
+          icon: Send,
+          disabled: false,
+          color: colors.primary?.blue?.[500] || '#3b82f6',
+          bg: `${colors.primary?.blue?.[500] || '#3b82f6'}20`
+        };
       default:
         return {
           text: isProjectCollaboration ? 'Request Project Collaboration' : 'Send Request',
@@ -445,7 +453,7 @@ const sendCollaborationRequest = async (customMessage) => {
       <div className="flex space-x-2">
         {!isOwnProfile && (
           <button
-            onClick={collaborationStatus === 'none' ? () => setShowRequestModal(true) : undefined}
+            onClick={['none', 'declined'].includes(collaborationStatus) ? () => setShowRequestModal(true) : undefined}
             disabled={buttonConfig.disabled || requestLoading}
             className="flex-1 flex items-center justify-center py-2 px-3 rounded-lg transition-all duration-200 font-medium text-sm disabled:opacity-50"
             style={{

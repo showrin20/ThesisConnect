@@ -370,3 +370,93 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ msg: 'Server error during profile update' });
   }
 };
+
+// GOOGLE LOGIN/SIGNUP CONTROLLER
+exports.googleLogin = async (req, res) => {
+  try {
+    const { token, email, name, picture, role } = req.body;
+    
+    if (!token || !email) {
+      return res.status(400).json({ 
+        success: false,
+        msg: 'Google token and email are required' 
+      });
+    }
+    
+    // Validate and normalize role
+    const validatedRole = validateRole(role || 'student');
+
+    // Check if user exists
+    let user = await User.findOne({ email });
+    
+    if (user) {
+      // User exists - login
+      // Update picture if provided and not already set
+      if (picture && !user.profilePicture) {
+        user.profilePicture = picture;
+      }
+      
+      // Update last login
+      user.lastLogin = new Date();
+      await user.save();
+    } else {
+      // User doesn't exist - register
+      user = new User({
+        name: name || email.split('@')[0],
+        email,
+        profilePicture: picture,
+        password: await bcrypt.hash(Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8), 10),
+        googleId: token,
+        role: validatedRole,
+        isGoogleAccount: true
+      });
+      
+      await user.save();
+    }
+
+    // Create JWT
+    const jwtToken = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    // Respond
+    res.json({
+      success: true,
+      token: jwtToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        university: user.university,
+        domain: user.domain,
+        scholarLink: user.scholarLink,
+        githubLink: user.githubLink,
+        linkedinLink: user.linkedinLink,
+        website: user.website,
+        keywords: user.keywords,
+        bio: user.bio,
+        phone: user.phone,
+        location: user.location,
+        researchInterests: user.researchInterests,
+        currentPosition: user.currentPosition,
+        yearsOfExperience: user.yearsOfExperience,
+        role: user.role,
+        profilePicture: user.profilePicture
+      },
+    });
+  } catch (err) {
+    console.error('🔴 Google login error:', {
+      message: err.message,
+      name: err.name,
+      stack: err.stack,
+      error: err,
+    });
+
+    res.status(500).json({ 
+      success: false,
+      msg: 'Server error during Google authentication' 
+    });
+  }
+};

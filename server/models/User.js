@@ -27,6 +27,9 @@ const UserSchema = new mongoose.Schema({
     default: Date.now
   },
   avatar: String,
+  profilePicture: String, // For Google profile picture
+  googleId: String, // For Google ID token
+  isGoogleAccount: { type: Boolean, default: false }, // Flag for Google accounts
   isActive: {
     type: Boolean,
     default: true
