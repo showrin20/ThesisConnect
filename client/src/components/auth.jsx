@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Link } from "react-router-dom";
+
 import { useAuth } from '../context/AuthContext';
 import loginPic from '../assets/loginPic.png';
 import signupPic from '../assets/signupPic.png';
@@ -210,11 +212,17 @@ export default function Auth({ isSignup = false }) {
             {isSignup ? (
               <p className="text-center text-sm" style={{ color: colors.text.secondary }}>
                 Already have an account?{' '}
-                <a href="/login" className="transition-colors" style={{ color: colors.primary.blue[400] }}
-                   onMouseEnter={(e) => e.target.style.color = colors.primary.blue[300]}
+
+               <Link
+                  to="/login"
+                  className="transition"
+               style={{ color: colors.primary.blue[400] }}
+ onMouseEnter={(e) => e.target.style.color = colors.primary.blue[300]}
                    onMouseLeave={(e) => e.target.style.color = colors.primary.blue[400]}>
-                  Login
-                </a>
+
+Login           </Link>
+
+            
               </p>
             ) : (
               <>
@@ -225,11 +233,14 @@ export default function Auth({ isSignup = false }) {
                 </a>
                 <p className="text-center text-sm" style={{ color: colors.text.secondary }}>
                   No account?{' '}
-                  <a href="/signup" className="transition-colors" style={{ color: colors.primary.blue[400] }}
-                     onMouseEnter={(e) => e.target.style.color = colors.primary.blue[300]}
-                     onMouseLeave={(e) => e.target.style.color = colors.primary.blue[400]}>
-                    Sign up
-                  </a>
+                <Link
+                  to="/signup"
+                  className="transition"
+               style={{ color: colors.primary.blue[400] }}
+ onMouseEnter={(e) => e.target.style.color = colors.primary.blue[300]}
+                   onMouseLeave={(e) => e.target.style.color = colors.primary.blue[400]}>
+
+Signup           </Link>
                 </p>
               </>
             )}
