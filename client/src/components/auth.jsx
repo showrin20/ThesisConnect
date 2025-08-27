@@ -213,14 +213,14 @@ export default function Auth({ isSignup = false }) {
               <p className="text-center text-sm" style={{ color: colors.text.secondary }}>
                 Already have an account?{' '}
 
-               <Link
-                  to="/login"
-                  className="transition"
-               style={{ color: colors.primary.blue[400] }}
- onMouseEnter={(e) => e.target.style.color = colors.primary.blue[300]}
-                   onMouseLeave={(e) => e.target.style.color = colors.primary.blue[400]}>
-
-Login           </Link>
+            <Link
+  to="/login"
+  className="transition"
+  style={{ color: colors.primary.blue[400] }}
+  onMouseEnter={(e) => e.target.style.color = colors.primary.blue[300]}
+  onMouseLeave={(e) => e.target.style.color = colors.primary.blue[400]}>
+  Login
+</Link>
 
             
               </p>
@@ -233,14 +233,14 @@ Login           </Link>
                 </a>
                 <p className="text-center text-sm" style={{ color: colors.text.secondary }}>
                   No account?{' '}
-                <Link
-                  to="/signup"
-                  className="transition"
-               style={{ color: colors.primary.blue[400] }}
- onMouseEnter={(e) => e.target.style.color = colors.primary.blue[300]}
-                   onMouseLeave={(e) => e.target.style.color = colors.primary.blue[400]}>
-
-Signup           </Link>
+          <Link
+  to="/signup"
+  className="transition"
+  style={{ color: colors.primary.blue[400] }}
+  onMouseEnter={(e) => e.target.style.color = colors.primary.blue[300]}
+  onMouseLeave={(e) => e.target.style.color = colors.primary.blue[400]}>
+  Signup
+</Link>
                 </p>
               </>
             )}
