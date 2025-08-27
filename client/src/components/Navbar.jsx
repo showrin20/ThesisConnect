@@ -539,7 +539,7 @@ const Navbar = () => {
                     </div>
 
                     <Link
-                      to="/profile"
+                      to="/#/profile"
                       className="flex items-center justify-center px-4 py-3 rounded-xl transition-all duration-300 font-medium border"
                       style={{
                         background: colors.button.secondary.background,

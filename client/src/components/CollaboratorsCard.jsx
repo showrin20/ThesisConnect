@@ -470,7 +470,7 @@ const sendCollaborationRequest = async (customMessage) => {
             color: colors.text.secondary,
             borderColor: colors.border.secondary
           }}
-          onClick={() => window.open(`/profile/${student._id}`, '_blank')}
+          onClick={() => window.open(`/#/profile/${student._id}`, '_blank')}
         >
           <ExternalLink size={16} />
         </button>
