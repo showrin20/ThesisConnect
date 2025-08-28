@@ -116,13 +116,13 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
         color: colors.accent?.yellow?.[500] || '#f59e0b',
         description: 'Collaboration requests'
       },
-         { 
-        icon: Bookmark, 
-        label: 'Bookmarks', 
-        path: '/bookmarks', 
-        color: colors.accent?.red?.[500] || '#ef4444',
-        description: 'Manage your bookmarks'
-      }
+      //    { 
+      //   icon: Bookmark, 
+      //   label: 'Bookmarks', 
+      //   path: '/bookmarks', 
+      //   color: colors.accent?.red?.[500] || '#ef4444',
+      //   description: 'Manage your bookmarks'
+      // }
       
     ],
     mentor: [
@@ -161,14 +161,14 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
         path: '/project-reviews', 
         color: colors.accent?.purple?.[500] || '#9333ea',
         description: 'Review student work'
-      },
-      { 
-        icon: Bookmark, 
-        label: 'Bookmarks', 
-        path: '/bookmarks', 
-        color: colors.accent?.red?.[500] || '#ef4444',
-        description: 'Manage your bookmarks'
       }
+      // { 
+      //   icon: Bookmark, 
+      //   label: 'Bookmarks', 
+      //   path: '/bookmarks', 
+      //   color: colors.accent?.red?.[500] || '#ef4444',
+      //   description: 'Manage your bookmarks'
+      // }
     ],
     admin: [
       { 
@@ -191,14 +191,14 @@ const Sidebar = ({ isOpen, onClose, projects = [], userStats = null }) => {
         path: '/my-blogs', 
         color: colors.accent?.red?.[500] || '#ef4444',
         description: 'Manage your blogs'
-      },
-      { 
-        icon: Bookmark, 
-        label: 'Bookmarks', 
-        path: '/bookmarks', 
-        color: colors.primary?.blue?.[500] || '#3b82f6',
-        description: 'Manage your bookmarks'
-      },
+      }
+      // { 
+      //   icon: Bookmark, 
+      //   label: 'Bookmarks', 
+      //   path: '/bookmarks', 
+      //   color: colors.primary?.blue?.[500] || '#3b82f6',
+      //   description: 'Manage your bookmarks'
+      // },
     ]
   };
 
