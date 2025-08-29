@@ -554,21 +554,7 @@ const Navbar = () => {
                       My Profile
                     </Link>
 
-                    <Link
-                      to="/bookmarks"
-                      className="flex items-center justify-center px-4 py-3 rounded-xl transition-all duration-300 font-medium border"
-                      style={{
-                        background: colors.button.secondary.background,
-                        color: colors.button.secondary.text,
-                        borderColor: colors.button.secondary.border,
-                      }}
-                      onClick={toggleMenu}
-                      role="menuitem"
-                      aria-label="Bookmarks"
-                    >
-                      <FaBookmark className="mr-2 text-sm" aria-hidden="true" />
-                      Bookmarks
-                    </Link>
+              
 
                     <button
                       onClick={() => {
