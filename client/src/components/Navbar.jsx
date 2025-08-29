@@ -324,7 +324,6 @@ const Navbar = () => {
                       {[
                         { to: "/profile", label: "Profile", icon: FaUser, color: colors.primary.blue[500] },
                         { to: "/dashboard", label: "Dashboard", icon: FaChartBar, color: colors.primary.purple[500] },
-                        { to: "/bookmarks", label: "Bookmarks", icon: FaBookmark, color: colors.accent.yellow[500] },
                         { to: "/settings", label: "Settings", icon: FaCog, color: colors.accent.green[500] },
                       ].map((item) => (
                         <Link
