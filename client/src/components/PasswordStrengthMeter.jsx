@@ -126,7 +126,7 @@ const PasswordStrengthMeter = ({ password }) => {
       
       {/* Requirements display */}
       {password && strength < 5 && (
-        <div className="mt-2 text-xs rounded-md p-2" style={{ ...getStatusBarStyle(), color: colors.text.muted }}>
+        <div className="mt-2 text-xs rounded-md p-2" style={{ ...getStatusBarStyle(), backgroundColor: colors.background.secondary, color: colors.text.primary }}>
           <ul className="list-disc pl-4 space-y-1">
             {password.length < 8 && <li>At least 8 characters</li>}
             {!/[a-z]/.test(password) && <li>Include lowercase letters</li>}

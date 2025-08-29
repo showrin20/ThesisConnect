@@ -239,7 +239,7 @@ export default function Auth({ isSignup = false }) {
                       <div>Strong password</div>
                     </div>
                   ) : (
-                    <p className="mt-1 text-xs" style={{ color: colors.text.muted }}>
+                    <p className="mt-1 text-xs" style={{ color: colors.text.primary }}>
                       Password must have 8+ chars, uppercase, lowercase, number, and special character
                     </p>
                   )}
