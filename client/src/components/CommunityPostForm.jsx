@@ -414,6 +414,8 @@ export default function CommunityPostForm({ onPostCreated, onClose }) {
           >
             Cancel
           </button>
+
+
           <button
             type="submit"
             disabled={loading || !isFormValid()}
@@ -425,6 +427,9 @@ export default function CommunityPostForm({ onPostCreated, onClose }) {
           >
             {loading ? 'Creating...' : !isFormValid() ? 'Fill Required Fields' : 'Create Post'}
           </button>
+
+
+
         </div>
         
         {/* Helper text */}

@@ -596,6 +596,11 @@ export default function Dashboard() {
                   Start New Project
                 </button>
                 
+
+
+
+
+
                 <button
                   onClick={() => setShowPublicationForm(true)}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200"
@@ -625,6 +630,8 @@ export default function Dashboard() {
                   <Users size={16} />
                   Create Community Post
                 </button>
+
+
                 
                 <button
                   onClick={() => setShowBlogForm(true)}
