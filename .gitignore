@@ -23,8 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 
-# Environment variables
-.env*
-client/.env*
-server/.env*
-*/**/.env*
+# # Environment variables
+# .env*
+# client/.env*
+# server/.env*
+# */**/.env*
