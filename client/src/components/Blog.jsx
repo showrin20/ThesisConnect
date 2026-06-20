@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import ReactMde from 'react-mde';
-import ReactMarkdown from 'react-markdown';
+import MarkdownEditor from './MarkdownEditor';
 import Select from 'react-select';
-import 'react-mde/lib/styles/css/react-mde-all.css';
 import axios from '../axios';
 import { colors } from '../styles/colors';
 
@@ -181,42 +179,14 @@ export default function Blog() {
             style={{
               borderColor: colors.border.secondary,
               backgroundColor: colors.input.background,
+              color: colors.text.primary,
             }}
           >
-            <style>{`
-              .react-mde .mde-header {
-                background-color: ${colors.background.card} !important;
-                border-bottom: 1px solid ${colors.border.secondary} !important;
-              }
-              .react-mde .mde-header button {
-                color: ${colors.text.primary} !important;
-              }
-              .react-mde .mde-header button:hover {
-                background-color: ${colors.primary.purple[100]}20 !important;
-                color: ${colors.primary.purple[100]} !important;
-              }
-              .react-mde .mde-text {
-                background-color: ${colors.input.background} !important;
-                color: ${colors.text.primary} !important;
-                border: none !important;
-              }
-              .react-mde .mde-text:focus {
-                outline: none !important;
-                box-shadow: 0 0 0 2px ${colors.input.borderFocus}33 !important;
-              }
-              .react-mde .mde-preview .mde-preview-content {
-                background-color: ${colors.background.card} !important;
-                color: ${colors.text.primary} !important;
-              }
-            `}</style>
-            <ReactMde
+            <MarkdownEditor
               value={content}
               onChange={setContent}
               selectedTab={selectedTab}
               onTabChange={setSelectedTab}
-              generateMarkdownPreview={(markdown) =>
-                Promise.resolve(<ReactMarkdown>{markdown}</ReactMarkdown>)
-              }
               minEditorHeight={250}
             />
           </div>

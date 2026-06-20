@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import ReactMde from 'react-mde';
-import ReactMarkdown from 'react-markdown';
+import MarkdownEditor from './MarkdownEditor';
 import CreatableSelect from 'react-select/creatable';
-import 'react-mde/lib/styles/css/react-mde-all.css';
 import { BookOpen, X, FileText } from 'lucide-react';
 import { colors } from '../styles/colors';
 import { getInputStyles, getButtonStyles } from '../styles/styleUtils';
@@ -245,44 +243,15 @@ export default function BlogForm({
             style={{
               borderColor: colors.border.secondary,
               backgroundColor: colors.input.background,
+              color: colors.text.primary,
             }}
           >
-            <style>{`
-              .react-mde .mde-header {
-                background-color: ${colors.background.card} !important;
-                border-bottom: 1px solid ${colors.border.secondary} !important;
-              }
-              .react-mde .mde-header button {
-                color: ${colors.text.secondary} !important;
-              }
-              .react-mde .mde-header button:hover {
-                background-color: ${colors.primary.blue[500]}20 !important;
-                color: ${colors.primary.blue[400]} !important;
-              }
-              .react-mde .mde-text {
-                background-color: ${colors.input.background} !important;
-                color: ${colors.text.primary} !important;
-                border: none !important;
-              }
-              .react-mde .mde-text:focus {
-                outline: none !important;
-                box-shadow: 0 0 0 2px ${colors.input.borderFocus}33 !important;
-              }
-              .react-mde .mde-preview .mde-preview-content {
-                background-color: ${colors.background.card} !important;
-                color: ${colors.text.primary} !important;
-              }
-            `}</style>
-            <ReactMde
+            <MarkdownEditor
               value={formData.content || ''}
               onChange={(value) => handleChange(value)}
               selectedTab={selectedTab}
               onTabChange={setSelectedTab}
-              generateMarkdownPreview={(markdown) =>
-                Promise.resolve(<ReactMarkdown>{markdown}</ReactMarkdown>)
-              }
               minEditorHeight={200}
-              heightUnits="px"
             />
           </div>
         </div>
