@@ -2,8 +2,8 @@
 import axios from 'axios';
 
 // Better API URL configuration with environment-aware logic
-const API_URL = import.meta.env.VITE_API_URL || 
-  (import.meta.env.PROD ? 'https://thesisconnect-backend.onrender.com/api' : 'http://localhost:1085/api');
+const API_URL = import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD ? 'https://thesisconnect.onrender.com/api' : 'http://localhost:1085/api');
 
 console.log('API connecting to:', API_URL); // Debug logging for connection issues
 
